@@ -56,3 +56,8 @@ export type Company = Prisma.CompanyModel
  * 
  */
 export type Port = Prisma.PortModel
+/**
+ * Model Terminal
+ * 
+ */
+export type Terminal = Prisma.TerminalModel

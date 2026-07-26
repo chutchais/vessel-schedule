@@ -399,7 +399,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   HealthCheck: 'HealthCheck',
   Company: 'Company',
-  Port: 'Port'
+  Port: 'Port',
+  Terminal: 'Terminal'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "healthCheck" | "company" | "port"
+    modelProps: "healthCheck" | "company" | "port" | "terminal"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -641,6 +642,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Terminal: {
+      payload: Prisma.$TerminalPayload<ExtArgs>
+      fields: Prisma.TerminalFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TerminalFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TerminalFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>
+        }
+        findFirst: {
+          args: Prisma.TerminalFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TerminalFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>
+        }
+        findMany: {
+          args: Prisma.TerminalFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>[]
+        }
+        create: {
+          args: Prisma.TerminalCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>
+        }
+        createMany: {
+          args: Prisma.TerminalCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TerminalCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>[]
+        }
+        delete: {
+          args: Prisma.TerminalDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>
+        }
+        update: {
+          args: Prisma.TerminalUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>
+        }
+        deleteMany: {
+          args: Prisma.TerminalDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TerminalUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TerminalUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>[]
+        }
+        upsert: {
+          args: Prisma.TerminalUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalPayload>
+        }
+        aggregate: {
+          args: Prisma.TerminalAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTerminal>
+        }
+        groupBy: {
+          args: Prisma.TerminalGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TerminalGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TerminalCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TerminalCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -721,6 +796,19 @@ export const PortScalarFieldEnum = {
 } as const
 
 export type PortScalarFieldEnum = (typeof PortScalarFieldEnum)[keyof typeof PortScalarFieldEnum]
+
+
+export const TerminalScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  portId: 'portId',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TerminalScalarFieldEnum = (typeof TerminalScalarFieldEnum)[keyof typeof TerminalScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -983,6 +1071,7 @@ export type GlobalOmitConfig = {
   healthCheck?: Prisma.HealthCheckOmit
   company?: Prisma.CompanyOmit
   port?: Prisma.PortOmit
+  terminal?: Prisma.TerminalOmit
 }
 
 /* Types for Logging */

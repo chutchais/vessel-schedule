@@ -268,6 +268,7 @@ export type PortWhereInput = {
   isActive?: Prisma.BoolFilter<"Port"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Port"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Port"> | Date | string
+  terminals?: Prisma.TerminalListRelationFilter
 }
 
 export type PortOrderByWithRelationInput = {
@@ -282,6 +283,7 @@ export type PortOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  terminals?: Prisma.TerminalOrderByRelationAggregateInput
 }
 
 export type PortWhereUniqueInput = Prisma.AtLeast<{
@@ -299,6 +301,7 @@ export type PortWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"Port"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Port"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Port"> | Date | string
+  terminals?: Prisma.TerminalListRelationFilter
 }, "id" | "code" | "unlocode">
 
 export type PortOrderByWithAggregationInput = {
@@ -349,6 +352,7 @@ export type PortCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  terminals?: Prisma.TerminalCreateNestedManyWithoutPortInput
 }
 
 export type PortUncheckedCreateInput = {
@@ -363,6 +367,7 @@ export type PortUncheckedCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutPortInput
 }
 
 export type PortUpdateInput = {
@@ -377,6 +382,7 @@ export type PortUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  terminals?: Prisma.TerminalUpdateManyWithoutPortNestedInput
 }
 
 export type PortUncheckedUpdateInput = {
@@ -391,6 +397,7 @@ export type PortUncheckedUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  terminals?: Prisma.TerminalUncheckedUpdateManyWithoutPortNestedInput
 }
 
 export type PortCreateManyInput = {
@@ -487,6 +494,11 @@ export type PortSumOrderByAggregateInput = {
   longitude?: Prisma.SortOrder
 }
 
+export type PortScalarRelationFilter = {
+  is?: Prisma.PortWhereInput
+  isNot?: Prisma.PortWhereInput
+}
+
 export type NullableDecimalFieldUpdateOperationsInput = {
   set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -495,6 +507,121 @@ export type NullableDecimalFieldUpdateOperationsInput = {
   divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
 }
 
+export type PortCreateNestedOneWithoutTerminalsInput = {
+  create?: Prisma.XOR<Prisma.PortCreateWithoutTerminalsInput, Prisma.PortUncheckedCreateWithoutTerminalsInput>
+  connectOrCreate?: Prisma.PortCreateOrConnectWithoutTerminalsInput
+  connect?: Prisma.PortWhereUniqueInput
+}
+
+export type PortUpdateOneRequiredWithoutTerminalsNestedInput = {
+  create?: Prisma.XOR<Prisma.PortCreateWithoutTerminalsInput, Prisma.PortUncheckedCreateWithoutTerminalsInput>
+  connectOrCreate?: Prisma.PortCreateOrConnectWithoutTerminalsInput
+  upsert?: Prisma.PortUpsertWithoutTerminalsInput
+  connect?: Prisma.PortWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PortUpdateToOneWithWhereWithoutTerminalsInput, Prisma.PortUpdateWithoutTerminalsInput>, Prisma.PortUncheckedUpdateWithoutTerminalsInput>
+}
+
+export type PortCreateWithoutTerminalsInput = {
+  id?: string
+  code: string
+  unlocode?: string | null
+  name: string
+  country: string
+  timezone: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type PortUncheckedCreateWithoutTerminalsInput = {
+  id?: string
+  code: string
+  unlocode?: string | null
+  name: string
+  country: string
+  timezone: string
+  latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type PortCreateOrConnectWithoutTerminalsInput = {
+  where: Prisma.PortWhereUniqueInput
+  create: Prisma.XOR<Prisma.PortCreateWithoutTerminalsInput, Prisma.PortUncheckedCreateWithoutTerminalsInput>
+}
+
+export type PortUpsertWithoutTerminalsInput = {
+  update: Prisma.XOR<Prisma.PortUpdateWithoutTerminalsInput, Prisma.PortUncheckedUpdateWithoutTerminalsInput>
+  create: Prisma.XOR<Prisma.PortCreateWithoutTerminalsInput, Prisma.PortUncheckedCreateWithoutTerminalsInput>
+  where?: Prisma.PortWhereInput
+}
+
+export type PortUpdateToOneWithWhereWithoutTerminalsInput = {
+  where?: Prisma.PortWhereInput
+  data: Prisma.XOR<Prisma.PortUpdateWithoutTerminalsInput, Prisma.PortUncheckedUpdateWithoutTerminalsInput>
+}
+
+export type PortUpdateWithoutTerminalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  unlocode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type PortUncheckedUpdateWithoutTerminalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  unlocode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+
+/**
+ * Count Type PortCountOutputType
+ */
+
+export type PortCountOutputType = {
+  terminals: number
+}
+
+export type PortCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  terminals?: boolean | PortCountOutputTypeCountTerminalsArgs
+}
+
+/**
+ * PortCountOutputType without action
+ */
+export type PortCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PortCountOutputType
+   */
+  select?: Prisma.PortCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * PortCountOutputType without action
+ */
+export type PortCountOutputTypeCountTerminalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TerminalWhereInput
+}
 
 
 export type PortSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -509,6 +636,8 @@ export type PortSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  terminals?: boolean | Prisma.Port$terminalsArgs<ExtArgs>
+  _count?: boolean | Prisma.PortCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["port"]>
 
 export type PortSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -554,10 +683,18 @@ export type PortSelectScalar = {
 }
 
 export type PortOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "unlocode" | "name" | "country" | "timezone" | "latitude" | "longitude" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["port"]>
+export type PortInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  terminals?: boolean | Prisma.Port$terminalsArgs<ExtArgs>
+  _count?: boolean | Prisma.PortCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type PortIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type PortIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $PortPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Port"
-  objects: {}
+  objects: {
+    terminals: Prisma.$TerminalPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     code: string
@@ -964,6 +1101,7 @@ readonly fields: PortFieldRefs;
  */
 export interface Prisma__PortClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  terminals<T extends Prisma.Port$terminalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Port$terminalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TerminalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1021,6 +1159,10 @@ export type PortFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
+  /**
    * Filter, which Port to fetch.
    */
   where: Prisma.PortWhereUniqueInput
@@ -1039,6 +1181,10 @@ export type PortFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
+  /**
    * Filter, which Port to fetch.
    */
   where: Prisma.PortWhereUniqueInput
@@ -1056,6 +1202,10 @@ export type PortFindFirstArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the Port
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
   /**
    * Filter, which Port to fetch.
    */
@@ -1105,6 +1255,10 @@ export type PortFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
+  /**
    * Filter, which Port to fetch.
    */
   where?: Prisma.PortWhereInput
@@ -1152,6 +1306,10 @@ export type PortFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Omit specific fields from the Port
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
   /**
    * Filter, which Ports to fetch.
    */
@@ -1201,6 +1359,10 @@ export type PortCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
+  /**
    * The data needed to create a Port.
    */
   data: Prisma.XOR<Prisma.PortCreateInput, Prisma.PortUncheckedCreateInput>
@@ -1248,6 +1410,10 @@ export type PortUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    * Omit specific fields from the Port
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
   /**
    * The data needed to update a Port.
    */
@@ -1315,6 +1481,10 @@ export type PortUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
+  /**
    * The filter to search for the Port to update in case it exists.
    */
   where: Prisma.PortWhereUniqueInput
@@ -1341,6 +1511,10 @@ export type PortDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
+  /**
    * Filter which Port to delete.
    */
   where: Prisma.PortWhereUniqueInput
@@ -1361,6 +1535,30 @@ export type PortDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
+ * Port.terminals
+ */
+export type Port$terminalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Terminal
+   */
+  select?: Prisma.TerminalSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Terminal
+   */
+  omit?: Prisma.TerminalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TerminalInclude<ExtArgs> | null
+  where?: Prisma.TerminalWhereInput
+  orderBy?: Prisma.TerminalOrderByWithRelationInput | Prisma.TerminalOrderByWithRelationInput[]
+  cursor?: Prisma.TerminalWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TerminalScalarFieldEnum | Prisma.TerminalScalarFieldEnum[]
+}
+
+/**
  * Port without action
  */
 export type PortDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1372,4 +1570,8 @@ export type PortDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * Omit specific fields from the Port
    */
   omit?: Prisma.PortOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PortInclude<ExtArgs> | null
 }

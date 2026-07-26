@@ -27,7 +27,7 @@ enum CompanyType {
 }
 
 model Company {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code      String      @unique @db.VarChar(20)
   name      String      @db.VarChar(200)
   shortName String?     @db.VarChar(100)
@@ -47,25 +47,46 @@ model Company {
 }
 
 model Port {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  code      String   @unique @db.VarChar(10)
-  unlocode  String?  @unique @db.VarChar(5)
+  code     String  @unique @db.VarChar(10)
+  unlocode String? @unique @db.VarChar(5)
 
-  name      String   @db.VarChar(200)
-  country   String   @db.VarChar(100)
-  timezone  String   @db.VarChar(50)
+  name     String @db.VarChar(200)
+  country  String @db.VarChar(100)
+  timezone String @db.VarChar(50)
 
-  latitude  Decimal? @db.Decimal(9,6)
-  longitude Decimal? @db.Decimal(9,6)
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
 
-  isActive  Boolean  @default(true)
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  terminals Terminal[]
 
   @@index([name])
   @@index([country])
   @@map("ports")
+}
+
+model Terminal {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  code String @db.VarChar(20)
+  name String @db.VarChar(200)
+
+  portId String @db.Uuid
+  port   Port   @relation(fields: [portId], references: [id])
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([portId, code])
+  @@index([portId])
+  @@index([name])
+  @@map("terminals")
 }
