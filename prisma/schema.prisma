@@ -45,3 +45,27 @@ model Company {
   @@index([isActive])
   @@map("companies")
 }
+
+model Port {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  code      String   @unique @db.VarChar(10)
+  unlocode  String?  @unique @db.VarChar(5)
+
+  name      String   @db.VarChar(200)
+  country   String   @db.VarChar(100)
+  timezone  String   @db.VarChar(50)
+
+  latitude  Decimal? @db.Decimal(9,6)
+  longitude Decimal? @db.Decimal(9,6)
+
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  @@index([name])
+  @@index([country])
+  @@map("ports")
+}

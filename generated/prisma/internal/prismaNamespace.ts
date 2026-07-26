@@ -398,7 +398,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   HealthCheck: 'HealthCheck',
-  Company: 'Company'
+  Company: 'Company',
+  Port: 'Port'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -414,7 +415,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "healthCheck" | "company"
+    modelProps: "healthCheck" | "company" | "port"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -566,6 +567,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Port: {
+      payload: Prisma.$PortPayload<ExtArgs>
+      fields: Prisma.PortFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PortFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PortFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>
+        }
+        findFirst: {
+          args: Prisma.PortFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PortFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>
+        }
+        findMany: {
+          args: Prisma.PortFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>[]
+        }
+        create: {
+          args: Prisma.PortCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>
+        }
+        createMany: {
+          args: Prisma.PortCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PortCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>[]
+        }
+        delete: {
+          args: Prisma.PortDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>
+        }
+        update: {
+          args: Prisma.PortUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>
+        }
+        deleteMany: {
+          args: Prisma.PortDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PortUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PortUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>[]
+        }
+        upsert: {
+          args: Prisma.PortUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortPayload>
+        }
+        aggregate: {
+          args: Prisma.PortAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePort>
+        }
+        groupBy: {
+          args: Prisma.PortGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PortGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PortCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PortCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -629,6 +704,23 @@ export const CompanyScalarFieldEnum = {
 } as const
 
 export type CompanyScalarFieldEnum = (typeof CompanyScalarFieldEnum)[keyof typeof CompanyScalarFieldEnum]
+
+
+export const PortScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  unlocode: 'unlocode',
+  name: 'name',
+  country: 'country',
+  timezone: 'timezone',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PortScalarFieldEnum = (typeof PortScalarFieldEnum)[keyof typeof PortScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -707,6 +799,20 @@ export type ListEnumCompanyTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'Decimal'
+ */
+export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
+    
+
+
+/**
+ * Reference to a field of type 'Decimal[]'
+ */
+export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
     
 
 
@@ -876,6 +982,7 @@ export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaC
 export type GlobalOmitConfig = {
   healthCheck?: Prisma.HealthCheckOmit
   company?: Prisma.CompanyOmit
+  port?: Prisma.PortOmit
 }
 
 /* Types for Logging */

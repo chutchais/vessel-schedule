@@ -51,3 +51,8 @@ export type HealthCheck = Prisma.HealthCheckModel
  * 
  */
 export type Company = Prisma.CompanyModel
+/**
+ * Model Port
+ * 
+ */
+export type Port = Prisma.PortModel

@@ -52,7 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   HealthCheck: 'HealthCheck',
-  Company: 'Company'
+  Company: 'Company',
+  Port: 'Port'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -95,6 +96,23 @@ export const CompanyScalarFieldEnum = {
 } as const
 
 export type CompanyScalarFieldEnum = (typeof CompanyScalarFieldEnum)[keyof typeof CompanyScalarFieldEnum]
+
+
+export const PortScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  unlocode: 'unlocode',
+  name: 'name',
+  country: 'country',
+  timezone: 'timezone',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PortScalarFieldEnum = (typeof PortScalarFieldEnum)[keyof typeof PortScalarFieldEnum]
 
 
 export const SortOrder = {
