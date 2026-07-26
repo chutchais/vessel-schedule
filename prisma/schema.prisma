@@ -40,10 +40,34 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  services Service[]
+
   @@index([name])
   @@index([type])
   @@index([isActive])
   @@map("companies")
+}
+
+model Service {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  code        String  @unique @db.VarChar(30)
+  name        String  @db.VarChar(200)
+  description String?
+  color       String  @default("#3B82F6") @db.VarChar(7)
+
+  companyId String  @db.Uuid
+  company   Company @relation(fields: [companyId], references: [id])
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([companyId])
+  @@index([isActive])
+  @@map("services")
 }
 
 model Port {

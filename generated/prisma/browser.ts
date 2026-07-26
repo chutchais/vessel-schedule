@@ -28,6 +28,11 @@ export type HealthCheck = Prisma.HealthCheckModel
  */
 export type Company = Prisma.CompanyModel
 /**
+ * Model Service
+ * 
+ */
+export type Service = Prisma.ServiceModel
+/**
  * Model Port
  * 
  */
