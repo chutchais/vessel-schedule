@@ -402,7 +402,8 @@ export const ModelName = {
   Port: 'Port',
   Vessel: 'Vessel',
   Terminal: 'Terminal',
-  Berth: 'Berth'
+  Berth: 'Berth',
+  VesselSchedule: 'VesselSchedule'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "healthCheck" | "company" | "port" | "vessel" | "terminal" | "berth"
+    modelProps: "healthCheck" | "company" | "port" | "vessel" | "terminal" | "berth" | "vesselSchedule"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -866,6 +867,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    VesselSchedule: {
+      payload: Prisma.$VesselSchedulePayload<ExtArgs>
+      fields: Prisma.VesselScheduleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.VesselScheduleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.VesselScheduleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>
+        }
+        findFirst: {
+          args: Prisma.VesselScheduleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.VesselScheduleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>
+        }
+        findMany: {
+          args: Prisma.VesselScheduleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>[]
+        }
+        create: {
+          args: Prisma.VesselScheduleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>
+        }
+        createMany: {
+          args: Prisma.VesselScheduleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.VesselScheduleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>[]
+        }
+        delete: {
+          args: Prisma.VesselScheduleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>
+        }
+        update: {
+          args: Prisma.VesselScheduleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>
+        }
+        deleteMany: {
+          args: Prisma.VesselScheduleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.VesselScheduleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.VesselScheduleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>[]
+        }
+        upsert: {
+          args: Prisma.VesselScheduleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselSchedulePayload>
+        }
+        aggregate: {
+          args: Prisma.VesselScheduleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateVesselSchedule>
+        }
+        groupBy: {
+          args: Prisma.VesselScheduleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VesselScheduleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.VesselScheduleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VesselScheduleCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -992,6 +1067,29 @@ export const BerthScalarFieldEnum = {
 } as const
 
 export type BerthScalarFieldEnum = (typeof BerthScalarFieldEnum)[keyof typeof BerthScalarFieldEnum]
+
+
+export const VesselScheduleScalarFieldEnum = {
+  id: 'id',
+  vesselId: 'vesselId',
+  terminalId: 'terminalId',
+  berthId: 'berthId',
+  voyageNumber: 'voyageNumber',
+  eta: 'eta',
+  etb: 'etb',
+  etd: 'etd',
+  ata: 'ata',
+  atb: 'atb',
+  atd: 'atd',
+  status: 'status',
+  remarks: 'remarks',
+  berthPositionMeters: 'berthPositionMeters',
+  headingReverse: 'headingReverse',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type VesselScheduleScalarFieldEnum = (typeof VesselScheduleScalarFieldEnum)[keyof typeof VesselScheduleScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1126,6 +1224,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ScheduleStatus'
+ */
+export type EnumScheduleStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ScheduleStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ScheduleStatus[]'
+ */
+export type ListEnumScheduleStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ScheduleStatus[]'>
     
 
 
@@ -1299,6 +1411,7 @@ export type GlobalOmitConfig = {
   vessel?: Prisma.VesselOmit
   terminal?: Prisma.TerminalOmit
   berth?: Prisma.BerthOmit
+  vesselSchedule?: Prisma.VesselScheduleOmit
 }
 
 /* Types for Logging */

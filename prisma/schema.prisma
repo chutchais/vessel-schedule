@@ -95,6 +95,8 @@ model Vessel {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  schedules VesselSchedule[]
+
   @@index([name])
   @@index([type])
   @@index([isActive])
@@ -115,7 +117,8 @@ model Terminal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  berths Berth[]
+  berths    Berth[]
+  schedules VesselSchedule[]
 
   @@unique([portId, code])
   @@index([portId])
@@ -147,10 +150,61 @@ model Berth {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  schedules VesselSchedule[]
+
   @@unique([terminalId, code])
   @@index([terminalId])
   @@index([name])
   @@index([sortOrder])
   @@index([isActive])
   @@map("berths")
+}
+
+enum ScheduleStatus {
+  PLANNED
+  CONFIRMED
+  ARRIVED
+  BERTHED
+  DEPARTED
+  CANCELLED
+}
+
+model VesselSchedule {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  vesselId String @db.Uuid
+  vessel   Vessel @relation(fields: [vesselId], references: [id])
+
+  terminalId String   @db.Uuid
+  terminal   Terminal @relation(fields: [terminalId], references: [id])
+
+  berthId String? @db.Uuid
+  berth   Berth?  @relation(fields: [berthId], references: [id])
+
+  voyageNumber String? @db.VarChar(50)
+
+  eta DateTime
+  etb DateTime?
+  etd DateTime
+
+  ata DateTime?
+  atb DateTime?
+  atd DateTime?
+
+  status  ScheduleStatus @default(PLANNED)
+  remarks String?
+
+  berthPositionMeters Int?
+  headingReverse      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vesselId])
+  @@index([terminalId])
+  @@index([berthId])
+  @@index([eta])
+  @@index([etd])
+  @@index([status])
+  @@map("vessel_schedules")
 }

@@ -71,3 +71,8 @@ export type Terminal = Prisma.TerminalModel
  * 
  */
 export type Berth = Prisma.BerthModel
+/**
+ * Model VesselSchedule
+ * 
+ */
+export type VesselSchedule = Prisma.VesselScheduleModel

@@ -38,3 +38,15 @@ export const ZeroOriginSide = {
 } as const
 
 export type ZeroOriginSide = (typeof ZeroOriginSide)[keyof typeof ZeroOriginSide]
+
+
+export const ScheduleStatus = {
+  PLANNED: 'PLANNED',
+  CONFIRMED: 'CONFIRMED',
+  ARRIVED: 'ARRIVED',
+  BERTHED: 'BERTHED',
+  DEPARTED: 'DEPARTED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type ScheduleStatus = (typeof ScheduleStatus)[keyof typeof ScheduleStatus]
