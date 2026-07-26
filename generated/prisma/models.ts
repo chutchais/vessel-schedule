@@ -11,5 +11,6 @@
 export type * from './models/HealthCheck'
 export type * from './models/Company'
 export type * from './models/Port'
+export type * from './models/Vessel'
 export type * from './models/Terminal'
 export type * from './commonInputTypes'

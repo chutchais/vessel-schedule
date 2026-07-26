@@ -71,6 +71,36 @@ model Port {
   @@map("ports")
 }
 
+enum VesselType {
+  CONTAINER_SHIP
+  BULK_CARRIER
+  TANKER
+  GENERAL_CARGO
+  RO_RO
+  OTHER
+}
+
+model Vessel {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  code     String     @unique @db.VarChar(20)
+  name     String     @db.VarChar(200)
+  imo      String?    @unique @db.VarChar(10)
+  callSign String?    @db.VarChar(10)
+  flag     String?    @db.VarChar(3)
+  type     VesselType
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([type])
+  @@index([isActive])
+  @@map("vessels")
+}
+
 model Terminal {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 

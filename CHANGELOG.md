@@ -2,6 +2,7 @@
 - Finished Company CRUD
 - Finished Port CRUD
 - Finished Terminal CRUD
+- Finished Vessel CRUD
 
 Next:
-- Vessel module
+- Vessel Schedule module

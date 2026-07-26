@@ -400,6 +400,7 @@ export const ModelName = {
   HealthCheck: 'HealthCheck',
   Company: 'Company',
   Port: 'Port',
+  Vessel: 'Vessel',
   Terminal: 'Terminal'
 } as const
 
@@ -416,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "healthCheck" | "company" | "port" | "terminal"
+    modelProps: "healthCheck" | "company" | "port" | "vessel" | "terminal"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -642,6 +643,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Vessel: {
+      payload: Prisma.$VesselPayload<ExtArgs>
+      fields: Prisma.VesselFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.VesselFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.VesselFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>
+        }
+        findFirst: {
+          args: Prisma.VesselFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.VesselFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>
+        }
+        findMany: {
+          args: Prisma.VesselFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>[]
+        }
+        create: {
+          args: Prisma.VesselCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>
+        }
+        createMany: {
+          args: Prisma.VesselCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.VesselCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>[]
+        }
+        delete: {
+          args: Prisma.VesselDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>
+        }
+        update: {
+          args: Prisma.VesselUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>
+        }
+        deleteMany: {
+          args: Prisma.VesselDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.VesselUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.VesselUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>[]
+        }
+        upsert: {
+          args: Prisma.VesselUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VesselPayload>
+        }
+        aggregate: {
+          args: Prisma.VesselAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateVessel>
+        }
+        groupBy: {
+          args: Prisma.VesselGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VesselGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.VesselCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VesselCountAggregateOutputType> | number
+        }
+      }
+    }
     Terminal: {
       payload: Prisma.$TerminalPayload<ExtArgs>
       fields: Prisma.TerminalFieldRefs
@@ -798,6 +873,22 @@ export const PortScalarFieldEnum = {
 export type PortScalarFieldEnum = (typeof PortScalarFieldEnum)[keyof typeof PortScalarFieldEnum]
 
 
+export const VesselScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  imo: 'imo',
+  callSign: 'callSign',
+  flag: 'flag',
+  type: 'type',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type VesselScalarFieldEnum = (typeof VesselScalarFieldEnum)[keyof typeof VesselScalarFieldEnum]
+
+
 export const TerminalScalarFieldEnum = {
   id: 'id',
   code: 'code',
@@ -901,6 +992,20 @@ export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
  * Reference to a field of type 'Decimal[]'
  */
 export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+/**
+ * Reference to a field of type 'VesselType'
+ */
+export type EnumVesselTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VesselType'>
+    
+
+
+/**
+ * Reference to a field of type 'VesselType[]'
+ */
+export type ListEnumVesselTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VesselType[]'>
     
 
 
@@ -1071,6 +1176,7 @@ export type GlobalOmitConfig = {
   healthCheck?: Prisma.HealthCheckOmit
   company?: Prisma.CompanyOmit
   port?: Prisma.PortOmit
+  vessel?: Prisma.VesselOmit
   terminal?: Prisma.TerminalOmit
 }
 

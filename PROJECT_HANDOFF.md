@@ -123,6 +123,28 @@ Terminal uniqueness:
 
 This allows the same terminal code at different ports but prevents duplicate terminal codes within the same port.
 
+### Vessel
+
+Completed:
+
+* Database model
+* GET and POST API
+* PATCH API
+* Vessel UI
+* Search and status filter
+* Create
+* Edit
+* Active and inactive status
+
+Fields:
+
+* code (unique)
+* name
+* imo (optional, unique — IMO number)
+* callSign (optional)
+* flag (optional — 3-letter country code)
+* type (CONTAINER_SHIP, BULK_CARRIER, TANKER, GENERAL_CARGO, RO_RO, OTHER)
+
 ## Current Branch
 
 ```text
@@ -190,6 +212,13 @@ Then create the next feature branch after deciding the next module.
    ✅ Edit
    ✅ Active/Inactive
 ```
+
+✅ Vessel
+   ✅ Database
+   ✅ API
+   ✅ UI
+   ✅ Edit
+   ✅ Active/Inactive
 
 ## Starting a New Chat
 

@@ -33,6 +33,11 @@ export type Company = Prisma.CompanyModel
  */
 export type Port = Prisma.PortModel
 /**
+ * Model Vessel
+ * 
+ */
+export type Vessel = Prisma.VesselModel
+/**
  * Model Terminal
  * 
  */

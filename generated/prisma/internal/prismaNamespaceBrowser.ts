@@ -54,6 +54,7 @@ export const ModelName = {
   HealthCheck: 'HealthCheck',
   Company: 'Company',
   Port: 'Port',
+  Vessel: 'Vessel',
   Terminal: 'Terminal'
 } as const
 
@@ -114,6 +115,22 @@ export const PortScalarFieldEnum = {
 } as const
 
 export type PortScalarFieldEnum = (typeof PortScalarFieldEnum)[keyof typeof PortScalarFieldEnum]
+
+
+export const VesselScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  imo: 'imo',
+  callSign: 'callSign',
+  flag: 'flag',
+  type: 'type',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type VesselScalarFieldEnum = (typeof VesselScalarFieldEnum)[keyof typeof VesselScalarFieldEnum]
 
 
 export const TerminalScalarFieldEnum = {

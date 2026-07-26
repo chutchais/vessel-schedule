@@ -18,3 +18,15 @@ export const CompanyType = {
 } as const
 
 export type CompanyType = (typeof CompanyType)[keyof typeof CompanyType]
+
+
+export const VesselType = {
+  CONTAINER_SHIP: 'CONTAINER_SHIP',
+  BULK_CARRIER: 'BULK_CARRIER',
+  TANKER: 'TANKER',
+  GENERAL_CARGO: 'GENERAL_CARGO',
+  RO_RO: 'RO_RO',
+  OTHER: 'OTHER'
+} as const
+
+export type VesselType = (typeof VesselType)[keyof typeof VesselType]
