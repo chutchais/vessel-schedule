@@ -229,6 +229,7 @@ export async function POST(request: NextRequest) {
     const berthPositionMeters = parseOptionalInteger(
       body.berthPositionMeters,
     );
+    const service = trimOptionalString(body.service);
     const headingReverse =
       typeof body.headingReverse === "boolean"
         ? body.headingReverse
@@ -476,6 +477,7 @@ export async function POST(request: NextRequest) {
         atd,
         status: status as ScheduleStatus,
         remarks: trimOptionalString(body.remarks),
+        service,
         berthPositionMeters,
         headingReverse,
       },

@@ -194,6 +194,7 @@ export async function PATCH(
     const berthPositionMeters = parseOptionalInteger(
       body.berthPositionMeters,
     );
+    const service = trimOptionalString(body.service);
     const headingReverse =
       typeof body.headingReverse === "boolean"
         ? body.headingReverse
@@ -452,6 +453,7 @@ export async function PATCH(
         atd,
         status: status as ScheduleStatus,
         remarks: trimOptionalString(body.remarks),
+        service,
         berthPositionMeters,
         headingReverse,
       },

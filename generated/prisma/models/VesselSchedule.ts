@@ -40,6 +40,7 @@ export type VesselScheduleMinAggregateOutputType = {
   terminalId: string | null
   berthId: string | null
   voyageNumber: string | null
+  service: string | null
   eta: Date | null
   etb: Date | null
   etd: Date | null
@@ -60,6 +61,7 @@ export type VesselScheduleMaxAggregateOutputType = {
   terminalId: string | null
   berthId: string | null
   voyageNumber: string | null
+  service: string | null
   eta: Date | null
   etb: Date | null
   etd: Date | null
@@ -80,6 +82,7 @@ export type VesselScheduleCountAggregateOutputType = {
   terminalId: number
   berthId: number
   voyageNumber: number
+  service: number
   eta: number
   etb: number
   etd: number
@@ -110,6 +113,7 @@ export type VesselScheduleMinAggregateInputType = {
   terminalId?: true
   berthId?: true
   voyageNumber?: true
+  service?: true
   eta?: true
   etb?: true
   etd?: true
@@ -130,6 +134,7 @@ export type VesselScheduleMaxAggregateInputType = {
   terminalId?: true
   berthId?: true
   voyageNumber?: true
+  service?: true
   eta?: true
   etb?: true
   etd?: true
@@ -150,6 +155,7 @@ export type VesselScheduleCountAggregateInputType = {
   terminalId?: true
   berthId?: true
   voyageNumber?: true
+  service?: true
   eta?: true
   etb?: true
   etd?: true
@@ -257,6 +263,7 @@ export type VesselScheduleGroupByOutputType = {
   terminalId: string
   berthId: string | null
   voyageNumber: string | null
+  service: string | null
   eta: Date
   etb: Date | null
   etd: Date
@@ -300,6 +307,7 @@ export type VesselScheduleWhereInput = {
   terminalId?: Prisma.UuidFilter<"VesselSchedule"> | string
   berthId?: Prisma.UuidNullableFilter<"VesselSchedule"> | string | null
   voyageNumber?: Prisma.StringNullableFilter<"VesselSchedule"> | string | null
+  service?: Prisma.StringNullableFilter<"VesselSchedule"> | string | null
   eta?: Prisma.DateTimeFilter<"VesselSchedule"> | Date | string
   etb?: Prisma.DateTimeNullableFilter<"VesselSchedule"> | Date | string | null
   etd?: Prisma.DateTimeFilter<"VesselSchedule"> | Date | string
@@ -323,6 +331,7 @@ export type VesselScheduleOrderByWithRelationInput = {
   terminalId?: Prisma.SortOrder
   berthId?: Prisma.SortOrderInput | Prisma.SortOrder
   voyageNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  service?: Prisma.SortOrderInput | Prisma.SortOrder
   eta?: Prisma.SortOrder
   etb?: Prisma.SortOrderInput | Prisma.SortOrder
   etd?: Prisma.SortOrder
@@ -349,6 +358,7 @@ export type VesselScheduleWhereUniqueInput = Prisma.AtLeast<{
   terminalId?: Prisma.UuidFilter<"VesselSchedule"> | string
   berthId?: Prisma.UuidNullableFilter<"VesselSchedule"> | string | null
   voyageNumber?: Prisma.StringNullableFilter<"VesselSchedule"> | string | null
+  service?: Prisma.StringNullableFilter<"VesselSchedule"> | string | null
   eta?: Prisma.DateTimeFilter<"VesselSchedule"> | Date | string
   etb?: Prisma.DateTimeNullableFilter<"VesselSchedule"> | Date | string | null
   etd?: Prisma.DateTimeFilter<"VesselSchedule"> | Date | string
@@ -372,6 +382,7 @@ export type VesselScheduleOrderByWithAggregationInput = {
   terminalId?: Prisma.SortOrder
   berthId?: Prisma.SortOrderInput | Prisma.SortOrder
   voyageNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  service?: Prisma.SortOrderInput | Prisma.SortOrder
   eta?: Prisma.SortOrder
   etb?: Prisma.SortOrderInput | Prisma.SortOrder
   etd?: Prisma.SortOrder
@@ -400,6 +411,7 @@ export type VesselScheduleScalarWhereWithAggregatesInput = {
   terminalId?: Prisma.UuidWithAggregatesFilter<"VesselSchedule"> | string
   berthId?: Prisma.UuidNullableWithAggregatesFilter<"VesselSchedule"> | string | null
   voyageNumber?: Prisma.StringNullableWithAggregatesFilter<"VesselSchedule"> | string | null
+  service?: Prisma.StringNullableWithAggregatesFilter<"VesselSchedule"> | string | null
   eta?: Prisma.DateTimeWithAggregatesFilter<"VesselSchedule"> | Date | string
   etb?: Prisma.DateTimeNullableWithAggregatesFilter<"VesselSchedule"> | Date | string | null
   etd?: Prisma.DateTimeWithAggregatesFilter<"VesselSchedule"> | Date | string
@@ -417,6 +429,7 @@ export type VesselScheduleScalarWhereWithAggregatesInput = {
 export type VesselScheduleCreateInput = {
   id?: string
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -440,6 +453,7 @@ export type VesselScheduleUncheckedCreateInput = {
   terminalId: string
   berthId?: string | null
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -457,6 +471,7 @@ export type VesselScheduleUncheckedCreateInput = {
 export type VesselScheduleUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -480,6 +495,7 @@ export type VesselScheduleUncheckedUpdateInput = {
   terminalId?: Prisma.StringFieldUpdateOperationsInput | string
   berthId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -500,6 +516,7 @@ export type VesselScheduleCreateManyInput = {
   terminalId: string
   berthId?: string | null
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -517,6 +534,7 @@ export type VesselScheduleCreateManyInput = {
 export type VesselScheduleUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -537,6 +555,7 @@ export type VesselScheduleUncheckedUpdateManyInput = {
   terminalId?: Prisma.StringFieldUpdateOperationsInput | string
   berthId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -567,6 +586,7 @@ export type VesselScheduleCountOrderByAggregateInput = {
   terminalId?: Prisma.SortOrder
   berthId?: Prisma.SortOrder
   voyageNumber?: Prisma.SortOrder
+  service?: Prisma.SortOrder
   eta?: Prisma.SortOrder
   etb?: Prisma.SortOrder
   etd?: Prisma.SortOrder
@@ -591,6 +611,7 @@ export type VesselScheduleMaxOrderByAggregateInput = {
   terminalId?: Prisma.SortOrder
   berthId?: Prisma.SortOrder
   voyageNumber?: Prisma.SortOrder
+  service?: Prisma.SortOrder
   eta?: Prisma.SortOrder
   etb?: Prisma.SortOrder
   etd?: Prisma.SortOrder
@@ -611,6 +632,7 @@ export type VesselScheduleMinOrderByAggregateInput = {
   terminalId?: Prisma.SortOrder
   berthId?: Prisma.SortOrder
   voyageNumber?: Prisma.SortOrder
+  service?: Prisma.SortOrder
   eta?: Prisma.SortOrder
   etb?: Prisma.SortOrder
   etd?: Prisma.SortOrder
@@ -774,6 +796,7 @@ export type NullableIntFieldUpdateOperationsInput = {
 export type VesselScheduleCreateWithoutVesselInput = {
   id?: string
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -795,6 +818,7 @@ export type VesselScheduleUncheckedCreateWithoutVesselInput = {
   terminalId: string
   berthId?: string | null
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -844,6 +868,7 @@ export type VesselScheduleScalarWhereInput = {
   terminalId?: Prisma.UuidFilter<"VesselSchedule"> | string
   berthId?: Prisma.UuidNullableFilter<"VesselSchedule"> | string | null
   voyageNumber?: Prisma.StringNullableFilter<"VesselSchedule"> | string | null
+  service?: Prisma.StringNullableFilter<"VesselSchedule"> | string | null
   eta?: Prisma.DateTimeFilter<"VesselSchedule"> | Date | string
   etb?: Prisma.DateTimeNullableFilter<"VesselSchedule"> | Date | string | null
   etd?: Prisma.DateTimeFilter<"VesselSchedule"> | Date | string
@@ -861,6 +886,7 @@ export type VesselScheduleScalarWhereInput = {
 export type VesselScheduleCreateWithoutTerminalInput = {
   id?: string
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -882,6 +908,7 @@ export type VesselScheduleUncheckedCreateWithoutTerminalInput = {
   vesselId: string
   berthId?: string | null
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -925,6 +952,7 @@ export type VesselScheduleUpdateManyWithWhereWithoutTerminalInput = {
 export type VesselScheduleCreateWithoutBerthInput = {
   id?: string
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -946,6 +974,7 @@ export type VesselScheduleUncheckedCreateWithoutBerthInput = {
   vesselId: string
   terminalId: string
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -991,6 +1020,7 @@ export type VesselScheduleCreateManyVesselInput = {
   terminalId: string
   berthId?: string | null
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -1008,6 +1038,7 @@ export type VesselScheduleCreateManyVesselInput = {
 export type VesselScheduleUpdateWithoutVesselInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1029,6 +1060,7 @@ export type VesselScheduleUncheckedUpdateWithoutVesselInput = {
   terminalId?: Prisma.StringFieldUpdateOperationsInput | string
   berthId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1048,6 +1080,7 @@ export type VesselScheduleUncheckedUpdateManyWithoutVesselInput = {
   terminalId?: Prisma.StringFieldUpdateOperationsInput | string
   berthId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1067,6 +1100,7 @@ export type VesselScheduleCreateManyTerminalInput = {
   vesselId: string
   berthId?: string | null
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -1084,6 +1118,7 @@ export type VesselScheduleCreateManyTerminalInput = {
 export type VesselScheduleUpdateWithoutTerminalInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1105,6 +1140,7 @@ export type VesselScheduleUncheckedUpdateWithoutTerminalInput = {
   vesselId?: Prisma.StringFieldUpdateOperationsInput | string
   berthId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1124,6 +1160,7 @@ export type VesselScheduleUncheckedUpdateManyWithoutTerminalInput = {
   vesselId?: Prisma.StringFieldUpdateOperationsInput | string
   berthId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1143,6 +1180,7 @@ export type VesselScheduleCreateManyBerthInput = {
   vesselId: string
   terminalId: string
   voyageNumber?: string | null
+  service?: string | null
   eta: Date | string
   etb?: Date | string | null
   etd: Date | string
@@ -1160,6 +1198,7 @@ export type VesselScheduleCreateManyBerthInput = {
 export type VesselScheduleUpdateWithoutBerthInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1181,6 +1220,7 @@ export type VesselScheduleUncheckedUpdateWithoutBerthInput = {
   vesselId?: Prisma.StringFieldUpdateOperationsInput | string
   terminalId?: Prisma.StringFieldUpdateOperationsInput | string
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1200,6 +1240,7 @@ export type VesselScheduleUncheckedUpdateManyWithoutBerthInput = {
   vesselId?: Prisma.StringFieldUpdateOperationsInput | string
   terminalId?: Prisma.StringFieldUpdateOperationsInput | string
   voyageNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eta?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etb?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   etd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1222,6 +1263,7 @@ export type VesselScheduleSelect<ExtArgs extends runtime.Types.Extensions.Intern
   terminalId?: boolean
   berthId?: boolean
   voyageNumber?: boolean
+  service?: boolean
   eta?: boolean
   etb?: boolean
   etd?: boolean
@@ -1245,6 +1287,7 @@ export type VesselScheduleSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   terminalId?: boolean
   berthId?: boolean
   voyageNumber?: boolean
+  service?: boolean
   eta?: boolean
   etb?: boolean
   etd?: boolean
@@ -1268,6 +1311,7 @@ export type VesselScheduleSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   terminalId?: boolean
   berthId?: boolean
   voyageNumber?: boolean
+  service?: boolean
   eta?: boolean
   etb?: boolean
   etd?: boolean
@@ -1291,6 +1335,7 @@ export type VesselScheduleSelectScalar = {
   terminalId?: boolean
   berthId?: boolean
   voyageNumber?: boolean
+  service?: boolean
   eta?: boolean
   etb?: boolean
   etd?: boolean
@@ -1305,7 +1350,7 @@ export type VesselScheduleSelectScalar = {
   updatedAt?: boolean
 }
 
-export type VesselScheduleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "vesselId" | "terminalId" | "berthId" | "voyageNumber" | "eta" | "etb" | "etd" | "ata" | "atb" | "atd" | "status" | "remarks" | "berthPositionMeters" | "headingReverse" | "createdAt" | "updatedAt", ExtArgs["result"]["vesselSchedule"]>
+export type VesselScheduleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "vesselId" | "terminalId" | "berthId" | "voyageNumber" | "service" | "eta" | "etb" | "etd" | "ata" | "atb" | "atd" | "status" | "remarks" | "berthPositionMeters" | "headingReverse" | "createdAt" | "updatedAt", ExtArgs["result"]["vesselSchedule"]>
 export type VesselScheduleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   vessel?: boolean | Prisma.VesselDefaultArgs<ExtArgs>
   terminal?: boolean | Prisma.TerminalDefaultArgs<ExtArgs>
@@ -1335,6 +1380,7 @@ export type $VesselSchedulePayload<ExtArgs extends runtime.Types.Extensions.Inte
     terminalId: string
     berthId: string | null
     voyageNumber: string | null
+    service: string | null
     eta: Date
     etb: Date | null
     etd: Date
@@ -1778,6 +1824,7 @@ export interface VesselScheduleFieldRefs {
   readonly terminalId: Prisma.FieldRef<"VesselSchedule", 'String'>
   readonly berthId: Prisma.FieldRef<"VesselSchedule", 'String'>
   readonly voyageNumber: Prisma.FieldRef<"VesselSchedule", 'String'>
+  readonly service: Prisma.FieldRef<"VesselSchedule", 'String'>
   readonly eta: Prisma.FieldRef<"VesselSchedule", 'DateTime'>
   readonly etb: Prisma.FieldRef<"VesselSchedule", 'DateTime'>
   readonly etd: Prisma.FieldRef<"VesselSchedule", 'DateTime'>

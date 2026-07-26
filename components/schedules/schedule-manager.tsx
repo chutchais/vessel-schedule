@@ -56,6 +56,7 @@ type Schedule = {
   terminalId: string;
   berthId: string | null;
   voyageNumber: string | null;
+  service: string | null;
   eta: string;
   etb: string | null;
   etd: string;
@@ -97,6 +98,7 @@ type Schedule = {
 type ScheduleForm = {
   vesselId: string;
   voyageNumber: string;
+  service: string;
   terminalId: string;
   berthId: string;
   eta: string;
@@ -139,6 +141,7 @@ type BerthsResponse = {
 const initialForm: ScheduleForm = {
   vesselId: "",
   voyageNumber: "",
+  service: "",
   terminalId: "",
   berthId: "",
   eta: "",
@@ -475,6 +478,9 @@ export function ScheduleManager() {
         (schedule.voyageNumber || "")
           .toLowerCase()
           .includes(searchText) ||
+        (schedule.service || "")
+          .toLowerCase()
+          .includes(searchText) ||
         schedule.terminal.code
           .toLowerCase()
           .includes(searchText) ||
@@ -574,6 +580,7 @@ export function ScheduleManager() {
     setForm({
       vesselId: schedule.vesselId,
       voyageNumber: schedule.voyageNumber || "",
+      service: schedule.service || "",
       terminalId: schedule.terminalId,
       berthId: schedule.berthId || "",
       eta: toDateTimeLocalValue(schedule.eta),
@@ -639,6 +646,7 @@ export function ScheduleManager() {
           body: JSON.stringify({
             vesselId: form.vesselId,
             voyageNumber: form.voyageNumber,
+            service: form.service,
             terminalId: form.terminalId,
             berthId: form.berthId,
             eta: etaIso,
@@ -789,6 +797,26 @@ export function ScheduleManager() {
                 )
               }
               maxLength={50}
+              disabled={saving}
+              className="w-full rounded-md border px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="service"
+              className="mb-1 block text-sm font-medium"
+            >
+              Service
+            </label>
+            <input
+              id="service"
+              type="text"
+              value={form.service}
+              onChange={(event) =>
+                updateForm("service", event.target.value)
+              }
+              maxLength={100}
               disabled={saving}
               className="w-full rounded-md border px-3 py-2"
             />
@@ -1122,7 +1150,7 @@ export function ScheduleManager() {
                 onChange={(event) =>
                   setSearch(event.target.value)
                 }
-                placeholder="Vessel, voyage, terminal, berth"
+                placeholder="Vessel, voyage, service, terminal, berth"
                 className="w-full rounded-md border px-3 py-2"
               />
             </div>
@@ -1243,6 +1271,9 @@ export function ScheduleManager() {
                     Voyage
                   </th>
                   <th className="px-4 py-3 font-semibold">
+                    Service
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
                     Port
                   </th>
                   <th className="px-4 py-3 font-semibold">
@@ -1283,6 +1314,9 @@ export function ScheduleManager() {
                     </td>
                     <td className="px-4 py-3">
                       {schedule.voyageNumber || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {schedule.service || "—"}
                     </td>
                     <td className="px-4 py-3">
                       {schedule.terminal.port.code} -{" "}

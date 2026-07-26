@@ -182,6 +182,7 @@ model VesselSchedule {
   berth   Berth?  @relation(fields: [berthId], references: [id])
 
   voyageNumber String? @db.VarChar(50)
+  service      String? @db.VarChar(100)
 
   eta DateTime
   etb DateTime?
