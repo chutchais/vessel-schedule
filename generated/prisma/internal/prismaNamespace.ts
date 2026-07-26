@@ -401,7 +401,8 @@ export const ModelName = {
   Company: 'Company',
   Port: 'Port',
   Vessel: 'Vessel',
-  Terminal: 'Terminal'
+  Terminal: 'Terminal',
+  Berth: 'Berth'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -417,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "healthCheck" | "company" | "port" | "vessel" | "terminal"
+    modelProps: "healthCheck" | "company" | "port" | "vessel" | "terminal" | "berth"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -791,6 +792,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Berth: {
+      payload: Prisma.$BerthPayload<ExtArgs>
+      fields: Prisma.BerthFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BerthFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BerthFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>
+        }
+        findFirst: {
+          args: Prisma.BerthFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BerthFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>
+        }
+        findMany: {
+          args: Prisma.BerthFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>[]
+        }
+        create: {
+          args: Prisma.BerthCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>
+        }
+        createMany: {
+          args: Prisma.BerthCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BerthCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>[]
+        }
+        delete: {
+          args: Prisma.BerthDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>
+        }
+        update: {
+          args: Prisma.BerthUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>
+        }
+        deleteMany: {
+          args: Prisma.BerthDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BerthUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BerthUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>[]
+        }
+        upsert: {
+          args: Prisma.BerthUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPayload>
+        }
+        aggregate: {
+          args: Prisma.BerthAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBerth>
+        }
+        groupBy: {
+          args: Prisma.BerthGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BerthGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BerthCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BerthCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -902,6 +977,23 @@ export const TerminalScalarFieldEnum = {
 export type TerminalScalarFieldEnum = (typeof TerminalScalarFieldEnum)[keyof typeof TerminalScalarFieldEnum]
 
 
+export const BerthScalarFieldEnum = {
+  id: 'id',
+  terminalId: 'terminalId',
+  code: 'code',
+  name: 'name',
+  berthLength: 'berthLength',
+  color: 'color',
+  zeroOriginSide: 'zeroOriginSide',
+  sortOrder: 'sortOrder',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BerthScalarFieldEnum = (typeof BerthScalarFieldEnum)[keyof typeof BerthScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1010,6 +1102,20 @@ export type ListEnumVesselTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 
 
 /**
+ * Reference to a field of type 'ZeroOriginSide'
+ */
+export type EnumZeroOriginSideFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ZeroOriginSide'>
+    
+
+
+/**
+ * Reference to a field of type 'ZeroOriginSide[]'
+ */
+export type ListEnumZeroOriginSideFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ZeroOriginSide[]'>
+    
+
+
+/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -1020,6 +1126,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -1178,6 +1298,7 @@ export type GlobalOmitConfig = {
   port?: Prisma.PortOmit
   vessel?: Prisma.VesselOmit
   terminal?: Prisma.TerminalOmit
+  berth?: Prisma.BerthOmit
 }
 
 /* Types for Logging */

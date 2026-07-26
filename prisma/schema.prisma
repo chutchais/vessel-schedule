@@ -115,8 +115,42 @@ model Terminal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  berths Berth[]
+
   @@unique([portId, code])
   @@index([portId])
   @@index([name])
   @@map("terminals")
+}
+
+enum ZeroOriginSide {
+  LEFT
+  RIGHT
+}
+
+model Berth {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  terminalId String   @db.Uuid
+  terminal   Terminal @relation(fields: [terminalId], references: [id])
+
+  code String @db.VarChar(20)
+  name String @db.VarChar(200)
+
+  berthLength    Decimal        @db.Decimal(8, 2)
+  color          String         @default("#3B82F6") @db.VarChar(7)
+  zeroOriginSide ZeroOriginSide @default(LEFT)
+  sortOrder      Int            @default(0)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([terminalId, code])
+  @@index([terminalId])
+  @@index([name])
+  @@index([sortOrder])
+  @@index([isActive])
+  @@map("berths")
 }

@@ -55,7 +55,8 @@ export const ModelName = {
   Company: 'Company',
   Port: 'Port',
   Vessel: 'Vessel',
-  Terminal: 'Terminal'
+  Terminal: 'Terminal',
+  Berth: 'Berth'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -144,6 +145,23 @@ export const TerminalScalarFieldEnum = {
 } as const
 
 export type TerminalScalarFieldEnum = (typeof TerminalScalarFieldEnum)[keyof typeof TerminalScalarFieldEnum]
+
+
+export const BerthScalarFieldEnum = {
+  id: 'id',
+  terminalId: 'terminalId',
+  code: 'code',
+  name: 'name',
+  berthLength: 'berthLength',
+  color: 'color',
+  zeroOriginSide: 'zeroOriginSide',
+  sortOrder: 'sortOrder',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BerthScalarFieldEnum = (typeof BerthScalarFieldEnum)[keyof typeof BerthScalarFieldEnum]
 
 
 export const SortOrder = {

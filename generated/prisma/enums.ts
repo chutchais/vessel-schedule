@@ -30,3 +30,11 @@ export const VesselType = {
 } as const
 
 export type VesselType = (typeof VesselType)[keyof typeof VesselType]
+
+
+export const ZeroOriginSide = {
+  LEFT: 'LEFT',
+  RIGHT: 'RIGHT'
+} as const
+
+export type ZeroOriginSide = (typeof ZeroOriginSide)[keyof typeof ZeroOriginSide]
