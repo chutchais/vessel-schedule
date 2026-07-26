@@ -64,6 +64,8 @@ model Service {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  schedules VesselSchedule[]
+
   @@index([name])
   @@index([companyId])
   @@index([isActive])
@@ -205,6 +207,9 @@ model VesselSchedule {
   berthId String? @db.Uuid
   berth   Berth?  @relation(fields: [berthId], references: [id])
 
+  serviceId String?  @db.Uuid
+  service   Service? @relation(fields: [serviceId], references: [id])
+
   voyageNumber String? @db.VarChar(50)
 
   eta DateTime
@@ -227,6 +232,7 @@ model VesselSchedule {
   @@index([vesselId])
   @@index([terminalId])
   @@index([berthId])
+  @@index([serviceId])
   @@index([eta])
   @@index([etd])
   @@index([status])

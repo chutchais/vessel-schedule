@@ -50,11 +50,25 @@ type Berth = {
   isActive: boolean;
 };
 
+type Service = {
+  id: string;
+  code: string;
+  name: string;
+  color: string;
+  isActive: boolean;
+  company: {
+    id: string;
+    code: string;
+    name: string;
+  };
+};
+
 type Schedule = {
   id: string;
   vesselId: string;
   terminalId: string;
   berthId: string | null;
+  serviceId: string | null;
   voyageNumber: string | null;
   eta: string;
   etb: string | null;
@@ -92,10 +106,12 @@ type Schedule = {
     color: string;
     zeroOriginSide: "LEFT" | "RIGHT";
   } | null;
+  service: Service | null;
 };
 
 type ScheduleForm = {
   vesselId: string;
+  serviceId: string;
   voyageNumber: string;
   terminalId: string;
   berthId: string;
@@ -136,8 +152,14 @@ type BerthsResponse = {
   error?: string;
 };
 
+type ServicesResponse = {
+  data?: Service[];
+  error?: string;
+};
+
 const initialForm: ScheduleForm = {
   vesselId: "",
+  serviceId: "",
   voyageNumber: "",
   terminalId: "",
   berthId: "",
@@ -259,6 +281,7 @@ export function ScheduleManager() {
   const [vessels, setVessels] = useState<Vessel[]>([]);
   const [terminals, setTerminals] = useState<Terminal[]>([]);
   const [berths, setBerths] = useState<Berth[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
 
   const [form, setForm] = useState<ScheduleForm>(initialForm);
   const [editingId, setEditingId] = useState<string | null>(
@@ -319,6 +342,7 @@ export function ScheduleManager() {
           vesselsResponse,
           terminalsResponse,
           berthsResponse,
+          servicesResponse,
         ] = await Promise.all([
           fetch("/api/schedules", {
             method: "GET",
@@ -336,6 +360,10 @@ export function ScheduleManager() {
             method: "GET",
             cache: "no-store",
           }),
+          fetch("/api/services", {
+            method: "GET",
+            cache: "no-store",
+          }),
         ]);
 
         const schedulesResult =
@@ -346,6 +374,8 @@ export function ScheduleManager() {
           (await terminalsResponse.json()) as TerminalsResponse;
         const berthsResult =
           (await berthsResponse.json()) as BerthsResponse;
+        const servicesResult =
+          (await servicesResponse.json()) as ServicesResponse;
 
         if (!schedulesResponse.ok) {
           throw new Error(
@@ -373,6 +403,13 @@ export function ScheduleManager() {
           );
         }
 
+        if (!servicesResponse.ok) {
+          throw new Error(
+            servicesResult.error ||
+              "Failed to load services",
+          );
+        }
+
         if (!cancelled) {
           setSchedules(
             Array.isArray(schedulesResult.data)
@@ -392,6 +429,11 @@ export function ScheduleManager() {
           setBerths(
             Array.isArray(berthsResult.data)
               ? berthsResult.data
+              : [],
+          );
+          setServices(
+            Array.isArray(servicesResult.data)
+              ? servicesResult.data
               : [],
           );
         }
@@ -454,6 +496,19 @@ export function ScheduleManager() {
     });
   }, [berths, editingId, form.berthId]);
 
+  const availableServices = useMemo(() => {
+    return services.filter((service) => {
+      if (service.isActive) {
+        return true;
+      }
+
+      return (
+        editingId !== null &&
+        form.serviceId === service.id
+      );
+    });
+  }, [services, editingId, form.serviceId]);
+
   const formBerths = useMemo(() => {
     return availableBerths.filter(
       (berth) => berth.terminalId === form.terminalId,
@@ -473,6 +528,18 @@ export function ScheduleManager() {
           .toLowerCase()
           .includes(searchText) ||
         (schedule.voyageNumber || "")
+          .toLowerCase()
+          .includes(searchText) ||
+        (schedule.service?.code || "")
+          .toLowerCase()
+          .includes(searchText) ||
+        (schedule.service?.name || "")
+          .toLowerCase()
+          .includes(searchText) ||
+        (schedule.service?.company.code || "")
+          .toLowerCase()
+          .includes(searchText) ||
+        (schedule.service?.company.name || "")
           .toLowerCase()
           .includes(searchText) ||
         schedule.terminal.code
@@ -573,6 +640,7 @@ export function ScheduleManager() {
     setEditingId(schedule.id);
     setForm({
       vesselId: schedule.vesselId,
+      serviceId: schedule.serviceId || "",
       voyageNumber: schedule.voyageNumber || "",
       terminalId: schedule.terminalId,
       berthId: schedule.berthId || "",
@@ -638,6 +706,7 @@ export function ScheduleManager() {
           },
           body: JSON.stringify({
             vesselId: form.vesselId,
+            serviceId: form.serviceId,
             voyageNumber: form.voyageNumber,
             terminalId: form.terminalId,
             berthId: form.berthId,
@@ -764,6 +833,37 @@ export function ScheduleManager() {
                   {vessel.name}
                   {vessel.imo ? ` (${vessel.imo})` : ""}
                   {!vessel.isActive
+                    ? " (Inactive)"
+                    : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="serviceId"
+              className="mb-1 block text-sm font-medium"
+            >
+              Service
+            </label>
+            <select
+              id="serviceId"
+              value={form.serviceId}
+              onChange={(event) =>
+                updateForm("serviceId", event.target.value)
+              }
+              disabled={saving}
+              className="w-full rounded-md border px-3 py-2"
+            >
+              <option value="">No Service</option>
+              {availableServices.map((service) => (
+                <option
+                  key={service.id}
+                  value={service.id}
+                >
+                  {service.code} - {service.name}
+                  {!service.isActive
                     ? " (Inactive)"
                     : ""}
                 </option>
@@ -1243,6 +1343,9 @@ export function ScheduleManager() {
                     Voyage
                   </th>
                   <th className="px-4 py-3 font-semibold">
+                    Service
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
                     Port
                   </th>
                   <th className="px-4 py-3 font-semibold">
@@ -1283,6 +1386,11 @@ export function ScheduleManager() {
                     </td>
                     <td className="px-4 py-3">
                       {schedule.voyageNumber || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {schedule.service
+                        ? `${schedule.service.code} - ${schedule.service.name}`
+                        : "—"}
                     </td>
                     <td className="px-4 py-3">
                       {schedule.terminal.port.code} -{" "}

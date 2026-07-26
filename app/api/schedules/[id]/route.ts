@@ -137,6 +137,7 @@ export async function PATCH(
           vesselId: true,
           terminalId: true,
           berthId: true,
+          serviceId: true,
         },
       });
 
@@ -181,6 +182,7 @@ export async function PATCH(
     const vesselId = body.vesselId.trim();
     const terminalId = body.terminalId.trim();
     const berthId = trimOptionalId(body.berthId);
+    const serviceId = trimOptionalId(body.serviceId);
     const eta = parseOptionalDate(body.eta);
     const etb = parseOptionalDate(body.etb);
     const etd = parseOptionalDate(body.etd);
@@ -376,6 +378,36 @@ export async function PATCH(
       );
     }
 
+    if (serviceId) {
+      const service = await prisma.service.findUnique({
+        where: { id: serviceId },
+        select: {
+          id: true,
+          isActive: true,
+        },
+      });
+
+      if (!service) {
+        return NextResponse.json(
+          { error: "Service not found" },
+          { status: 404 },
+        );
+      }
+
+      if (
+        !service.isActive &&
+        service.id !== existingSchedule.serviceId
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Only active services can be selected",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     if (berthId) {
       const berth = await prisma.berth.findUnique({
         where: { id: berthId },
@@ -441,6 +473,7 @@ export async function PATCH(
         vesselId,
         terminalId,
         berthId,
+        serviceId,
         voyageNumber: trimOptionalString(
           body.voyageNumber,
         ),
@@ -486,6 +519,22 @@ export async function PATCH(
             name: true,
             color: true,
             zeroOriginSide: true,
+          },
+        },
+        service: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            color: true,
+            isActive: true,
+            company: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+              },
+            },
           },
         },
       },

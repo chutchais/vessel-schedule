@@ -1164,6 +1164,7 @@ export const VesselScheduleScalarFieldEnum = {
   vesselId: 'vesselId',
   terminalId: 'terminalId',
   berthId: 'berthId',
+  serviceId: 'serviceId',
   voyageNumber: 'voyageNumber',
   eta: 'eta',
   etb: 'etb',
