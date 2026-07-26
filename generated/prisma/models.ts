@@ -9,4 +9,5 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/HealthCheck'
+export type * from './models/Company'
 export type * from './commonInputTypes'

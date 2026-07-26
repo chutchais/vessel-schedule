@@ -46,3 +46,8 @@ export { Prisma }
  * 
  */
 export type HealthCheck = Prisma.HealthCheckModel
+/**
+ * Model Company
+ * 
+ */
+export type Company = Prisma.CompanyModel

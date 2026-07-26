@@ -18,3 +18,30 @@ model HealthCheck {
   createdAt DateTime @default(now())
 }
 
+enum CompanyType {
+  SHIPPING_LINE
+  SHIPPING_AGENT
+  TERMINAL_OPERATOR
+  PORT_AUTHORITY
+  OTHER
+}
+
+model Company {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String      @unique @db.VarChar(20)
+  name      String      @db.VarChar(200)
+  shortName String?     @db.VarChar(100)
+  type      CompanyType
+  email     String?     @db.VarChar(255)
+  phone     String?     @db.VarChar(50)
+  address   String?
+  isActive  Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([type])
+  @@index([isActive])
+  @@map("companies")
+}

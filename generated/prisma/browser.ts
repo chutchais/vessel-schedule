@@ -22,3 +22,8 @@ export * from './enums';
  * 
  */
 export type HealthCheck = Prisma.HealthCheckModel
+/**
+ * Model Company
+ * 
+ */
+export type Company = Prisma.CompanyModel
