@@ -20,8 +20,20 @@ export type VesselModel = runtime.Types.Result.DefaultSelection<Prisma.$VesselPa
 
 export type AggregateVessel = {
   _count: VesselCountAggregateOutputType | null
+  _avg: VesselAvgAggregateOutputType | null
+  _sum: VesselSumAggregateOutputType | null
   _min: VesselMinAggregateOutputType | null
   _max: VesselMaxAggregateOutputType | null
+}
+
+export type VesselAvgAggregateOutputType = {
+  lengthOverall: runtime.Decimal | null
+  beam: runtime.Decimal | null
+}
+
+export type VesselSumAggregateOutputType = {
+  lengthOverall: runtime.Decimal | null
+  beam: runtime.Decimal | null
 }
 
 export type VesselMinAggregateOutputType = {
@@ -32,6 +44,8 @@ export type VesselMinAggregateOutputType = {
   callSign: string | null
   flag: string | null
   type: $Enums.VesselType | null
+  lengthOverall: runtime.Decimal | null
+  beam: runtime.Decimal | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -45,6 +59,8 @@ export type VesselMaxAggregateOutputType = {
   callSign: string | null
   flag: string | null
   type: $Enums.VesselType | null
+  lengthOverall: runtime.Decimal | null
+  beam: runtime.Decimal | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -58,12 +74,24 @@ export type VesselCountAggregateOutputType = {
   callSign: number
   flag: number
   type: number
+  lengthOverall: number
+  beam: number
   isActive: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
+
+export type VesselAvgAggregateInputType = {
+  lengthOverall?: true
+  beam?: true
+}
+
+export type VesselSumAggregateInputType = {
+  lengthOverall?: true
+  beam?: true
+}
 
 export type VesselMinAggregateInputType = {
   id?: true
@@ -73,6 +101,8 @@ export type VesselMinAggregateInputType = {
   callSign?: true
   flag?: true
   type?: true
+  lengthOverall?: true
+  beam?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -86,6 +116,8 @@ export type VesselMaxAggregateInputType = {
   callSign?: true
   flag?: true
   type?: true
+  lengthOverall?: true
+  beam?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -99,6 +131,8 @@ export type VesselCountAggregateInputType = {
   callSign?: true
   flag?: true
   type?: true
+  lengthOverall?: true
+  beam?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -143,6 +177,18 @@ export type VesselAggregateArgs<ExtArgs extends runtime.Types.Extensions.Interna
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: VesselAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: VesselSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: VesselMinAggregateInputType
@@ -173,6 +219,8 @@ export type VesselGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   _count?: VesselCountAggregateInputType | true
+  _avg?: VesselAvgAggregateInputType
+  _sum?: VesselSumAggregateInputType
   _min?: VesselMinAggregateInputType
   _max?: VesselMaxAggregateInputType
 }
@@ -185,10 +233,14 @@ export type VesselGroupByOutputType = {
   callSign: string | null
   flag: string | null
   type: $Enums.VesselType
+  lengthOverall: runtime.Decimal | null
+  beam: runtime.Decimal | null
   isActive: boolean
   createdAt: Date
   updatedAt: Date
   _count: VesselCountAggregateOutputType | null
+  _avg: VesselAvgAggregateOutputType | null
+  _sum: VesselSumAggregateOutputType | null
   _min: VesselMinAggregateOutputType | null
   _max: VesselMaxAggregateOutputType | null
 }
@@ -219,6 +271,8 @@ export type VesselWhereInput = {
   callSign?: Prisma.StringNullableFilter<"Vessel"> | string | null
   flag?: Prisma.StringNullableFilter<"Vessel"> | string | null
   type?: Prisma.EnumVesselTypeFilter<"Vessel"> | $Enums.VesselType
+  lengthOverall?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFilter<"Vessel"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
@@ -233,6 +287,8 @@ export type VesselOrderByWithRelationInput = {
   callSign?: Prisma.SortOrderInput | Prisma.SortOrder
   flag?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  lengthOverall?: Prisma.SortOrderInput | Prisma.SortOrder
+  beam?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -250,6 +306,8 @@ export type VesselWhereUniqueInput = Prisma.AtLeast<{
   callSign?: Prisma.StringNullableFilter<"Vessel"> | string | null
   flag?: Prisma.StringNullableFilter<"Vessel"> | string | null
   type?: Prisma.EnumVesselTypeFilter<"Vessel"> | $Enums.VesselType
+  lengthOverall?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFilter<"Vessel"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
@@ -264,12 +322,16 @@ export type VesselOrderByWithAggregationInput = {
   callSign?: Prisma.SortOrderInput | Prisma.SortOrder
   flag?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  lengthOverall?: Prisma.SortOrderInput | Prisma.SortOrder
+  beam?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.VesselCountOrderByAggregateInput
+  _avg?: Prisma.VesselAvgOrderByAggregateInput
   _max?: Prisma.VesselMaxOrderByAggregateInput
   _min?: Prisma.VesselMinOrderByAggregateInput
+  _sum?: Prisma.VesselSumOrderByAggregateInput
 }
 
 export type VesselScalarWhereWithAggregatesInput = {
@@ -283,6 +345,8 @@ export type VesselScalarWhereWithAggregatesInput = {
   callSign?: Prisma.StringNullableWithAggregatesFilter<"Vessel"> | string | null
   flag?: Prisma.StringNullableWithAggregatesFilter<"Vessel"> | string | null
   type?: Prisma.EnumVesselTypeWithAggregatesFilter<"Vessel"> | $Enums.VesselType
+  lengthOverall?: Prisma.DecimalNullableWithAggregatesFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.DecimalNullableWithAggregatesFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"Vessel"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Vessel"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Vessel"> | Date | string
@@ -296,6 +360,8 @@ export type VesselCreateInput = {
   callSign?: string | null
   flag?: string | null
   type: $Enums.VesselType
+  lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -310,6 +376,8 @@ export type VesselUncheckedCreateInput = {
   callSign?: string | null
   flag?: string | null
   type: $Enums.VesselType
+  lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -324,6 +392,8 @@ export type VesselUpdateInput = {
   callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -338,6 +408,8 @@ export type VesselUncheckedUpdateInput = {
   callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -352,6 +424,8 @@ export type VesselCreateManyInput = {
   callSign?: string | null
   flag?: string | null
   type: $Enums.VesselType
+  lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -365,6 +439,8 @@ export type VesselUpdateManyMutationInput = {
   callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -378,6 +454,8 @@ export type VesselUncheckedUpdateManyInput = {
   callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -391,9 +469,16 @@ export type VesselCountOrderByAggregateInput = {
   callSign?: Prisma.SortOrder
   flag?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  lengthOverall?: Prisma.SortOrder
+  beam?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type VesselAvgOrderByAggregateInput = {
+  lengthOverall?: Prisma.SortOrder
+  beam?: Prisma.SortOrder
 }
 
 export type VesselMaxOrderByAggregateInput = {
@@ -404,6 +489,8 @@ export type VesselMaxOrderByAggregateInput = {
   callSign?: Prisma.SortOrder
   flag?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  lengthOverall?: Prisma.SortOrder
+  beam?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -417,9 +504,16 @@ export type VesselMinOrderByAggregateInput = {
   callSign?: Prisma.SortOrder
   flag?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  lengthOverall?: Prisma.SortOrder
+  beam?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type VesselSumOrderByAggregateInput = {
+  lengthOverall?: Prisma.SortOrder
+  beam?: Prisma.SortOrder
 }
 
 export type VesselScalarRelationFilter = {
@@ -453,6 +547,8 @@ export type VesselCreateWithoutSchedulesInput = {
   callSign?: string | null
   flag?: string | null
   type: $Enums.VesselType
+  lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -466,6 +562,8 @@ export type VesselUncheckedCreateWithoutSchedulesInput = {
   callSign?: string | null
   flag?: string | null
   type: $Enums.VesselType
+  lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -495,6 +593,8 @@ export type VesselUpdateWithoutSchedulesInput = {
   callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -508,6 +608,8 @@ export type VesselUncheckedUpdateWithoutSchedulesInput = {
   callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -552,6 +654,8 @@ export type VesselSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   callSign?: boolean
   flag?: boolean
   type?: boolean
+  lengthOverall?: boolean
+  beam?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -567,6 +671,8 @@ export type VesselSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   callSign?: boolean
   flag?: boolean
   type?: boolean
+  lengthOverall?: boolean
+  beam?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -580,6 +686,8 @@ export type VesselSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   callSign?: boolean
   flag?: boolean
   type?: boolean
+  lengthOverall?: boolean
+  beam?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -593,12 +701,14 @@ export type VesselSelectScalar = {
   callSign?: boolean
   flag?: boolean
   type?: boolean
+  lengthOverall?: boolean
+  beam?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type VesselOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "imo" | "callSign" | "flag" | "type" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["vessel"]>
+export type VesselOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "imo" | "callSign" | "flag" | "type" | "lengthOverall" | "beam" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["vessel"]>
 export type VesselInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   schedules?: boolean | Prisma.Vessel$schedulesArgs<ExtArgs>
   _count?: boolean | Prisma.VesselCountOutputTypeDefaultArgs<ExtArgs>
@@ -619,6 +729,8 @@ export type $VesselPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     callSign: string | null
     flag: string | null
     type: $Enums.VesselType
+    lengthOverall: runtime.Decimal | null
+    beam: runtime.Decimal | null
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -1053,6 +1165,8 @@ export interface VesselFieldRefs {
   readonly callSign: Prisma.FieldRef<"Vessel", 'String'>
   readonly flag: Prisma.FieldRef<"Vessel", 'String'>
   readonly type: Prisma.FieldRef<"Vessel", 'VesselType'>
+  readonly lengthOverall: Prisma.FieldRef<"Vessel", 'Decimal'>
+  readonly beam: Prisma.FieldRef<"Vessel", 'Decimal'>
   readonly isActive: Prisma.FieldRef<"Vessel", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Vessel", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Vessel", 'DateTime'>

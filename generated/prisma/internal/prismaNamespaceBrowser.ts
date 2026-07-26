@@ -143,6 +143,8 @@ export const VesselScalarFieldEnum = {
   callSign: 'callSign',
   flag: 'flag',
   type: 'type',
+  lengthOverall: 'lengthOverall',
+  beam: 'beam',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

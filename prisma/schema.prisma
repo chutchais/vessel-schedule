@@ -116,6 +116,9 @@ model Vessel {
   flag     String?    @db.VarChar(3)
   type     VesselType
 
+  lengthOverall Decimal? @db.Decimal(8, 2)
+  beam          Decimal? @db.Decimal(8, 2)
+
   isActive Boolean @default(true)
 
   createdAt DateTime @default(now())

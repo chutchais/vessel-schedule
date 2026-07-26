@@ -21,6 +21,8 @@ type Vessel = {
   callSign: string | null;
   flag: string | null;
   type: VesselType;
+  lengthOverall: string | null;
+  beam: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -33,6 +35,8 @@ type VesselForm = {
   callSign: string;
   flag: string;
   type: VesselType;
+  lengthOverall: string;
+  beam: string;
   isActive: boolean;
 };
 
@@ -48,6 +52,8 @@ const emptyForm: VesselForm = {
   callSign: "",
   flag: "",
   type: "CONTAINER_SHIP",
+  lengthOverall: "",
+  beam: "",
   isActive: true,
 };
 
@@ -217,6 +223,8 @@ export function VesselManager() {
       callSign: vessel.callSign ?? "",
       flag: vessel.flag ?? "",
       type: vessel.type,
+      lengthOverall: vessel.lengthOverall ?? "",
+      beam: vessel.beam ?? "",
       isActive: vessel.isActive,
     });
     setError("");
@@ -389,6 +397,9 @@ export function VesselManager() {
                   Flag
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  LOA / Beam (m)
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
@@ -401,7 +412,7 @@ export function VesselManager() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-10 text-center text-sm text-gray-500"
                   >
                     Loading vessels...
@@ -410,7 +421,7 @@ export function VesselManager() {
               ) : filteredVessels.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-10 text-center text-sm text-gray-500"
                   >
                     No vessels found.
@@ -442,6 +453,13 @@ export function VesselManager() {
 
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
                       {vessel.flag || "—"}
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                      <div>{vessel.lengthOverall ? `${vessel.lengthOverall}` : "—"}</div>
+                      {vessel.beam ? (
+                        <div className="text-xs text-gray-500">{vessel.beam}</div>
+                      ) : null}
                     </td>
 
                     <td className="whitespace-nowrap px-4 py-3">
@@ -619,6 +637,44 @@ export function VesselManager() {
                     }
                     placeholder="PAN"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-none focus:border-gray-500"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="vessel-loa"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
+                    Length Overall (m)
+                  </label>
+                  <input
+                    id="vessel-loa"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.lengthOverall}
+                    onChange={(e) => updateForm("lengthOverall", e.target.value)}
+                    placeholder="399.99"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="vessel-beam"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
+                    Beam (m)
+                  </label>
+                  <input
+                    id="vessel-beam"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.beam}
+                    onChange={(e) => updateForm("beam", e.target.value)}
+                    placeholder="58.80"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
                   />
                 </div>
 

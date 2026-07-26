@@ -97,6 +97,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           typeof body.flag === "string" && body.flag.trim()
             ? body.flag.trim().toUpperCase()
             : null,
+        lengthOverall:
+          body.lengthOverall !== undefined && body.lengthOverall !== ""
+            ? (Number(body.lengthOverall) >= 0 ? Number(body.lengthOverall) : null)
+            : null,
+        beam:
+          body.beam !== undefined && body.beam !== ""
+            ? (Number(body.beam) >= 0 ? Number(body.beam) : null)
+            : null,
         isActive:
           typeof body.isActive === "boolean"
             ? body.isActive

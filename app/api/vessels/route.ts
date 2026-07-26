@@ -18,6 +18,12 @@ function optionalString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function optionalDecimal(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const num = Number(value);
+  return isNaN(num) || num < 0 ? null : num;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const search = request.nextUrl.searchParams.get("search")?.trim();
@@ -124,6 +130,8 @@ export async function POST(request: NextRequest) {
         imo,
         callSign: optionalString(body.callSign),
         flag: optionalString(body.flag)?.toUpperCase() ?? null,
+        lengthOverall: optionalDecimal(body.lengthOverall),
+        beam: optionalDecimal(body.beam),
         isActive:
           typeof body.isActive === "boolean" ? body.isActive : true,
       },
