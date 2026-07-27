@@ -531,10 +531,6 @@ export type CompanyUncheckedUpdateManyWithoutOrganizationNestedInput = {
   deleteMany?: Prisma.CompanyScalarWhereInput | Prisma.CompanyScalarWhereInput[]
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type EnumCompanyTypeFieldUpdateOperationsInput = {
   set?: $Enums.CompanyType
 }

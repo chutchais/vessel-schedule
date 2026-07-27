@@ -18,7 +18,14 @@ model HealthCheck {
   createdAt DateTime @default(now())
 }
 
-// ─── Platform-level enums ────────────────────────────────────────────────────
+enum OrganizationRequestStatus {
+  PENDING
+  APPROVING
+  APPROVED
+  REJECTED
+  APPROVAL_FAILED
+  CANCELLED
+}
 
 enum PlatformRole {
   USER
@@ -41,7 +48,8 @@ model Organization {
   slug     String  @unique @db.VarChar(100)
   isActive Boolean @default(true)
 
-  members OrganizationMember[]
+  members                 OrganizationMember[]
+  requestsForOrganization OrganizationRequest[] @relation("OrganizationForRequest")
 
   companies       Company[]
   ports           Port[]
@@ -68,7 +76,8 @@ model User {
   platformRole PlatformRole @default(USER)
   isActive     Boolean      @default(true)
 
-  memberships OrganizationMember[]
+  memberships    OrganizationMember[]
+  approvalsGiven OrganizationRequest[] @relation("ApprovedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -96,6 +105,47 @@ model OrganizationMember {
   @@index([organizationId, role])
   @@index([organizationId, isActive])
   @@map("organization_members")
+}
+
+// ─── Organization Request Model ───────────────────────────────────────────────
+
+model OrganizationRequest {
+  id String @id @default(cuid()) @db.VarChar(30)
+
+  organizationName String  @db.VarChar(200)
+  slug             String? @db.VarChar(100)
+
+  requesterName  String  @db.VarChar(200)
+  requesterEmail String  @db.VarChar(255)
+  phone          String? @db.VarChar(50)
+  message        String? @db.Text
+
+  status OrganizationRequestStatus @default(PENDING)
+
+  organizationId String?       @db.Uuid
+  organization   Organization? @relation("OrganizationForRequest", fields: [organizationId], references: [id], onDelete: SetNull)
+
+  authUserId String? @db.Uuid
+
+  reviewedById String? @db.Uuid
+  reviewedBy   User?   @relation("ApprovedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  reviewedAt        DateTime?
+  approvalStartedAt DateTime?
+  invitationSentAt  DateTime?
+
+  reviewNotes   String? @db.Text
+  failureReason String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([requesterEmail])
+  @@index([organizationId])
+  @@index([reviewedById])
+  @@index([createdAt])
+  @@map("organization_requests")
 }
 
 // ─── Operational models ───────────────────────────────────────────────────────

@@ -887,10 +887,6 @@ export type VesselScheduleUncheckedUpdateManyWithoutBerthNestedInput = {
   deleteMany?: Prisma.VesselScheduleScalarWhereInput | Prisma.VesselScheduleScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type EnumScheduleStatusFieldUpdateOperationsInput = {
   set?: $Enums.ScheduleStatus
 }

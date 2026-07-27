@@ -39,6 +39,7 @@ type UserContext = {
   id: string;
   displayName: string;
   email: string;
+  platformRole: "USER" | "SUPER_ADMIN";
   activeOrganization: { id: string; name: string; slug: string };
   membership: { role: string };
   availableOrganizations: Array<{ id: string; name: string; slug: string; role: string }>;
@@ -201,6 +202,28 @@ export function SidebarNavigation({ className = "", onNavigate }: SidebarNavigat
             </ul>
           </section>
         ))}
+
+        {userContext?.platformRole === "SUPER_ADMIN" && (
+          <section>
+            <p className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Platform Administration</p>
+            <ul className="mt-2 space-y-1">
+              <li>
+                <Link
+                  href="/admin/organization-requests"
+                  onClick={onNavigate}
+                  className={[
+                    "block rounded-md px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                    isActivePath(pathname, "/admin/organization-requests")
+                      ? "bg-blue-50 font-medium text-blue-700"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                  ].join(" ")}
+                >
+                  Organization Requests
+                </Link>
+              </li>
+            </ul>
+          </section>
+        )}
       </div>
 
       <div className="border-t border-slate-200 p-4">

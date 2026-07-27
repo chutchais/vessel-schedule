@@ -9,6 +9,18 @@
 * 🟢 You can import this file directly.
 */
 
+export const OrganizationRequestStatus = {
+  PENDING: 'PENDING',
+  APPROVING: 'APPROVING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  APPROVAL_FAILED: 'APPROVAL_FAILED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type OrganizationRequestStatus = (typeof OrganizationRequestStatus)[keyof typeof OrganizationRequestStatus]
+
+
 export const PlatformRole = {
   USER: 'USER',
   SUPER_ADMIN: 'SUPER_ADMIN'

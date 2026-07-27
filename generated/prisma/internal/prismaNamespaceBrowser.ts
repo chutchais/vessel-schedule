@@ -55,6 +55,7 @@ export const ModelName = {
   Organization: 'Organization',
   User: 'User',
   OrganizationMember: 'OrganizationMember',
+  OrganizationRequest: 'OrganizationRequest',
   Company: 'Company',
   Service: 'Service',
   Port: 'Port',
@@ -124,6 +125,30 @@ export const OrganizationMemberScalarFieldEnum = {
 } as const
 
 export type OrganizationMemberScalarFieldEnum = (typeof OrganizationMemberScalarFieldEnum)[keyof typeof OrganizationMemberScalarFieldEnum]
+
+
+export const OrganizationRequestScalarFieldEnum = {
+  id: 'id',
+  organizationName: 'organizationName',
+  slug: 'slug',
+  requesterName: 'requesterName',
+  requesterEmail: 'requesterEmail',
+  phone: 'phone',
+  message: 'message',
+  status: 'status',
+  organizationId: 'organizationId',
+  authUserId: 'authUserId',
+  reviewedById: 'reviewedById',
+  reviewedAt: 'reviewedAt',
+  approvalStartedAt: 'approvalStartedAt',
+  invitationSentAt: 'invitationSentAt',
+  reviewNotes: 'reviewNotes',
+  failureReason: 'failureReason',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrganizationRequestScalarFieldEnum = (typeof OrganizationRequestScalarFieldEnum)[keyof typeof OrganizationRequestScalarFieldEnum]
 
 
 export const CompanyScalarFieldEnum = {
