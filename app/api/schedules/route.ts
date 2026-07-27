@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageSchedules } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 const SCHEDULE_STATUSES = [
@@ -356,53 +357,73 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const schedule = await prisma.vesselSchedule.create({
-      data: {
-        organizationId,
-        vesselId,
-        terminalId,
-        berthId,
-        serviceId,
-        voyageNumber: trimOptionalString(body.voyageNumber),
-        eta,
-        etb,
-        etd,
-        ata,
-        atb,
-        atd,
-        status: status as ScheduleStatus,
-        remarks: trimOptionalString(body.remarks),
-        berthPositionMeters,
-        headingReverse,
-      },
-      include: {
-        vessel: {
-          select: { id: true, imo: true, name: true, callSign: true },
+    const schedule = await prisma.$transaction(async (tx) => {
+      const created = await tx.vesselSchedule.create({
+        data: {
+          organizationId,
+          vesselId,
+          terminalId,
+          berthId,
+          serviceId,
+          voyageNumber: trimOptionalString(body.voyageNumber),
+          eta,
+          etb,
+          etd,
+          ata,
+          atb,
+          atd,
+          status: status as ScheduleStatus,
+          remarks: trimOptionalString(body.remarks),
+          berthPositionMeters,
+          headingReverse,
         },
-        terminal: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            port: {
-              select: { id: true, code: true, name: true, timezone: true },
+        include: {
+          vessel: {
+            select: { id: true, imo: true, name: true, callSign: true },
+          },
+          terminal: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              port: {
+                select: { id: true, code: true, name: true, timezone: true },
+              },
+            },
+          },
+          berth: {
+            select: { id: true, code: true, name: true, color: true, zeroOriginSide: true },
+          },
+          service: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              color: true,
+              isActive: true,
+              operatorCompany: { select: { id: true, code: true, name: true } },
             },
           },
         },
-        berth: {
-          select: { id: true, code: true, name: true, color: true, zeroOriginSide: true },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
         },
-        service: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            color: true,
-            isActive: true,
-            operatorCompany: { select: { id: true, code: true, name: true } },
-          },
-        },
-      },
+        action: "CREATE",
+        entityType: "VesselSchedule",
+        entityId: created.id,
+        entityName: created.voyageNumber,
+        beforeData: null,
+        afterData: created,
+      });
+
+      return created;
     });
 
     return NextResponse.json({ data: serializeSchedule(schedule) }, { status: 201 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 const VESSEL_TYPES = [
@@ -127,19 +128,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const vessel = await prisma.vessel.create({
-      data: {
+    const vessel = await prisma.$transaction(async (tx) => {
+      const created = await tx.vessel.create({
+        data: {
+          organizationId,
+          code,
+          name,
+          type: type as VesselType,
+          imo,
+          callSign: optionalString(body.callSign),
+          flag: optionalString(body.flag)?.toUpperCase() ?? null,
+          lengthOverall: optionalDecimal(body.lengthOverall),
+          beam: optionalDecimal(body.beam),
+          isActive: typeof body.isActive === "boolean" ? body.isActive : true,
+        },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
         organizationId,
-        code,
-        name,
-        type: type as VesselType,
-        imo,
-        callSign: optionalString(body.callSign),
-        flag: optionalString(body.flag)?.toUpperCase() ?? null,
-        lengthOverall: optionalDecimal(body.lengthOverall),
-        beam: optionalDecimal(body.beam),
-        isActive: typeof body.isActive === "boolean" ? body.isActive : true,
-      },
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "CREATE",
+        entityType: "Vessel",
+        entityId: created.id,
+        entityName: created.name,
+        beforeData: null,
+        afterData: created,
+      });
+
+      return created;
     });
 
     return NextResponse.json({ data: serializeVessel(vessel) }, { status: 201 });

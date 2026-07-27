@@ -3,6 +3,7 @@ import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { canChangeRole, canDeactivateMember } from "@/lib/auth/invitations";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 
 type RouteContext = { params: Promise<{ userId: string }> };
 
@@ -98,16 +99,66 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
-    const updated = await prisma.organizationMember.update({
-      where: { organizationId_userId: { organizationId: activeOrganization.id, userId } },
-      data: updateData,
-      select: {
-        userId: true,
-        role: true,
-        isActive: true,
-        joinedAt: true,
-        user: { select: { displayName: true, email: true } },
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const beforeMember = await tx.organizationMember.findUnique({
+        where: { organizationId_userId: { organizationId: activeOrganization.id, userId } },
+        select: {
+          organizationId: true,
+          userId: true,
+          role: true,
+          isActive: true,
+          joinedAt: true,
+          user: { select: { displayName: true, email: true } },
+        },
+      });
+
+      if (!beforeMember) {
+        throw new Error("Member not found during update");
+      }
+
+      const updatedMember = await tx.organizationMember.update({
+        where: { organizationId_userId: { organizationId: activeOrganization.id, userId } },
+        data: updateData,
+        select: {
+          organizationId: true,
+          userId: true,
+          role: true,
+          isActive: true,
+          joinedAt: true,
+          user: { select: { displayName: true, email: true } },
+        },
+      });
+
+      const action =
+        beforeMember.isActive !== updatedMember.isActive
+          ? updatedMember.isActive
+            ? "ACTIVATE_MEMBER"
+            : "DEACTIVATE_MEMBER"
+          : "CHANGE_ROLE";
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId: activeOrganization.id,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action,
+        entityType: "OrganizationMember",
+        entityId: updatedMember.userId,
+        entityName: updatedMember.user.displayName,
+        beforeData: beforeMember,
+        afterData: updatedMember,
+        metadata: {
+          fromRole: beforeMember.role,
+          toRole: updatedMember.role,
+          fromIsActive: beforeMember.isActive,
+          toIsActive: updatedMember.isActive,
+        },
+      });
+
+      return updatedMember;
     });
 
     return NextResponse.json({ data: updated });

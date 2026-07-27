@@ -54,6 +54,29 @@ enum InvitationDeliveryStatus {
   FAILED
 }
 
+enum AuditScope {
+  ORGANIZATION
+  PLATFORM
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  ACTIVATE
+  DEACTIVATE
+  INVITE
+  RESEND_INVITATION
+  REVOKE_INVITATION
+  ACCEPT_INVITATION
+  DECLINE_INVITATION
+  CHANGE_ROLE
+  ACTIVATE_MEMBER
+  DEACTIVATE_MEMBER
+  TRANSFER_OWNERSHIP
+  APPROVE_REQUEST
+  REJECT_REQUEST
+}
+
 // ─── Multi-tenant foundation ──────────────────────────────────────────────────
 
 model Organization {
@@ -74,6 +97,7 @@ model Organization {
   vessels         Vessel[]
   services        Service[]
   vesselSchedules VesselSchedule[]
+  auditLogs       AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -97,6 +121,7 @@ model User {
 
   sentOrganizationInvitations     OrganizationInvitation[] @relation("OrganizationInvitationInviter")
   acceptedOrganizationInvitations OrganizationInvitation[] @relation("OrganizationInvitationAcceptor")
+  auditLogs                       AuditLog[]               @relation("AuditLogActor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -468,4 +493,40 @@ model VesselSchedule {
   @@index([etd])
   @@index([status])
   @@map("vessel_schedules")
+}
+
+model AuditLog {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  scope AuditScope
+
+  organizationId String?       @db.Uuid
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  actorUserId String? @db.Uuid
+  actorUser   User?   @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  actorEmail       String? @db.VarChar(255)
+  actorDisplayName String? @db.VarChar(200)
+
+  action     AuditAction
+  entityType String      @db.VarChar(100)
+  entityId   String      @db.VarChar(100)
+  entityName String?     @db.VarChar(250)
+
+  beforeData Json?
+  afterData  Json?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([scope])
+  @@index([organizationId])
+  @@index([organizationId, createdAt])
+  @@index([actorUserId])
+  @@index([action])
+  @@index([entityType])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

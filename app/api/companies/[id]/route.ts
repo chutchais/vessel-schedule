@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 type RouteContext = {
@@ -62,19 +63,54 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Company code already exists" }, { status: 409 });
     }
 
-    const company = await prisma.company.update({
-      where: { id },
-      data: {
-        code,
-        name,
-        shortName:
-          typeof body.shortName === "string" && body.shortName.trim() ? body.shortName.trim() : null,
-        type: typeof body.type === "string" ? body.type : existingCompany.type,
-        email: typeof body.email === "string" && body.email.trim() ? body.email.trim() : null,
-        phone: typeof body.phone === "string" && body.phone.trim() ? body.phone.trim() : null,
-        address: typeof body.address === "string" && body.address.trim() ? body.address.trim() : null,
-        isActive: typeof body.isActive === "boolean" ? body.isActive : existingCompany.isActive,
-      },
+    const company = await prisma.$transaction(async (tx) => {
+      const beforeCompany = await tx.company.findFirst({
+        where: { id, organizationId },
+      });
+
+      if (!beforeCompany) {
+        throw new Error("Company not found during update");
+      }
+
+      const updated = await tx.company.update({
+        where: { id },
+        data: {
+          code,
+          name,
+          shortName:
+            typeof body.shortName === "string" && body.shortName.trim() ? body.shortName.trim() : null,
+          type: typeof body.type === "string" ? body.type : existingCompany.type,
+          email: typeof body.email === "string" && body.email.trim() ? body.email.trim() : null,
+          phone: typeof body.phone === "string" && body.phone.trim() ? body.phone.trim() : null,
+          address: typeof body.address === "string" && body.address.trim() ? body.address.trim() : null,
+          isActive: typeof body.isActive === "boolean" ? body.isActive : existingCompany.isActive,
+        },
+      });
+
+      const action =
+        beforeCompany.isActive !== updated.isActive
+          ? updated.isActive
+            ? "ACTIVATE"
+            : "DEACTIVATE"
+          : "UPDATE";
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action,
+        entityType: "Company",
+        entityId: updated.id,
+        entityName: updated.name,
+        beforeData: beforeCompany,
+        afterData: updated,
+      });
+
+      return updated;
     });
 
     return NextResponse.json({ data: company });

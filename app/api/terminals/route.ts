@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 export async function GET() {
@@ -94,23 +95,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Terminal code already exists for this port" }, { status: 409 });
     }
 
-    const terminal = await prisma.terminal.create({
-      data: {
-        organizationId,
-        portId,
-        code,
-        name,
-        isActive: typeof body.isActive === "boolean" ? body.isActive : true,
-      },
-      include: {
-        port: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
+    const terminal = await prisma.$transaction(async (tx) => {
+      const created = await tx.terminal.create({
+        data: {
+          organizationId,
+          portId,
+          code,
+          name,
+          isActive: typeof body.isActive === "boolean" ? body.isActive : true,
+        },
+        include: {
+          port: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
           },
         },
-      },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "CREATE",
+        entityType: "Terminal",
+        entityId: created.id,
+        entityName: created.name,
+        beforeData: null,
+        afterData: created,
+      });
+
+      return created;
     });
 
     return NextResponse.json({ data: terminal }, { status: 201 });

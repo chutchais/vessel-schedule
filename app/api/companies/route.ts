@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 const COMPANY_TYPES = [
@@ -120,18 +121,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Company code '${code}' already exists` }, { status: 409 });
     }
 
-    const company = await prisma.company.create({
-      data: {
+    const company = await prisma.$transaction(async (tx) => {
+      const created = await tx.company.create({
+        data: {
+          organizationId,
+          code,
+          name,
+          shortName: optionalString(body.shortName),
+          type: type as CompanyType,
+          email: optionalString(body.email),
+          phone: optionalString(body.phone),
+          address: optionalString(body.address),
+          isActive: typeof body.isActive === "boolean" ? body.isActive : true,
+        },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
         organizationId,
-        code,
-        name,
-        shortName: optionalString(body.shortName),
-        type: type as CompanyType,
-        email: optionalString(body.email),
-        phone: optionalString(body.phone),
-        address: optionalString(body.address),
-        isActive: typeof body.isActive === "boolean" ? body.isActive : true,
-      },
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "CREATE",
+        entityType: "Company",
+        entityId: created.id,
+        entityName: created.name,
+        beforeData: null,
+        afterData: created,
+      });
+
+      return created;
     });
 
     return NextResponse.json({ data: company }, { status: 201 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 type RouteContext = {
@@ -93,18 +94,53 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: `${duplicateField} already exists` }, { status: 409 });
     }
 
-    const port = await prisma.port.update({
-      where: { id },
-      data: {
-        code,
-        unlocode,
-        name,
-        country,
-        timezone,
-        latitude,
-        longitude,
-        isActive: typeof body.isActive === "boolean" ? body.isActive : existingPort.isActive,
-      },
+    const port = await prisma.$transaction(async (tx) => {
+      const beforePort = await tx.port.findFirst({
+        where: { id, organizationId },
+      });
+
+      if (!beforePort) {
+        throw new Error("Port not found during update");
+      }
+
+      const updated = await tx.port.update({
+        where: { id },
+        data: {
+          code,
+          unlocode,
+          name,
+          country,
+          timezone,
+          latitude,
+          longitude,
+          isActive: typeof body.isActive === "boolean" ? body.isActive : existingPort.isActive,
+        },
+      });
+
+      const action =
+        beforePort.isActive !== updated.isActive
+          ? updated.isActive
+            ? "ACTIVATE"
+            : "DEACTIVATE"
+          : "UPDATE";
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action,
+        entityType: "Port",
+        entityId: updated.id,
+        entityName: updated.name,
+        beforeData: beforePort,
+        afterData: updated,
+      });
+
+      return updated;
     });
 
     return NextResponse.json({ data: serializePort(port) });

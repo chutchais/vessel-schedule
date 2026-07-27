@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/db/prisma";
 import { normalizeEmail } from "@/lib/auth/email";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -158,6 +159,29 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           acceptedById: upsertedUser.id,
           acceptedAt: new Date(),
           pendingKey: null,
+        },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId: invitation.organizationId,
+        actor: {
+          id: upsertedUser.id,
+          email: verifiedEmail,
+          displayName: resolvedDisplayName,
+        },
+        action: "ACCEPT_INVITATION",
+        entityType: "OrganizationInvitation",
+        entityId: invitation.id,
+        entityName: invitation.email,
+        beforeData: {
+          status: invitation.status,
+          role: invitation.role,
+          expiresAt: invitation.expiresAt,
+        },
+        afterData: {
+          status: "ACCEPTED",
+          acceptedById: upsertedUser.id,
         },
       });
 

@@ -3,6 +3,7 @@ import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { canManageInvitation } from "@/lib/auth/invitations";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -40,9 +41,35 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    await prisma.organizationInvitation.update({
-      where: { id },
-      data: { status: "REVOKED", revokedAt: new Date(), pendingKey: null },
+    await prisma.$transaction(async (tx) => {
+      const beforeInvitation = await tx.organizationInvitation.findUnique({
+        where: { id },
+      });
+
+      if (!beforeInvitation) {
+        throw new Error("Invitation not found during revoke");
+      }
+
+      const updatedInvitation = await tx.organizationInvitation.update({
+        where: { id },
+        data: { status: "REVOKED", revokedAt: new Date(), pendingKey: null },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId: activeOrganization.id,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "REVOKE_INVITATION",
+        entityType: "OrganizationInvitation",
+        entityId: updatedInvitation.id,
+        entityName: updatedInvitation.email,
+        beforeData: beforeInvitation,
+        afterData: updatedInvitation,
+      });
     });
 
     return NextResponse.json({ success: true });

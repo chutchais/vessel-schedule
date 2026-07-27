@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 const COLOR_HEX_PATTERN = /^#[0-9A-F]{6}$/;
@@ -117,21 +118,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Service code already exists" }, { status: 409 });
     }
 
-    const service = await prisma.service.create({
-      data: {
-        operatorCompanyId: companyId,
-        organizationId,
-        code,
-        name,
-        description: description || null,
-        color,
-        isActive: typeof body.isActive === "boolean" ? body.isActive : true,
-      },
-      include: {
-        operatorCompany: {
-          select: serviceCompanySelect,
+    const service = await prisma.$transaction(async (tx) => {
+      const created = await tx.service.create({
+        data: {
+          operatorCompanyId: companyId,
+          organizationId,
+          code,
+          name,
+          description: description || null,
+          color,
+          isActive: typeof body.isActive === "boolean" ? body.isActive : true,
         },
-      },
+        include: {
+          operatorCompany: {
+            select: serviceCompanySelect,
+          },
+        },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "CREATE",
+        entityType: "Service",
+        entityId: created.id,
+        entityName: created.name,
+        beforeData: null,
+        afterData: created,
+      });
+
+      return created;
     });
 
     return NextResponse.json({ data: service }, { status: 201 });

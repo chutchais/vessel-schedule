@@ -3,6 +3,7 @@ import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { canManageInvitation } from "@/lib/auth/invitations";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { inviteUserByEmailWithRedirect } from "@/lib/supabase/admin";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -111,7 +112,36 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     if (newPendingKey) updateData.pendingKey = newPendingKey;
     if (authUserId) updateData.authUserId = authUserId;
 
-    await prisma.organizationInvitation.update({ where: { id }, data: updateData });
+    await prisma.$transaction(async (tx) => {
+      const beforeInvitation = await tx.organizationInvitation.findUnique({
+        where: { id },
+      });
+
+      if (!beforeInvitation) {
+        throw new Error("Invitation not found during resend");
+      }
+
+      const updatedInvitation = await tx.organizationInvitation.update({ where: { id }, data: updateData });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId: activeOrganization.id,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "RESEND_INVITATION",
+        entityType: "OrganizationInvitation",
+        entityId: updatedInvitation.id,
+        entityName: updatedInvitation.email,
+        beforeData: beforeInvitation,
+        afterData: updatedInvitation,
+        metadata: {
+          deliveryStatus: updatedInvitation.deliveryStatus,
+        },
+      });
+    });
 
     return NextResponse.json({ success: true, deliveryStatus });
   } catch (error) {

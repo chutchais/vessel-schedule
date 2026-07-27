@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import { AuthError } from "@/lib/auth/auth-errors";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 
 type RouteContext = { params: Promise<{ userId: string }> };
 
@@ -77,6 +78,36 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       if (ownerCount !== 1) {
         throw new Error("Transfer resulted in unexpected owner count; rolling back");
       }
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId: activeOrganization.id,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "TRANSFER_OWNERSHIP",
+        entityType: "Organization",
+        entityId: activeOrganization.id,
+        entityName: activeOrganization.name,
+        beforeData: {
+          ownerUserId: currentUser.id,
+          ownerRole: requesterMembership.role,
+          targetUserId,
+          targetRole: targetMembership.role,
+        },
+        afterData: {
+          ownerUserId: targetUserId,
+          previousOwnerUserId: currentUser.id,
+          previousOwnerRole: "ADMIN",
+          newOwnerRole: "OWNER",
+        },
+        metadata: {
+          fromOwnerId: currentUser.id,
+          toOwnerId: targetUserId,
+        },
+      });
 
       return { success: true, newOwner, newAdmin } as const;
     });

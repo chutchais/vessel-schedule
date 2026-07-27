@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/db/prisma";
 import { normalizeEmail } from "@/lib/auth/email";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -36,9 +37,35 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    await prisma.organizationInvitation.update({
-      where: { id },
-      data: { status: "DECLINED", pendingKey: null, revokedAt: new Date() },
+    await prisma.$transaction(async (tx) => {
+      const beforeInvitation = await tx.organizationInvitation.findUnique({
+        where: { id },
+      });
+
+      if (!beforeInvitation) {
+        throw new Error("Invitation not found during decline");
+      }
+
+      const updatedInvitation = await tx.organizationInvitation.update({
+        where: { id },
+        data: { status: "DECLINED", pendingKey: null, revokedAt: new Date() },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId: beforeInvitation.organizationId,
+        actor: {
+          id: authUser.id,
+          email: verifiedEmail,
+          displayName: authUser.user_metadata?.display_name || authUser.email || "Unknown User",
+        },
+        action: "DECLINE_INVITATION",
+        entityType: "OrganizationInvitation",
+        entityId: updatedInvitation.id,
+        entityName: updatedInvitation.email,
+        beforeData: beforeInvitation,
+        afterData: updatedInvitation,
+      });
     });
 
     return NextResponse.json({ success: true });

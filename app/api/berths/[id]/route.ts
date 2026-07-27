@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 const COLOR_HEX_PATTERN = /^#[0-9A-F]{6}$/i;
@@ -109,34 +110,69 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Berth code already exists for this terminal" }, { status: 409 });
     }
 
-    const berth = await prisma.berth.update({
-      where: { id },
-      data: {
-        terminalId,
-        code,
-        name,
-        berthLength,
-        color,
-        zeroOriginSide: zeroOriginSideRaw === "right" ? "RIGHT" : "LEFT",
-        sortOrder,
-        isActive: typeof body.isActive === "boolean" ? body.isActive : existingBerth.isActive,
-      },
-      include: {
-        terminal: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            port: {
-              select: {
-                id: true,
-                code: true,
-                name: true,
+    const berth = await prisma.$transaction(async (tx) => {
+      const beforeBerth = await tx.berth.findFirst({
+        where: { id, organizationId },
+      });
+
+      if (!beforeBerth) {
+        throw new Error("Berth not found during update");
+      }
+
+      const updated = await tx.berth.update({
+        where: { id },
+        data: {
+          terminalId,
+          code,
+          name,
+          berthLength,
+          color,
+          zeroOriginSide: zeroOriginSideRaw === "right" ? "RIGHT" : "LEFT",
+          sortOrder,
+          isActive: typeof body.isActive === "boolean" ? body.isActive : existingBerth.isActive,
+        },
+        include: {
+          terminal: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              port: {
+                select: {
+                  id: true,
+                  code: true,
+                  name: true,
+                },
               },
             },
           },
         },
-      },
+      });
+
+      const action =
+        beforeBerth.isActive !== updated.isActive
+          ? updated.isActive
+            ? "ACTIVATE"
+            : "DEACTIVATE"
+          : "UPDATE";
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action,
+        entityType: "Berth",
+        entityId: updated.id,
+        entityName: updated.name,
+        beforeData: beforeBerth,
+        afterData: updated,
+      });
+
+      return updated;
     });
 
     return NextResponse.json({ data: serializeBerth(berth) });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import { AuthError } from "@/lib/auth/auth-errors";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 
 type RouteContext = {
   params: Promise<{
@@ -62,6 +63,10 @@ export async function POST(
       select: {
         id: true,
         status: true,
+        organizationId: true,
+        organizationName: true,
+        requesterName: true,
+        requesterEmail: true,
       },
     });
 
@@ -76,14 +81,56 @@ export async function POST(
       );
     }
 
-    await prisma.organizationRequest.update({
-      where: { id },
-      data: {
-        status: "REJECTED",
-        reviewedById: currentUser.id,
-        reviewedAt: new Date(),
-        reviewNotes: normalized.reviewNotes,
-      },
+    await prisma.$transaction(async (tx) => {
+      const beforeRequest = await tx.organizationRequest.findUnique({
+        where: { id },
+      });
+
+      if (!beforeRequest) {
+        throw new Error("Organization request not found during rejection");
+      }
+
+      const updatedRequest = await tx.organizationRequest.update({
+        where: { id },
+        data: {
+          status: "REJECTED",
+          reviewedById: currentUser.id,
+          reviewedAt: new Date(),
+          reviewNotes: normalized.reviewNotes,
+        },
+      });
+
+      await createAuditLog(tx, {
+        scope: "PLATFORM",
+        organizationId: updatedRequest.organizationId,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "REJECT_REQUEST",
+        entityType: "OrganizationRequest",
+        entityId: updatedRequest.id,
+        entityName: updatedRequest.organizationName,
+        beforeData: {
+          id: beforeRequest.id,
+          status: beforeRequest.status,
+          organizationName: beforeRequest.organizationName,
+          requesterName: beforeRequest.requesterName,
+          requesterEmail: beforeRequest.requesterEmail,
+          organizationId: beforeRequest.organizationId,
+        },
+        afterData: {
+          id: updatedRequest.id,
+          status: updatedRequest.status,
+          organizationId: updatedRequest.organizationId,
+          reviewedById: updatedRequest.reviewedById,
+          reviewedAt: updatedRequest.reviewedAt,
+        },
+        metadata: {
+          reviewNotes: normalized.reviewNotes,
+        },
+      });
     });
 
     return NextResponse.json(

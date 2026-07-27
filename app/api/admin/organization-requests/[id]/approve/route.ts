@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { isValidEmail } from "@/lib/auth/email";
 import { ensureUniqueSlug } from "@/lib/utils/slug";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { inviteUserByEmail } from "@/lib/supabase/admin";
 
 type RouteContext = {
@@ -149,6 +150,7 @@ export async function POST(
       }
 
       let authUserId = orgRequest.authUserId;
+      let invitationDeliveryStatus: "ALREADY_LINKED" | "SENT" = authUserId ? "ALREADY_LINKED" : "SENT";
 
       if (!authUserId) {
         const inviteResponse = await inviteUserByEmail(orgRequest.requesterEmail);
@@ -186,6 +188,7 @@ export async function POST(
         }
 
         authUserId = inviteResponse.data.user.id;
+        invitationDeliveryStatus = "SENT";
 
         await prisma.organizationRequest.update({
           where: { id },
@@ -238,6 +241,44 @@ export async function POST(
             status: "APPROVED",
             reviewedAt: new Date(),
             failureReason: null,
+          },
+        });
+
+        await createAuditLog(tx, {
+          scope: "PLATFORM",
+          organizationId,
+          actor: {
+            id: currentUser.id,
+            email: currentUser.email,
+            displayName: currentUser.displayName,
+          },
+          action: "APPROVE_REQUEST",
+          entityType: "OrganizationRequest",
+          entityId: id,
+          entityName: normalized.organizationName,
+          beforeData: {
+            id: orgRequest.id,
+            status: orgRequest.status,
+            organizationName: orgRequest.organizationName,
+            requesterName: orgRequest.requesterName,
+            requesterEmail: orgRequest.requesterEmail,
+            organizationId: orgRequest.organizationId,
+          },
+          afterData: {
+            id: orgRequest.id,
+            status: "APPROVED",
+            organizationId,
+            reviewedById: currentUser.id,
+          },
+          metadata: {
+            createdOrganization: {
+              id: organizationId,
+              name: normalized.organizationName,
+              slug: normalized.slug,
+            },
+            firstOwnerUserId: authUserId,
+            firstOwnerRole: "OWNER",
+            invitationDeliveryStatus,
           },
         });
       });

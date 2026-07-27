@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 
 const VESSEL_TYPES = [
@@ -83,29 +84,64 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         ? (body.type as VesselType)
         : existingVessel.type;
 
-    const vessel = await prisma.vessel.update({
-      where: { id },
-      data: {
-        code,
-        name,
-        type,
-        imo,
-        callSign: typeof body.callSign === "string" && body.callSign.trim() ? body.callSign.trim() : null,
-        flag: typeof body.flag === "string" && body.flag.trim() ? body.flag.trim().toUpperCase() : null,
-        lengthOverall:
-          body.lengthOverall !== undefined && body.lengthOverall !== ""
-            ? Number(body.lengthOverall) >= 0
-              ? Number(body.lengthOverall)
-              : null
-            : null,
-        beam:
-          body.beam !== undefined && body.beam !== ""
-            ? Number(body.beam) >= 0
-              ? Number(body.beam)
-              : null
-            : null,
-        isActive: typeof body.isActive === "boolean" ? body.isActive : existingVessel.isActive,
-      },
+    const vessel = await prisma.$transaction(async (tx) => {
+      const beforeVessel = await tx.vessel.findFirst({
+        where: { id, organizationId },
+      });
+
+      if (!beforeVessel) {
+        throw new Error("Vessel not found during update");
+      }
+
+      const updated = await tx.vessel.update({
+        where: { id },
+        data: {
+          code,
+          name,
+          type,
+          imo,
+          callSign: typeof body.callSign === "string" && body.callSign.trim() ? body.callSign.trim() : null,
+          flag: typeof body.flag === "string" && body.flag.trim() ? body.flag.trim().toUpperCase() : null,
+          lengthOverall:
+            body.lengthOverall !== undefined && body.lengthOverall !== ""
+              ? Number(body.lengthOverall) >= 0
+                ? Number(body.lengthOverall)
+                : null
+              : null,
+          beam:
+            body.beam !== undefined && body.beam !== ""
+              ? Number(body.beam) >= 0
+                ? Number(body.beam)
+                : null
+              : null,
+          isActive: typeof body.isActive === "boolean" ? body.isActive : existingVessel.isActive,
+        },
+      });
+
+      const action =
+        beforeVessel.isActive !== updated.isActive
+          ? updated.isActive
+            ? "ACTIVATE"
+            : "DEACTIVATE"
+          : "UPDATE";
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action,
+        entityType: "Vessel",
+        entityId: updated.id,
+        entityName: updated.name,
+        beforeData: beforeVessel,
+        afterData: updated,
+      });
+
+      return updated;
     });
 
     return NextResponse.json({ data: serializeVessel(vessel) });

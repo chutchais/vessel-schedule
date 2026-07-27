@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { normalizeEmail, isValidEmail } from "@/lib/auth/email";
 import { canInviteRole } from "@/lib/auth/invitations";
+import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { inviteUserByEmailWithRedirect } from "@/lib/supabase/admin";
 
 const VALID_ROLES = ["OWNER", "ADMIN", "PLANNER", "VIEWER"] as const;
@@ -156,14 +157,39 @@ export async function POST(request: NextRequest) {
       deliveryError = "Email delivery failed";
     }
 
-    const updated = await prisma.organizationInvitation.update({
-      where: { id: invitation.id },
-      data: {
-        authUserId,
-        deliveryStatus,
-        invitationSentAt,
-        deliveryError,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const finalInvitation = await tx.organizationInvitation.update({
+        where: { id: invitation.id },
+        data: {
+          authUserId,
+          deliveryStatus,
+          invitationSentAt,
+          deliveryError,
+        },
+      });
+
+      await createAuditLog(tx, {
+        scope: "ORGANIZATION",
+        organizationId: activeOrganization.id,
+        actor: {
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        },
+        action: "INVITE",
+        entityType: "OrganizationInvitation",
+        entityId: finalInvitation.id,
+        entityName: finalInvitation.email,
+        beforeData: null,
+        afterData: finalInvitation,
+        metadata: {
+          role: finalInvitation.role,
+          status: finalInvitation.status,
+          deliveryStatus: finalInvitation.deliveryStatus,
+        },
+      });
+
+      return finalInvitation;
     });
 
     const deliveryMessage =
