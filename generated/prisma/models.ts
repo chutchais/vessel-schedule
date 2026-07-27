@@ -9,6 +9,9 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/HealthCheck'
+export type * from './models/Organization'
+export type * from './models/User'
+export type * from './models/OrganizationMember'
 export type * from './models/Company'
 export type * from './models/Service'
 export type * from './models/Port'

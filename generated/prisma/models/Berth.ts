@@ -46,6 +46,7 @@ export type BerthMinAggregateOutputType = {
   zeroOriginSide: $Enums.ZeroOriginSide | null
   sortOrder: number | null
   isActive: boolean | null
+  organizationId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -60,6 +61,7 @@ export type BerthMaxAggregateOutputType = {
   zeroOriginSide: $Enums.ZeroOriginSide | null
   sortOrder: number | null
   isActive: boolean | null
+  organizationId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -74,6 +76,7 @@ export type BerthCountAggregateOutputType = {
   zeroOriginSide: number
   sortOrder: number
   isActive: number
+  organizationId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -100,6 +103,7 @@ export type BerthMinAggregateInputType = {
   zeroOriginSide?: true
   sortOrder?: true
   isActive?: true
+  organizationId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -114,6 +118,7 @@ export type BerthMaxAggregateInputType = {
   zeroOriginSide?: true
   sortOrder?: true
   isActive?: true
+  organizationId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -128,6 +133,7 @@ export type BerthCountAggregateInputType = {
   zeroOriginSide?: true
   sortOrder?: true
   isActive?: true
+  organizationId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -229,6 +235,7 @@ export type BerthGroupByOutputType = {
   zeroOriginSide: $Enums.ZeroOriginSide
   sortOrder: number
   isActive: boolean
+  organizationId: string
   createdAt: Date
   updatedAt: Date
   _count: BerthCountAggregateOutputType | null
@@ -266,9 +273,11 @@ export type BerthWhereInput = {
   zeroOriginSide?: Prisma.EnumZeroOriginSideFilter<"Berth"> | $Enums.ZeroOriginSide
   sortOrder?: Prisma.IntFilter<"Berth"> | number
   isActive?: Prisma.BoolFilter<"Berth"> | boolean
+  organizationId?: Prisma.UuidFilter<"Berth"> | string
   createdAt?: Prisma.DateTimeFilter<"Berth"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Berth"> | Date | string
   terminal?: Prisma.XOR<Prisma.TerminalScalarRelationFilter, Prisma.TerminalWhereInput>
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   schedules?: Prisma.VesselScheduleListRelationFilter
 }
 
@@ -282,15 +291,17 @@ export type BerthOrderByWithRelationInput = {
   zeroOriginSide?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   terminal?: Prisma.TerminalOrderByWithRelationInput
+  organization?: Prisma.OrganizationOrderByWithRelationInput
   schedules?: Prisma.VesselScheduleOrderByRelationAggregateInput
 }
 
 export type BerthWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  terminalId_code?: Prisma.BerthTerminalIdCodeCompoundUniqueInput
+  organizationId_terminalId_code?: Prisma.BerthOrganizationIdTerminalIdCodeCompoundUniqueInput
   AND?: Prisma.BerthWhereInput | Prisma.BerthWhereInput[]
   OR?: Prisma.BerthWhereInput[]
   NOT?: Prisma.BerthWhereInput | Prisma.BerthWhereInput[]
@@ -302,11 +313,13 @@ export type BerthWhereUniqueInput = Prisma.AtLeast<{
   zeroOriginSide?: Prisma.EnumZeroOriginSideFilter<"Berth"> | $Enums.ZeroOriginSide
   sortOrder?: Prisma.IntFilter<"Berth"> | number
   isActive?: Prisma.BoolFilter<"Berth"> | boolean
+  organizationId?: Prisma.UuidFilter<"Berth"> | string
   createdAt?: Prisma.DateTimeFilter<"Berth"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Berth"> | Date | string
   terminal?: Prisma.XOR<Prisma.TerminalScalarRelationFilter, Prisma.TerminalWhereInput>
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   schedules?: Prisma.VesselScheduleListRelationFilter
-}, "id" | "terminalId_code">
+}, "id" | "organizationId_terminalId_code">
 
 export type BerthOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -318,6 +331,7 @@ export type BerthOrderByWithAggregationInput = {
   zeroOriginSide?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.BerthCountOrderByAggregateInput
@@ -340,6 +354,7 @@ export type BerthScalarWhereWithAggregatesInput = {
   zeroOriginSide?: Prisma.EnumZeroOriginSideWithAggregatesFilter<"Berth"> | $Enums.ZeroOriginSide
   sortOrder?: Prisma.IntWithAggregatesFilter<"Berth"> | number
   isActive?: Prisma.BoolWithAggregatesFilter<"Berth"> | boolean
+  organizationId?: Prisma.UuidWithAggregatesFilter<"Berth"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Berth"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Berth"> | Date | string
 }
@@ -356,6 +371,7 @@ export type BerthCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   terminal: Prisma.TerminalCreateNestedOneWithoutBerthsInput
+  organization: Prisma.OrganizationCreateNestedOneWithoutBerthsInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutBerthInput
 }
 
@@ -369,6 +385,7 @@ export type BerthUncheckedCreateInput = {
   zeroOriginSide?: $Enums.ZeroOriginSide
   sortOrder?: number
   isActive?: boolean
+  organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
   schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutBerthInput
@@ -386,6 +403,7 @@ export type BerthUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   terminal?: Prisma.TerminalUpdateOneRequiredWithoutBerthsNestedInput
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutBerthsNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutBerthNestedInput
 }
 
@@ -399,6 +417,7 @@ export type BerthUncheckedUpdateInput = {
   zeroOriginSide?: Prisma.EnumZeroOriginSideFieldUpdateOperationsInput | $Enums.ZeroOriginSide
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutBerthNestedInput
@@ -414,6 +433,7 @@ export type BerthCreateManyInput = {
   zeroOriginSide?: $Enums.ZeroOriginSide
   sortOrder?: number
   isActive?: boolean
+  organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -441,6 +461,7 @@ export type BerthUncheckedUpdateManyInput = {
   zeroOriginSide?: Prisma.EnumZeroOriginSideFieldUpdateOperationsInput | $Enums.ZeroOriginSide
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -455,7 +476,8 @@ export type BerthOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type BerthTerminalIdCodeCompoundUniqueInput = {
+export type BerthOrganizationIdTerminalIdCodeCompoundUniqueInput = {
+  organizationId: string
   terminalId: string
   code: string
 }
@@ -470,6 +492,7 @@ export type BerthCountOrderByAggregateInput = {
   zeroOriginSide?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -489,6 +512,7 @@ export type BerthMaxOrderByAggregateInput = {
   zeroOriginSide?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -503,6 +527,7 @@ export type BerthMinOrderByAggregateInput = {
   zeroOriginSide?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -515,6 +540,48 @@ export type BerthSumOrderByAggregateInput = {
 export type BerthNullableScalarRelationFilter = {
   is?: Prisma.BerthWhereInput | null
   isNot?: Prisma.BerthWhereInput | null
+}
+
+export type BerthCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.BerthCreateWithoutOrganizationInput, Prisma.BerthUncheckedCreateWithoutOrganizationInput> | Prisma.BerthCreateWithoutOrganizationInput[] | Prisma.BerthUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.BerthCreateOrConnectWithoutOrganizationInput | Prisma.BerthCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.BerthCreateManyOrganizationInputEnvelope
+  connect?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+}
+
+export type BerthUncheckedCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.BerthCreateWithoutOrganizationInput, Prisma.BerthUncheckedCreateWithoutOrganizationInput> | Prisma.BerthCreateWithoutOrganizationInput[] | Prisma.BerthUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.BerthCreateOrConnectWithoutOrganizationInput | Prisma.BerthCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.BerthCreateManyOrganizationInputEnvelope
+  connect?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+}
+
+export type BerthUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.BerthCreateWithoutOrganizationInput, Prisma.BerthUncheckedCreateWithoutOrganizationInput> | Prisma.BerthCreateWithoutOrganizationInput[] | Prisma.BerthUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.BerthCreateOrConnectWithoutOrganizationInput | Prisma.BerthCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.BerthUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.BerthUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.BerthCreateManyOrganizationInputEnvelope
+  set?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+  disconnect?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+  delete?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+  connect?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+  update?: Prisma.BerthUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.BerthUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.BerthUpdateManyWithWhereWithoutOrganizationInput | Prisma.BerthUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.BerthScalarWhereInput | Prisma.BerthScalarWhereInput[]
+}
+
+export type BerthUncheckedUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.BerthCreateWithoutOrganizationInput, Prisma.BerthUncheckedCreateWithoutOrganizationInput> | Prisma.BerthCreateWithoutOrganizationInput[] | Prisma.BerthUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.BerthCreateOrConnectWithoutOrganizationInput | Prisma.BerthCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.BerthUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.BerthUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.BerthCreateManyOrganizationInputEnvelope
+  set?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+  disconnect?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+  delete?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+  connect?: Prisma.BerthWhereUniqueInput | Prisma.BerthWhereUniqueInput[]
+  update?: Prisma.BerthUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.BerthUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.BerthUpdateManyWithWhereWithoutOrganizationInput | Prisma.BerthUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.BerthScalarWhereInput | Prisma.BerthScalarWhereInput[]
 }
 
 export type BerthCreateNestedManyWithoutTerminalInput = {
@@ -595,6 +662,80 @@ export type BerthUpdateOneWithoutSchedulesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.BerthUpdateToOneWithWhereWithoutSchedulesInput, Prisma.BerthUpdateWithoutSchedulesInput>, Prisma.BerthUncheckedUpdateWithoutSchedulesInput>
 }
 
+export type BerthCreateWithoutOrganizationInput = {
+  id?: string
+  code: string
+  name: string
+  berthLength: runtime.Decimal | runtime.DecimalJsLike | number | string
+  color?: string
+  zeroOriginSide?: $Enums.ZeroOriginSide
+  sortOrder?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  terminal: Prisma.TerminalCreateNestedOneWithoutBerthsInput
+  schedules?: Prisma.VesselScheduleCreateNestedManyWithoutBerthInput
+}
+
+export type BerthUncheckedCreateWithoutOrganizationInput = {
+  id?: string
+  terminalId: string
+  code: string
+  name: string
+  berthLength: runtime.Decimal | runtime.DecimalJsLike | number | string
+  color?: string
+  zeroOriginSide?: $Enums.ZeroOriginSide
+  sortOrder?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutBerthInput
+}
+
+export type BerthCreateOrConnectWithoutOrganizationInput = {
+  where: Prisma.BerthWhereUniqueInput
+  create: Prisma.XOR<Prisma.BerthCreateWithoutOrganizationInput, Prisma.BerthUncheckedCreateWithoutOrganizationInput>
+}
+
+export type BerthCreateManyOrganizationInputEnvelope = {
+  data: Prisma.BerthCreateManyOrganizationInput | Prisma.BerthCreateManyOrganizationInput[]
+  skipDuplicates?: boolean
+}
+
+export type BerthUpsertWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.BerthWhereUniqueInput
+  update: Prisma.XOR<Prisma.BerthUpdateWithoutOrganizationInput, Prisma.BerthUncheckedUpdateWithoutOrganizationInput>
+  create: Prisma.XOR<Prisma.BerthCreateWithoutOrganizationInput, Prisma.BerthUncheckedCreateWithoutOrganizationInput>
+}
+
+export type BerthUpdateWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.BerthWhereUniqueInput
+  data: Prisma.XOR<Prisma.BerthUpdateWithoutOrganizationInput, Prisma.BerthUncheckedUpdateWithoutOrganizationInput>
+}
+
+export type BerthUpdateManyWithWhereWithoutOrganizationInput = {
+  where: Prisma.BerthScalarWhereInput
+  data: Prisma.XOR<Prisma.BerthUpdateManyMutationInput, Prisma.BerthUncheckedUpdateManyWithoutOrganizationInput>
+}
+
+export type BerthScalarWhereInput = {
+  AND?: Prisma.BerthScalarWhereInput | Prisma.BerthScalarWhereInput[]
+  OR?: Prisma.BerthScalarWhereInput[]
+  NOT?: Prisma.BerthScalarWhereInput | Prisma.BerthScalarWhereInput[]
+  id?: Prisma.UuidFilter<"Berth"> | string
+  terminalId?: Prisma.UuidFilter<"Berth"> | string
+  code?: Prisma.StringFilter<"Berth"> | string
+  name?: Prisma.StringFilter<"Berth"> | string
+  berthLength?: Prisma.DecimalFilter<"Berth"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  color?: Prisma.StringFilter<"Berth"> | string
+  zeroOriginSide?: Prisma.EnumZeroOriginSideFilter<"Berth"> | $Enums.ZeroOriginSide
+  sortOrder?: Prisma.IntFilter<"Berth"> | number
+  isActive?: Prisma.BoolFilter<"Berth"> | boolean
+  organizationId?: Prisma.UuidFilter<"Berth"> | string
+  createdAt?: Prisma.DateTimeFilter<"Berth"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Berth"> | Date | string
+}
+
 export type BerthCreateWithoutTerminalInput = {
   id?: string
   code: string
@@ -606,6 +747,7 @@ export type BerthCreateWithoutTerminalInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutBerthsInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutBerthInput
 }
 
@@ -618,6 +760,7 @@ export type BerthUncheckedCreateWithoutTerminalInput = {
   zeroOriginSide?: $Enums.ZeroOriginSide
   sortOrder?: number
   isActive?: boolean
+  organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
   schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutBerthInput
@@ -649,23 +792,6 @@ export type BerthUpdateManyWithWhereWithoutTerminalInput = {
   data: Prisma.XOR<Prisma.BerthUpdateManyMutationInput, Prisma.BerthUncheckedUpdateManyWithoutTerminalInput>
 }
 
-export type BerthScalarWhereInput = {
-  AND?: Prisma.BerthScalarWhereInput | Prisma.BerthScalarWhereInput[]
-  OR?: Prisma.BerthScalarWhereInput[]
-  NOT?: Prisma.BerthScalarWhereInput | Prisma.BerthScalarWhereInput[]
-  id?: Prisma.UuidFilter<"Berth"> | string
-  terminalId?: Prisma.UuidFilter<"Berth"> | string
-  code?: Prisma.StringFilter<"Berth"> | string
-  name?: Prisma.StringFilter<"Berth"> | string
-  berthLength?: Prisma.DecimalFilter<"Berth"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  color?: Prisma.StringFilter<"Berth"> | string
-  zeroOriginSide?: Prisma.EnumZeroOriginSideFilter<"Berth"> | $Enums.ZeroOriginSide
-  sortOrder?: Prisma.IntFilter<"Berth"> | number
-  isActive?: Prisma.BoolFilter<"Berth"> | boolean
-  createdAt?: Prisma.DateTimeFilter<"Berth"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Berth"> | Date | string
-}
-
 export type BerthCreateWithoutSchedulesInput = {
   id?: string
   code: string
@@ -678,6 +804,7 @@ export type BerthCreateWithoutSchedulesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   terminal: Prisma.TerminalCreateNestedOneWithoutBerthsInput
+  organization: Prisma.OrganizationCreateNestedOneWithoutBerthsInput
 }
 
 export type BerthUncheckedCreateWithoutSchedulesInput = {
@@ -690,6 +817,7 @@ export type BerthUncheckedCreateWithoutSchedulesInput = {
   zeroOriginSide?: $Enums.ZeroOriginSide
   sortOrder?: number
   isActive?: boolean
+  organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -722,9 +850,69 @@ export type BerthUpdateWithoutSchedulesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   terminal?: Prisma.TerminalUpdateOneRequiredWithoutBerthsNestedInput
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutBerthsNestedInput
 }
 
 export type BerthUncheckedUpdateWithoutSchedulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  terminalId?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  berthLength?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  color?: Prisma.StringFieldUpdateOperationsInput | string
+  zeroOriginSide?: Prisma.EnumZeroOriginSideFieldUpdateOperationsInput | $Enums.ZeroOriginSide
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BerthCreateManyOrganizationInput = {
+  id?: string
+  terminalId: string
+  code: string
+  name: string
+  berthLength: runtime.Decimal | runtime.DecimalJsLike | number | string
+  color?: string
+  zeroOriginSide?: $Enums.ZeroOriginSide
+  sortOrder?: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type BerthUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  berthLength?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  color?: Prisma.StringFieldUpdateOperationsInput | string
+  zeroOriginSide?: Prisma.EnumZeroOriginSideFieldUpdateOperationsInput | $Enums.ZeroOriginSide
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  terminal?: Prisma.TerminalUpdateOneRequiredWithoutBerthsNestedInput
+  schedules?: Prisma.VesselScheduleUpdateManyWithoutBerthNestedInput
+}
+
+export type BerthUncheckedUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  terminalId?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  berthLength?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  color?: Prisma.StringFieldUpdateOperationsInput | string
+  zeroOriginSide?: Prisma.EnumZeroOriginSideFieldUpdateOperationsInput | $Enums.ZeroOriginSide
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutBerthNestedInput
+}
+
+export type BerthUncheckedUpdateManyWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   terminalId?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
@@ -747,6 +935,7 @@ export type BerthCreateManyTerminalInput = {
   zeroOriginSide?: $Enums.ZeroOriginSide
   sortOrder?: number
   isActive?: boolean
+  organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -762,6 +951,7 @@ export type BerthUpdateWithoutTerminalInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutBerthsNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutBerthNestedInput
 }
 
@@ -774,6 +964,7 @@ export type BerthUncheckedUpdateWithoutTerminalInput = {
   zeroOriginSide?: Prisma.EnumZeroOriginSideFieldUpdateOperationsInput | $Enums.ZeroOriginSide
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutBerthNestedInput
@@ -788,6 +979,7 @@ export type BerthUncheckedUpdateManyWithoutTerminalInput = {
   zeroOriginSide?: Prisma.EnumZeroOriginSideFieldUpdateOperationsInput | $Enums.ZeroOriginSide
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -833,9 +1025,11 @@ export type BerthSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   zeroOriginSide?: boolean
   sortOrder?: boolean
   isActive?: boolean
+  organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   terminal?: boolean | Prisma.TerminalDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   schedules?: boolean | Prisma.Berth$schedulesArgs<ExtArgs>
   _count?: boolean | Prisma.BerthCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["berth"]>
@@ -850,9 +1044,11 @@ export type BerthSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   zeroOriginSide?: boolean
   sortOrder?: boolean
   isActive?: boolean
+  organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   terminal?: boolean | Prisma.TerminalDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["berth"]>
 
 export type BerthSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -865,9 +1061,11 @@ export type BerthSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   zeroOriginSide?: boolean
   sortOrder?: boolean
   isActive?: boolean
+  organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   terminal?: boolean | Prisma.TerminalDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["berth"]>
 
 export type BerthSelectScalar = {
@@ -880,27 +1078,32 @@ export type BerthSelectScalar = {
   zeroOriginSide?: boolean
   sortOrder?: boolean
   isActive?: boolean
+  organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type BerthOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "terminalId" | "code" | "name" | "berthLength" | "color" | "zeroOriginSide" | "sortOrder" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["berth"]>
+export type BerthOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "terminalId" | "code" | "name" | "berthLength" | "color" | "zeroOriginSide" | "sortOrder" | "isActive" | "organizationId" | "createdAt" | "updatedAt", ExtArgs["result"]["berth"]>
 export type BerthInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   terminal?: boolean | Prisma.TerminalDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   schedules?: boolean | Prisma.Berth$schedulesArgs<ExtArgs>
   _count?: boolean | Prisma.BerthCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type BerthIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   terminal?: boolean | Prisma.TerminalDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }
 export type BerthIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   terminal?: boolean | Prisma.TerminalDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }
 
 export type $BerthPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Berth"
   objects: {
     terminal: Prisma.$TerminalPayload<ExtArgs>
+    organization: Prisma.$OrganizationPayload<ExtArgs>
     schedules: Prisma.$VesselSchedulePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -913,6 +1116,7 @@ export type $BerthPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     zeroOriginSide: $Enums.ZeroOriginSide
     sortOrder: number
     isActive: boolean
+    organizationId: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["berth"]>
@@ -1310,6 +1514,7 @@ readonly fields: BerthFieldRefs;
 export interface Prisma__BerthClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   terminal<T extends Prisma.TerminalDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TerminalDefaultArgs<ExtArgs>>): Prisma.Prisma__TerminalClient<runtime.Types.Result.GetResult<Prisma.$TerminalPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   schedules<T extends Prisma.Berth$schedulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Berth$schedulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VesselSchedulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1349,6 +1554,7 @@ export interface BerthFieldRefs {
   readonly zeroOriginSide: Prisma.FieldRef<"Berth", 'ZeroOriginSide'>
   readonly sortOrder: Prisma.FieldRef<"Berth", 'Int'>
   readonly isActive: Prisma.FieldRef<"Berth", 'Boolean'>
+  readonly organizationId: Prisma.FieldRef<"Berth", 'String'>
   readonly createdAt: Prisma.FieldRef<"Berth", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Berth", 'DateTime'>
 }

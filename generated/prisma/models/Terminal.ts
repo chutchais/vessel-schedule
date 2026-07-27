@@ -29,6 +29,7 @@ export type TerminalMinAggregateOutputType = {
   code: string | null
   name: string | null
   portId: string | null
+  organizationId: string | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -39,6 +40,7 @@ export type TerminalMaxAggregateOutputType = {
   code: string | null
   name: string | null
   portId: string | null
+  organizationId: string | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -49,6 +51,7 @@ export type TerminalCountAggregateOutputType = {
   code: number
   name: number
   portId: number
+  organizationId: number
   isActive: number
   createdAt: number
   updatedAt: number
@@ -61,6 +64,7 @@ export type TerminalMinAggregateInputType = {
   code?: true
   name?: true
   portId?: true
+  organizationId?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -71,6 +75,7 @@ export type TerminalMaxAggregateInputType = {
   code?: true
   name?: true
   portId?: true
+  organizationId?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -81,6 +86,7 @@ export type TerminalCountAggregateInputType = {
   code?: true
   name?: true
   portId?: true
+  organizationId?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -164,6 +170,7 @@ export type TerminalGroupByOutputType = {
   code: string
   name: string
   portId: string
+  organizationId: string
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -195,10 +202,12 @@ export type TerminalWhereInput = {
   code?: Prisma.StringFilter<"Terminal"> | string
   name?: Prisma.StringFilter<"Terminal"> | string
   portId?: Prisma.UuidFilter<"Terminal"> | string
+  organizationId?: Prisma.UuidFilter<"Terminal"> | string
   isActive?: Prisma.BoolFilter<"Terminal"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Terminal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Terminal"> | Date | string
   port?: Prisma.XOR<Prisma.PortScalarRelationFilter, Prisma.PortWhereInput>
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   berths?: Prisma.BerthListRelationFilter
   schedules?: Prisma.VesselScheduleListRelationFilter
 }
@@ -208,36 +217,41 @@ export type TerminalOrderByWithRelationInput = {
   code?: Prisma.SortOrder
   name?: Prisma.SortOrder
   portId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   port?: Prisma.PortOrderByWithRelationInput
+  organization?: Prisma.OrganizationOrderByWithRelationInput
   berths?: Prisma.BerthOrderByRelationAggregateInput
   schedules?: Prisma.VesselScheduleOrderByRelationAggregateInput
 }
 
 export type TerminalWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  portId_code?: Prisma.TerminalPortIdCodeCompoundUniqueInput
+  organizationId_portId_code?: Prisma.TerminalOrganizationIdPortIdCodeCompoundUniqueInput
   AND?: Prisma.TerminalWhereInput | Prisma.TerminalWhereInput[]
   OR?: Prisma.TerminalWhereInput[]
   NOT?: Prisma.TerminalWhereInput | Prisma.TerminalWhereInput[]
   code?: Prisma.StringFilter<"Terminal"> | string
   name?: Prisma.StringFilter<"Terminal"> | string
   portId?: Prisma.UuidFilter<"Terminal"> | string
+  organizationId?: Prisma.UuidFilter<"Terminal"> | string
   isActive?: Prisma.BoolFilter<"Terminal"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Terminal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Terminal"> | Date | string
   port?: Prisma.XOR<Prisma.PortScalarRelationFilter, Prisma.PortWhereInput>
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   berths?: Prisma.BerthListRelationFilter
   schedules?: Prisma.VesselScheduleListRelationFilter
-}, "id" | "portId_code">
+}, "id" | "organizationId_portId_code">
 
 export type TerminalOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   code?: Prisma.SortOrder
   name?: Prisma.SortOrder
   portId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -254,6 +268,7 @@ export type TerminalScalarWhereWithAggregatesInput = {
   code?: Prisma.StringWithAggregatesFilter<"Terminal"> | string
   name?: Prisma.StringWithAggregatesFilter<"Terminal"> | string
   portId?: Prisma.UuidWithAggregatesFilter<"Terminal"> | string
+  organizationId?: Prisma.UuidWithAggregatesFilter<"Terminal"> | string
   isActive?: Prisma.BoolWithAggregatesFilter<"Terminal"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Terminal"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Terminal"> | Date | string
@@ -267,6 +282,7 @@ export type TerminalCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   port: Prisma.PortCreateNestedOneWithoutTerminalsInput
+  organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
   berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
 }
@@ -276,6 +292,7 @@ export type TerminalUncheckedCreateInput = {
   code: string
   name: string
   portId: string
+  organizationId: string
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -291,6 +308,7 @@ export type TerminalUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   port?: Prisma.PortUpdateOneRequiredWithoutTerminalsNestedInput
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
   berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
 }
@@ -300,6 +318,7 @@ export type TerminalUncheckedUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   portId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -312,6 +331,7 @@ export type TerminalCreateManyInput = {
   code: string
   name: string
   portId: string
+  organizationId: string
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -331,6 +351,7 @@ export type TerminalUncheckedUpdateManyInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   portId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -346,7 +367,8 @@ export type TerminalOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type TerminalPortIdCodeCompoundUniqueInput = {
+export type TerminalOrganizationIdPortIdCodeCompoundUniqueInput = {
+  organizationId: string
   portId: string
   code: string
 }
@@ -356,6 +378,7 @@ export type TerminalCountOrderByAggregateInput = {
   code?: Prisma.SortOrder
   name?: Prisma.SortOrder
   portId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -366,6 +389,7 @@ export type TerminalMaxOrderByAggregateInput = {
   code?: Prisma.SortOrder
   name?: Prisma.SortOrder
   portId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -376,6 +400,7 @@ export type TerminalMinOrderByAggregateInput = {
   code?: Prisma.SortOrder
   name?: Prisma.SortOrder
   portId?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -384,6 +409,48 @@ export type TerminalMinOrderByAggregateInput = {
 export type TerminalScalarRelationFilter = {
   is?: Prisma.TerminalWhereInput
   isNot?: Prisma.TerminalWhereInput
+}
+
+export type TerminalCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.TerminalCreateWithoutOrganizationInput, Prisma.TerminalUncheckedCreateWithoutOrganizationInput> | Prisma.TerminalCreateWithoutOrganizationInput[] | Prisma.TerminalUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.TerminalCreateOrConnectWithoutOrganizationInput | Prisma.TerminalCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.TerminalCreateManyOrganizationInputEnvelope
+  connect?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+}
+
+export type TerminalUncheckedCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.TerminalCreateWithoutOrganizationInput, Prisma.TerminalUncheckedCreateWithoutOrganizationInput> | Prisma.TerminalCreateWithoutOrganizationInput[] | Prisma.TerminalUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.TerminalCreateOrConnectWithoutOrganizationInput | Prisma.TerminalCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.TerminalCreateManyOrganizationInputEnvelope
+  connect?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+}
+
+export type TerminalUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.TerminalCreateWithoutOrganizationInput, Prisma.TerminalUncheckedCreateWithoutOrganizationInput> | Prisma.TerminalCreateWithoutOrganizationInput[] | Prisma.TerminalUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.TerminalCreateOrConnectWithoutOrganizationInput | Prisma.TerminalCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.TerminalUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.TerminalUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.TerminalCreateManyOrganizationInputEnvelope
+  set?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+  disconnect?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+  delete?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+  connect?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+  update?: Prisma.TerminalUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.TerminalUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.TerminalUpdateManyWithWhereWithoutOrganizationInput | Prisma.TerminalUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.TerminalScalarWhereInput | Prisma.TerminalScalarWhereInput[]
+}
+
+export type TerminalUncheckedUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.TerminalCreateWithoutOrganizationInput, Prisma.TerminalUncheckedCreateWithoutOrganizationInput> | Prisma.TerminalCreateWithoutOrganizationInput[] | Prisma.TerminalUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.TerminalCreateOrConnectWithoutOrganizationInput | Prisma.TerminalCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.TerminalUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.TerminalUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.TerminalCreateManyOrganizationInputEnvelope
+  set?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+  disconnect?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+  delete?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+  connect?: Prisma.TerminalWhereUniqueInput | Prisma.TerminalWhereUniqueInput[]
+  update?: Prisma.TerminalUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.TerminalUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.TerminalUpdateManyWithWhereWithoutOrganizationInput | Prisma.TerminalUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.TerminalScalarWhereInput | Prisma.TerminalScalarWhereInput[]
 }
 
 export type TerminalCreateNestedManyWithoutPortInput = {
@@ -456,6 +523,70 @@ export type TerminalUpdateOneRequiredWithoutSchedulesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TerminalUpdateToOneWithWhereWithoutSchedulesInput, Prisma.TerminalUpdateWithoutSchedulesInput>, Prisma.TerminalUncheckedUpdateWithoutSchedulesInput>
 }
 
+export type TerminalCreateWithoutOrganizationInput = {
+  id?: string
+  code: string
+  name: string
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  port: Prisma.PortCreateNestedOneWithoutTerminalsInput
+  berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
+  schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
+}
+
+export type TerminalUncheckedCreateWithoutOrganizationInput = {
+  id?: string
+  code: string
+  name: string
+  portId: string
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  berths?: Prisma.BerthUncheckedCreateNestedManyWithoutTerminalInput
+  schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutTerminalInput
+}
+
+export type TerminalCreateOrConnectWithoutOrganizationInput = {
+  where: Prisma.TerminalWhereUniqueInput
+  create: Prisma.XOR<Prisma.TerminalCreateWithoutOrganizationInput, Prisma.TerminalUncheckedCreateWithoutOrganizationInput>
+}
+
+export type TerminalCreateManyOrganizationInputEnvelope = {
+  data: Prisma.TerminalCreateManyOrganizationInput | Prisma.TerminalCreateManyOrganizationInput[]
+  skipDuplicates?: boolean
+}
+
+export type TerminalUpsertWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.TerminalWhereUniqueInput
+  update: Prisma.XOR<Prisma.TerminalUpdateWithoutOrganizationInput, Prisma.TerminalUncheckedUpdateWithoutOrganizationInput>
+  create: Prisma.XOR<Prisma.TerminalCreateWithoutOrganizationInput, Prisma.TerminalUncheckedCreateWithoutOrganizationInput>
+}
+
+export type TerminalUpdateWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.TerminalWhereUniqueInput
+  data: Prisma.XOR<Prisma.TerminalUpdateWithoutOrganizationInput, Prisma.TerminalUncheckedUpdateWithoutOrganizationInput>
+}
+
+export type TerminalUpdateManyWithWhereWithoutOrganizationInput = {
+  where: Prisma.TerminalScalarWhereInput
+  data: Prisma.XOR<Prisma.TerminalUpdateManyMutationInput, Prisma.TerminalUncheckedUpdateManyWithoutOrganizationInput>
+}
+
+export type TerminalScalarWhereInput = {
+  AND?: Prisma.TerminalScalarWhereInput | Prisma.TerminalScalarWhereInput[]
+  OR?: Prisma.TerminalScalarWhereInput[]
+  NOT?: Prisma.TerminalScalarWhereInput | Prisma.TerminalScalarWhereInput[]
+  id?: Prisma.UuidFilter<"Terminal"> | string
+  code?: Prisma.StringFilter<"Terminal"> | string
+  name?: Prisma.StringFilter<"Terminal"> | string
+  portId?: Prisma.UuidFilter<"Terminal"> | string
+  organizationId?: Prisma.UuidFilter<"Terminal"> | string
+  isActive?: Prisma.BoolFilter<"Terminal"> | boolean
+  createdAt?: Prisma.DateTimeFilter<"Terminal"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Terminal"> | Date | string
+}
+
 export type TerminalCreateWithoutPortInput = {
   id?: string
   code: string
@@ -463,6 +594,7 @@ export type TerminalCreateWithoutPortInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
   berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
 }
@@ -471,6 +603,7 @@ export type TerminalUncheckedCreateWithoutPortInput = {
   id?: string
   code: string
   name: string
+  organizationId: string
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -504,19 +637,6 @@ export type TerminalUpdateManyWithWhereWithoutPortInput = {
   data: Prisma.XOR<Prisma.TerminalUpdateManyMutationInput, Prisma.TerminalUncheckedUpdateManyWithoutPortInput>
 }
 
-export type TerminalScalarWhereInput = {
-  AND?: Prisma.TerminalScalarWhereInput | Prisma.TerminalScalarWhereInput[]
-  OR?: Prisma.TerminalScalarWhereInput[]
-  NOT?: Prisma.TerminalScalarWhereInput | Prisma.TerminalScalarWhereInput[]
-  id?: Prisma.UuidFilter<"Terminal"> | string
-  code?: Prisma.StringFilter<"Terminal"> | string
-  name?: Prisma.StringFilter<"Terminal"> | string
-  portId?: Prisma.UuidFilter<"Terminal"> | string
-  isActive?: Prisma.BoolFilter<"Terminal"> | boolean
-  createdAt?: Prisma.DateTimeFilter<"Terminal"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Terminal"> | Date | string
-}
-
 export type TerminalCreateWithoutBerthsInput = {
   id?: string
   code: string
@@ -525,6 +645,7 @@ export type TerminalCreateWithoutBerthsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   port: Prisma.PortCreateNestedOneWithoutTerminalsInput
+  organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
 }
 
@@ -533,6 +654,7 @@ export type TerminalUncheckedCreateWithoutBerthsInput = {
   code: string
   name: string
   portId: string
+  organizationId: string
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -563,6 +685,7 @@ export type TerminalUpdateWithoutBerthsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   port?: Prisma.PortUpdateOneRequiredWithoutTerminalsNestedInput
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
 }
 
@@ -571,6 +694,7 @@ export type TerminalUncheckedUpdateWithoutBerthsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   portId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -585,6 +709,7 @@ export type TerminalCreateWithoutSchedulesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   port: Prisma.PortCreateNestedOneWithoutTerminalsInput
+  organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
   berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
 }
 
@@ -593,6 +718,7 @@ export type TerminalUncheckedCreateWithoutSchedulesInput = {
   code: string
   name: string
   portId: string
+  organizationId: string
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -623,6 +749,7 @@ export type TerminalUpdateWithoutSchedulesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   port?: Prisma.PortUpdateOneRequiredWithoutTerminalsNestedInput
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
   berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
 }
 
@@ -631,16 +758,62 @@ export type TerminalUncheckedUpdateWithoutSchedulesInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   portId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   berths?: Prisma.BerthUncheckedUpdateManyWithoutTerminalNestedInput
 }
 
+export type TerminalCreateManyOrganizationInput = {
+  id?: string
+  code: string
+  name: string
+  portId: string
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type TerminalUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  port?: Prisma.PortUpdateOneRequiredWithoutTerminalsNestedInput
+  berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
+  schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
+}
+
+export type TerminalUncheckedUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  portId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  berths?: Prisma.BerthUncheckedUpdateManyWithoutTerminalNestedInput
+  schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutTerminalNestedInput
+}
+
+export type TerminalUncheckedUpdateManyWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  portId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type TerminalCreateManyPortInput = {
   id?: string
   code: string
   name: string
+  organizationId: string
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -653,6 +826,7 @@ export type TerminalUpdateWithoutPortInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
   berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
 }
@@ -661,6 +835,7 @@ export type TerminalUncheckedUpdateWithoutPortInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -672,6 +847,7 @@ export type TerminalUncheckedUpdateManyWithoutPortInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -722,10 +898,12 @@ export type TerminalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   code?: boolean
   name?: boolean
   portId?: boolean
+  organizationId?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   port?: boolean | Prisma.PortDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   berths?: boolean | Prisma.Terminal$berthsArgs<ExtArgs>
   schedules?: boolean | Prisma.Terminal$schedulesArgs<ExtArgs>
   _count?: boolean | Prisma.TerminalCountOutputTypeDefaultArgs<ExtArgs>
@@ -736,10 +914,12 @@ export type TerminalSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   code?: boolean
   name?: boolean
   portId?: boolean
+  organizationId?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   port?: boolean | Prisma.PortDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["terminal"]>
 
 export type TerminalSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -747,10 +927,12 @@ export type TerminalSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   code?: boolean
   name?: boolean
   portId?: boolean
+  organizationId?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   port?: boolean | Prisma.PortDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["terminal"]>
 
 export type TerminalSelectScalar = {
@@ -758,29 +940,34 @@ export type TerminalSelectScalar = {
   code?: boolean
   name?: boolean
   portId?: boolean
+  organizationId?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TerminalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "portId" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["terminal"]>
+export type TerminalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "portId" | "organizationId" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["terminal"]>
 export type TerminalInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   port?: boolean | Prisma.PortDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   berths?: boolean | Prisma.Terminal$berthsArgs<ExtArgs>
   schedules?: boolean | Prisma.Terminal$schedulesArgs<ExtArgs>
   _count?: boolean | Prisma.TerminalCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TerminalIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   port?: boolean | Prisma.PortDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }
 export type TerminalIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   port?: boolean | Prisma.PortDefaultArgs<ExtArgs>
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }
 
 export type $TerminalPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Terminal"
   objects: {
     port: Prisma.$PortPayload<ExtArgs>
+    organization: Prisma.$OrganizationPayload<ExtArgs>
     berths: Prisma.$BerthPayload<ExtArgs>[]
     schedules: Prisma.$VesselSchedulePayload<ExtArgs>[]
   }
@@ -789,6 +976,7 @@ export type $TerminalPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     code: string
     name: string
     portId: string
+    organizationId: string
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -1187,6 +1375,7 @@ readonly fields: TerminalFieldRefs;
 export interface Prisma__TerminalClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   port<T extends Prisma.PortDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PortDefaultArgs<ExtArgs>>): Prisma.Prisma__PortClient<runtime.Types.Result.GetResult<Prisma.$PortPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   berths<T extends Prisma.Terminal$berthsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Terminal$berthsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BerthPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   schedules<T extends Prisma.Terminal$schedulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Terminal$schedulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VesselSchedulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1222,6 +1411,7 @@ export interface TerminalFieldRefs {
   readonly code: Prisma.FieldRef<"Terminal", 'String'>
   readonly name: Prisma.FieldRef<"Terminal", 'String'>
   readonly portId: Prisma.FieldRef<"Terminal", 'String'>
+  readonly organizationId: Prisma.FieldRef<"Terminal", 'String'>
   readonly isActive: Prisma.FieldRef<"Terminal", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Terminal", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Terminal", 'DateTime'>

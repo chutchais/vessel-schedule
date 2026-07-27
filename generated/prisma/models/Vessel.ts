@@ -47,6 +47,7 @@ export type VesselMinAggregateOutputType = {
   lengthOverall: runtime.Decimal | null
   beam: runtime.Decimal | null
   isActive: boolean | null
+  organizationId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +63,7 @@ export type VesselMaxAggregateOutputType = {
   lengthOverall: runtime.Decimal | null
   beam: runtime.Decimal | null
   isActive: boolean | null
+  organizationId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -77,6 +79,7 @@ export type VesselCountAggregateOutputType = {
   lengthOverall: number
   beam: number
   isActive: number
+  organizationId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -104,6 +107,7 @@ export type VesselMinAggregateInputType = {
   lengthOverall?: true
   beam?: true
   isActive?: true
+  organizationId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -119,6 +123,7 @@ export type VesselMaxAggregateInputType = {
   lengthOverall?: true
   beam?: true
   isActive?: true
+  organizationId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -134,6 +139,7 @@ export type VesselCountAggregateInputType = {
   lengthOverall?: true
   beam?: true
   isActive?: true
+  organizationId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -236,6 +242,7 @@ export type VesselGroupByOutputType = {
   lengthOverall: runtime.Decimal | null
   beam: runtime.Decimal | null
   isActive: boolean
+  organizationId: string
   createdAt: Date
   updatedAt: Date
   _count: VesselCountAggregateOutputType | null
@@ -274,8 +281,10 @@ export type VesselWhereInput = {
   lengthOverall?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   beam?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFilter<"Vessel"> | boolean
+  organizationId?: Prisma.UuidFilter<"Vessel"> | string
   createdAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   schedules?: Prisma.VesselScheduleListRelationFilter
 }
 
@@ -290,29 +299,34 @@ export type VesselOrderByWithRelationInput = {
   lengthOverall?: Prisma.SortOrderInput | Prisma.SortOrder
   beam?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  organization?: Prisma.OrganizationOrderByWithRelationInput
   schedules?: Prisma.VesselScheduleOrderByRelationAggregateInput
 }
 
 export type VesselWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   code?: string
-  imo?: string
+  organizationId_imo?: Prisma.VesselOrganizationIdImoCompoundUniqueInput
   AND?: Prisma.VesselWhereInput | Prisma.VesselWhereInput[]
   OR?: Prisma.VesselWhereInput[]
   NOT?: Prisma.VesselWhereInput | Prisma.VesselWhereInput[]
   name?: Prisma.StringFilter<"Vessel"> | string
+  imo?: Prisma.StringNullableFilter<"Vessel"> | string | null
   callSign?: Prisma.StringNullableFilter<"Vessel"> | string | null
   flag?: Prisma.StringNullableFilter<"Vessel"> | string | null
   type?: Prisma.EnumVesselTypeFilter<"Vessel"> | $Enums.VesselType
   lengthOverall?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   beam?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFilter<"Vessel"> | boolean
+  organizationId?: Prisma.UuidFilter<"Vessel"> | string
   createdAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
+  organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   schedules?: Prisma.VesselScheduleListRelationFilter
-}, "id" | "code" | "imo">
+}, "id" | "code" | "organizationId_imo">
 
 export type VesselOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -325,6 +339,7 @@ export type VesselOrderByWithAggregationInput = {
   lengthOverall?: Prisma.SortOrderInput | Prisma.SortOrder
   beam?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.VesselCountOrderByAggregateInput
@@ -348,6 +363,7 @@ export type VesselScalarWhereWithAggregatesInput = {
   lengthOverall?: Prisma.DecimalNullableWithAggregatesFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   beam?: Prisma.DecimalNullableWithAggregatesFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"Vessel"> | boolean
+  organizationId?: Prisma.UuidWithAggregatesFilter<"Vessel"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Vessel"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Vessel"> | Date | string
 }
@@ -365,6 +381,7 @@ export type VesselCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutVesselsInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutVesselInput
 }
 
@@ -379,6 +396,7 @@ export type VesselUncheckedCreateInput = {
   lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: boolean
+  organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
   schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutVesselInput
@@ -397,6 +415,7 @@ export type VesselUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutVesselsNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutVesselNestedInput
 }
 
@@ -411,6 +430,7 @@ export type VesselUncheckedUpdateInput = {
   lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutVesselNestedInput
@@ -427,6 +447,7 @@ export type VesselCreateManyInput = {
   lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: boolean
+  organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -457,8 +478,24 @@ export type VesselUncheckedUpdateManyInput = {
   lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type VesselListRelationFilter = {
+  every?: Prisma.VesselWhereInput
+  some?: Prisma.VesselWhereInput
+  none?: Prisma.VesselWhereInput
+}
+
+export type VesselOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
+export type VesselOrganizationIdImoCompoundUniqueInput = {
+  organizationId: string
+  imo: string
 }
 
 export type VesselCountOrderByAggregateInput = {
@@ -472,6 +509,7 @@ export type VesselCountOrderByAggregateInput = {
   lengthOverall?: Prisma.SortOrder
   beam?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -492,6 +530,7 @@ export type VesselMaxOrderByAggregateInput = {
   lengthOverall?: Prisma.SortOrder
   beam?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -507,6 +546,7 @@ export type VesselMinOrderByAggregateInput = {
   lengthOverall?: Prisma.SortOrder
   beam?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  organizationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -519,6 +559,48 @@ export type VesselSumOrderByAggregateInput = {
 export type VesselScalarRelationFilter = {
   is?: Prisma.VesselWhereInput
   isNot?: Prisma.VesselWhereInput
+}
+
+export type VesselCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.VesselCreateWithoutOrganizationInput, Prisma.VesselUncheckedCreateWithoutOrganizationInput> | Prisma.VesselCreateWithoutOrganizationInput[] | Prisma.VesselUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.VesselCreateOrConnectWithoutOrganizationInput | Prisma.VesselCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.VesselCreateManyOrganizationInputEnvelope
+  connect?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+}
+
+export type VesselUncheckedCreateNestedManyWithoutOrganizationInput = {
+  create?: Prisma.XOR<Prisma.VesselCreateWithoutOrganizationInput, Prisma.VesselUncheckedCreateWithoutOrganizationInput> | Prisma.VesselCreateWithoutOrganizationInput[] | Prisma.VesselUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.VesselCreateOrConnectWithoutOrganizationInput | Prisma.VesselCreateOrConnectWithoutOrganizationInput[]
+  createMany?: Prisma.VesselCreateManyOrganizationInputEnvelope
+  connect?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+}
+
+export type VesselUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.VesselCreateWithoutOrganizationInput, Prisma.VesselUncheckedCreateWithoutOrganizationInput> | Prisma.VesselCreateWithoutOrganizationInput[] | Prisma.VesselUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.VesselCreateOrConnectWithoutOrganizationInput | Prisma.VesselCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.VesselUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.VesselUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.VesselCreateManyOrganizationInputEnvelope
+  set?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+  disconnect?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+  delete?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+  connect?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+  update?: Prisma.VesselUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.VesselUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.VesselUpdateManyWithWhereWithoutOrganizationInput | Prisma.VesselUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.VesselScalarWhereInput | Prisma.VesselScalarWhereInput[]
+}
+
+export type VesselUncheckedUpdateManyWithoutOrganizationNestedInput = {
+  create?: Prisma.XOR<Prisma.VesselCreateWithoutOrganizationInput, Prisma.VesselUncheckedCreateWithoutOrganizationInput> | Prisma.VesselCreateWithoutOrganizationInput[] | Prisma.VesselUncheckedCreateWithoutOrganizationInput[]
+  connectOrCreate?: Prisma.VesselCreateOrConnectWithoutOrganizationInput | Prisma.VesselCreateOrConnectWithoutOrganizationInput[]
+  upsert?: Prisma.VesselUpsertWithWhereUniqueWithoutOrganizationInput | Prisma.VesselUpsertWithWhereUniqueWithoutOrganizationInput[]
+  createMany?: Prisma.VesselCreateManyOrganizationInputEnvelope
+  set?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+  disconnect?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+  delete?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+  connect?: Prisma.VesselWhereUniqueInput | Prisma.VesselWhereUniqueInput[]
+  update?: Prisma.VesselUpdateWithWhereUniqueWithoutOrganizationInput | Prisma.VesselUpdateWithWhereUniqueWithoutOrganizationInput[]
+  updateMany?: Prisma.VesselUpdateManyWithWhereWithoutOrganizationInput | Prisma.VesselUpdateManyWithWhereWithoutOrganizationInput[]
+  deleteMany?: Prisma.VesselScalarWhereInput | Prisma.VesselScalarWhereInput[]
 }
 
 export type EnumVesselTypeFieldUpdateOperationsInput = {
@@ -539,6 +621,83 @@ export type VesselUpdateOneRequiredWithoutSchedulesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.VesselUpdateToOneWithWhereWithoutSchedulesInput, Prisma.VesselUpdateWithoutSchedulesInput>, Prisma.VesselUncheckedUpdateWithoutSchedulesInput>
 }
 
+export type VesselCreateWithoutOrganizationInput = {
+  id?: string
+  code: string
+  name: string
+  imo?: string | null
+  callSign?: string | null
+  flag?: string | null
+  type: $Enums.VesselType
+  lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  schedules?: Prisma.VesselScheduleCreateNestedManyWithoutVesselInput
+}
+
+export type VesselUncheckedCreateWithoutOrganizationInput = {
+  id?: string
+  code: string
+  name: string
+  imo?: string | null
+  callSign?: string | null
+  flag?: string | null
+  type: $Enums.VesselType
+  lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutVesselInput
+}
+
+export type VesselCreateOrConnectWithoutOrganizationInput = {
+  where: Prisma.VesselWhereUniqueInput
+  create: Prisma.XOR<Prisma.VesselCreateWithoutOrganizationInput, Prisma.VesselUncheckedCreateWithoutOrganizationInput>
+}
+
+export type VesselCreateManyOrganizationInputEnvelope = {
+  data: Prisma.VesselCreateManyOrganizationInput | Prisma.VesselCreateManyOrganizationInput[]
+  skipDuplicates?: boolean
+}
+
+export type VesselUpsertWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.VesselWhereUniqueInput
+  update: Prisma.XOR<Prisma.VesselUpdateWithoutOrganizationInput, Prisma.VesselUncheckedUpdateWithoutOrganizationInput>
+  create: Prisma.XOR<Prisma.VesselCreateWithoutOrganizationInput, Prisma.VesselUncheckedCreateWithoutOrganizationInput>
+}
+
+export type VesselUpdateWithWhereUniqueWithoutOrganizationInput = {
+  where: Prisma.VesselWhereUniqueInput
+  data: Prisma.XOR<Prisma.VesselUpdateWithoutOrganizationInput, Prisma.VesselUncheckedUpdateWithoutOrganizationInput>
+}
+
+export type VesselUpdateManyWithWhereWithoutOrganizationInput = {
+  where: Prisma.VesselScalarWhereInput
+  data: Prisma.XOR<Prisma.VesselUpdateManyMutationInput, Prisma.VesselUncheckedUpdateManyWithoutOrganizationInput>
+}
+
+export type VesselScalarWhereInput = {
+  AND?: Prisma.VesselScalarWhereInput | Prisma.VesselScalarWhereInput[]
+  OR?: Prisma.VesselScalarWhereInput[]
+  NOT?: Prisma.VesselScalarWhereInput | Prisma.VesselScalarWhereInput[]
+  id?: Prisma.UuidFilter<"Vessel"> | string
+  code?: Prisma.StringFilter<"Vessel"> | string
+  name?: Prisma.StringFilter<"Vessel"> | string
+  imo?: Prisma.StringNullableFilter<"Vessel"> | string | null
+  callSign?: Prisma.StringNullableFilter<"Vessel"> | string | null
+  flag?: Prisma.StringNullableFilter<"Vessel"> | string | null
+  type?: Prisma.EnumVesselTypeFilter<"Vessel"> | $Enums.VesselType
+  lengthOverall?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.DecimalNullableFilter<"Vessel"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: Prisma.BoolFilter<"Vessel"> | boolean
+  organizationId?: Prisma.UuidFilter<"Vessel"> | string
+  createdAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Vessel"> | Date | string
+}
+
 export type VesselCreateWithoutSchedulesInput = {
   id?: string
   code: string
@@ -552,6 +711,7 @@ export type VesselCreateWithoutSchedulesInput = {
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  organization: Prisma.OrganizationCreateNestedOneWithoutVesselsInput
 }
 
 export type VesselUncheckedCreateWithoutSchedulesInput = {
@@ -565,6 +725,7 @@ export type VesselUncheckedCreateWithoutSchedulesInput = {
   lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   isActive?: boolean
+  organizationId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -598,9 +759,73 @@ export type VesselUpdateWithoutSchedulesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutVesselsNestedInput
 }
 
 export type VesselUncheckedUpdateWithoutSchedulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  imo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type VesselCreateManyOrganizationInput = {
+  id?: string
+  code: string
+  name: string
+  imo?: string | null
+  callSign?: string | null
+  flag?: string | null
+  type: $Enums.VesselType
+  lengthOverall?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type VesselUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  imo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  schedules?: Prisma.VesselScheduleUpdateManyWithoutVesselNestedInput
+}
+
+export type VesselUncheckedUpdateWithoutOrganizationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  imo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  callSign?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumVesselTypeFieldUpdateOperationsInput | $Enums.VesselType
+  lengthOverall?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  beam?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutVesselNestedInput
+}
+
+export type VesselUncheckedUpdateManyWithoutOrganizationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
@@ -657,8 +882,10 @@ export type VesselSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   lengthOverall?: boolean
   beam?: boolean
   isActive?: boolean
+  organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   schedules?: boolean | Prisma.Vessel$schedulesArgs<ExtArgs>
   _count?: boolean | Prisma.VesselCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["vessel"]>
@@ -674,8 +901,10 @@ export type VesselSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   lengthOverall?: boolean
   beam?: boolean
   isActive?: boolean
+  organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["vessel"]>
 
 export type VesselSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -689,8 +918,10 @@ export type VesselSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   lengthOverall?: boolean
   beam?: boolean
   isActive?: boolean
+  organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["vessel"]>
 
 export type VesselSelectScalar = {
@@ -704,21 +935,28 @@ export type VesselSelectScalar = {
   lengthOverall?: boolean
   beam?: boolean
   isActive?: boolean
+  organizationId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type VesselOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "imo" | "callSign" | "flag" | "type" | "lengthOverall" | "beam" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["vessel"]>
+export type VesselOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "imo" | "callSign" | "flag" | "type" | "lengthOverall" | "beam" | "isActive" | "organizationId" | "createdAt" | "updatedAt", ExtArgs["result"]["vessel"]>
 export type VesselInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   schedules?: boolean | Prisma.Vessel$schedulesArgs<ExtArgs>
   _count?: boolean | Prisma.VesselCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type VesselIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type VesselIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type VesselIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+}
+export type VesselIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
+}
 
 export type $VesselPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Vessel"
   objects: {
+    organization: Prisma.$OrganizationPayload<ExtArgs>
     schedules: Prisma.$VesselSchedulePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -732,6 +970,7 @@ export type $VesselPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     lengthOverall: runtime.Decimal | null
     beam: runtime.Decimal | null
     isActive: boolean
+    organizationId: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["vessel"]>
@@ -1128,6 +1367,7 @@ readonly fields: VesselFieldRefs;
  */
 export interface Prisma__VesselClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   schedules<T extends Prisma.Vessel$schedulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Vessel$schedulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VesselSchedulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1168,6 +1408,7 @@ export interface VesselFieldRefs {
   readonly lengthOverall: Prisma.FieldRef<"Vessel", 'Decimal'>
   readonly beam: Prisma.FieldRef<"Vessel", 'Decimal'>
   readonly isActive: Prisma.FieldRef<"Vessel", 'Boolean'>
+  readonly organizationId: Prisma.FieldRef<"Vessel", 'String'>
   readonly createdAt: Prisma.FieldRef<"Vessel", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Vessel", 'DateTime'>
 }
@@ -1424,6 +1665,10 @@ export type VesselCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    */
   data: Prisma.VesselCreateManyInput | Prisma.VesselCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VesselIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1494,6 +1739,10 @@ export type VesselUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many Vessels to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.VesselIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

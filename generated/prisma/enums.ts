@@ -9,6 +9,24 @@
 * 🟢 You can import this file directly.
 */
 
+export const PlatformRole = {
+  USER: 'USER',
+  SUPER_ADMIN: 'SUPER_ADMIN'
+} as const
+
+export type PlatformRole = (typeof PlatformRole)[keyof typeof PlatformRole]
+
+
+export const OrganizationRole = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  PLANNER: 'PLANNER',
+  VIEWER: 'VIEWER'
+} as const
+
+export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole]
+
+
 export const CompanyType = {
   SHIPPING_LINE: 'SHIPPING_LINE',
   SHIPPING_AGENT: 'SHIPPING_AGENT',

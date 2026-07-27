@@ -52,6 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   HealthCheck: 'HealthCheck',
+  Organization: 'Organization',
+  User: 'User',
+  OrganizationMember: 'OrganizationMember',
   Company: 'Company',
   Service: 'Service',
   Port: 'Port',
@@ -86,6 +89,43 @@ export const HealthCheckScalarFieldEnum = {
 export type HealthCheckScalarFieldEnum = (typeof HealthCheckScalarFieldEnum)[keyof typeof HealthCheckScalarFieldEnum]
 
 
+export const OrganizationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
+
+
+export const UserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  displayName: 'displayName',
+  platformRole: 'platformRole',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const OrganizationMemberScalarFieldEnum = {
+  organizationId: 'organizationId',
+  userId: 'userId',
+  role: 'role',
+  isActive: 'isActive',
+  joinedAt: 'joinedAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrganizationMemberScalarFieldEnum = (typeof OrganizationMemberScalarFieldEnum)[keyof typeof OrganizationMemberScalarFieldEnum]
+
+
 export const CompanyScalarFieldEnum = {
   id: 'id',
   code: 'code',
@@ -96,6 +136,7 @@ export const CompanyScalarFieldEnum = {
   phone: 'phone',
   address: 'address',
   isActive: 'isActive',
+  organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -109,7 +150,8 @@ export const ServiceScalarFieldEnum = {
   name: 'name',
   description: 'description',
   color: 'color',
-  companyId: 'companyId',
+  operatorCompanyId: 'operatorCompanyId',
+  organizationId: 'organizationId',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -128,6 +170,7 @@ export const PortScalarFieldEnum = {
   latitude: 'latitude',
   longitude: 'longitude',
   isActive: 'isActive',
+  organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -146,6 +189,7 @@ export const VesselScalarFieldEnum = {
   lengthOverall: 'lengthOverall',
   beam: 'beam',
   isActive: 'isActive',
+  organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -158,6 +202,7 @@ export const TerminalScalarFieldEnum = {
   code: 'code',
   name: 'name',
   portId: 'portId',
+  organizationId: 'organizationId',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -176,6 +221,7 @@ export const BerthScalarFieldEnum = {
   zeroOriginSide: 'zeroOriginSide',
   sortOrder: 'sortOrder',
   isActive: 'isActive',
+  organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -189,6 +235,7 @@ export const VesselScheduleScalarFieldEnum = {
   terminalId: 'terminalId',
   berthId: 'berthId',
   serviceId: 'serviceId',
+  organizationId: 'organizationId',
   voyageNumber: 'voyageNumber',
   eta: 'eta',
   etb: 'etb',
