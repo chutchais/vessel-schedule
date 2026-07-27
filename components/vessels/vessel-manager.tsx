@@ -109,6 +109,8 @@ export function VesselManager() {
   const [pageSuccess, setPageSuccess] = useState("");
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     return () => {
       isMountedRef.current = false;
     };

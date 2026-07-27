@@ -1,11 +1,17 @@
 "use client";
 
-import {
-  FormEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertMessage } from "@/components/ui/alert-message";
+import { Button } from "@/components/ui/button";
+import { Drawer } from "@/components/ui/drawer";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FormField } from "@/components/ui/form-field";
+import { Input } from "@/components/ui/input";
+import { LoadingState } from "@/components/ui/loading-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { Select } from "@/components/ui/select";
+import { TableContainer } from "@/components/ui/table-container";
+import { Textarea } from "@/components/ui/textarea";
 
 const SCHEDULE_STATUSES = [
   "PLANNED",
@@ -157,7 +163,7 @@ type ServicesResponse = {
   error?: string;
 };
 
-const initialForm: ScheduleForm = {
+const INITIAL_FORM: ScheduleForm = {
   vesselId: "",
   serviceId: "",
   voyageNumber: "",
@@ -215,10 +221,7 @@ function toIsoUtc(value: string): string | null {
   return date.toISOString();
 }
 
-function formatDateInTimezone(
-  iso: string | null,
-  timezone?: string | null,
-) {
+function formatDateInTimezone(iso: string | null, timezone?: string | null) {
   if (!iso) {
     return "—";
   }
@@ -244,275 +247,153 @@ function formatDateInTimezone(
         timeZone: timezone,
       }).format(date);
     } catch {
-      return new Intl.DateTimeFormat(
-        undefined,
-        options,
-      ).format(date);
+      return new Intl.DateTimeFormat(undefined, options).format(date);
     }
   }
 
-  return new Intl.DateTimeFormat(undefined, options).format(
-    date,
-  );
+  return new Intl.DateTimeFormat(undefined, options).format(date);
 }
 
 function statusBadgeClass(status: ScheduleStatus) {
-  if (status === "PLANNED") {
-    return "bg-blue-100 text-blue-700";
-  }
-  if (status === "CONFIRMED") {
-    return "bg-indigo-100 text-indigo-700";
-  }
-  if (status === "ARRIVED") {
-    return "bg-amber-100 text-amber-700";
-  }
-  if (status === "BERTHED") {
-    return "bg-purple-100 text-purple-700";
-  }
-  if (status === "DEPARTED") {
-    return "bg-emerald-100 text-emerald-700";
-  }
-
-  return "bg-gray-100 text-gray-700";
+  if (status === "PLANNED") return "bg-blue-100 text-blue-700";
+  if (status === "CONFIRMED") return "bg-indigo-100 text-indigo-700";
+  if (status === "ARRIVED") return "bg-amber-100 text-amber-700";
+  if (status === "BERTHED") return "bg-purple-100 text-purple-700";
+  if (status === "DEPARTED") return "bg-emerald-100 text-emerald-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 export function ScheduleManager() {
+  const isMountedRef = useRef(true);
+
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [vessels, setVessels] = useState<Vessel[]>([]);
   const [terminals, setTerminals] = useState<Terminal[]>([]);
   const [berths, setBerths] = useState<Berth[]>([]);
   const [services, setServices] = useState<Service[]>([]);
 
-  const [form, setForm] = useState<ScheduleForm>(initialForm);
-  const [editingId, setEditingId] = useState<string | null>(
-    null,
-  );
+  const [form, setForm] = useState<ScheduleForm>(INITIAL_FORM);
+  const [initialFormState, setInitialFormState] = useState<ScheduleForm>(INITIAL_FORM);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showDiscardChanges, setShowDiscardChanges] = useState(false);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [terminalFilter, setTerminalFilter] =
-    useState("all");
+  const [terminalFilter, setTerminalFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingLabel, setSavingLabel] = useState("");
 
-  const [error, setError] = useState("");
+  const [pageError, setPageError] = useState("");
+  const [drawerError, setDrawerError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function loadSchedulesOnly() {
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const loadSchedulesOnly = useCallback(async () => {
     try {
       const response = await fetch("/api/schedules", {
         method: "GET",
         cache: "no-store",
       });
 
-      const result =
-        (await response.json()) as SchedulesResponse;
-
+      const result = (await response.json()) as SchedulesResponse;
       if (!response.ok) {
-        throw new Error(
-          result.error || "Failed to load schedules",
-        );
+        throw new Error(result.error || "Failed to load schedules");
       }
 
-      setSchedules(
-        Array.isArray(result.data) ? result.data : [],
-      );
-    } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Failed to load schedules",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadInitialData() {
-      try {
-        const [
-          schedulesResponse,
-          vesselsResponse,
-          terminalsResponse,
-          berthsResponse,
-          servicesResponse,
-        ] = await Promise.all([
-          fetch("/api/schedules", {
-            method: "GET",
-            cache: "no-store",
-          }),
-          fetch("/api/vessels", {
-            method: "GET",
-            cache: "no-store",
-          }),
-          fetch("/api/terminals", {
-            method: "GET",
-            cache: "no-store",
-          }),
-          fetch("/api/berths", {
-            method: "GET",
-            cache: "no-store",
-          }),
-          fetch("/api/services", {
-            method: "GET",
-            cache: "no-store",
-          }),
-        ]);
-
-        const schedulesResult =
-          (await schedulesResponse.json()) as SchedulesResponse;
-        const vesselsResult =
-          (await vesselsResponse.json()) as VesselsResponse;
-        const terminalsResult =
-          (await terminalsResponse.json()) as TerminalsResponse;
-        const berthsResult =
-          (await berthsResponse.json()) as BerthsResponse;
-        const servicesResult =
-          (await servicesResponse.json()) as ServicesResponse;
-
-        if (!schedulesResponse.ok) {
-          throw new Error(
-            schedulesResult.error ||
-              "Failed to load schedules",
-          );
-        }
-
-        if (!vesselsResponse.ok) {
-          throw new Error(
-            vesselsResult.error || "Failed to load vessels",
-          );
-        }
-
-        if (!terminalsResponse.ok) {
-          throw new Error(
-            terminalsResult.error ||
-              "Failed to load terminals",
-          );
-        }
-
-        if (!berthsResponse.ok) {
-          throw new Error(
-            berthsResult.error || "Failed to load berths",
-          );
-        }
-
-        if (!servicesResponse.ok) {
-          throw new Error(
-            servicesResult.error ||
-              "Failed to load services",
-          );
-        }
-
-        if (!cancelled) {
-          setSchedules(
-            Array.isArray(schedulesResult.data)
-              ? schedulesResult.data
-              : [],
-          );
-          setVessels(
-            Array.isArray(vesselsResult.data)
-              ? vesselsResult.data
-              : [],
-          );
-          setTerminals(
-            Array.isArray(terminalsResult.data)
-              ? terminalsResult.data
-              : [],
-          );
-          setBerths(
-            Array.isArray(berthsResult.data)
-              ? berthsResult.data
-              : [],
-          );
-          setServices(
-            Array.isArray(servicesResult.data)
-              ? servicesResult.data
-              : [],
-          );
-        }
-      } catch (loadError) {
-        if (!cancelled) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Failed to load schedule data",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+      if (isMountedRef.current) {
+        setSchedules(Array.isArray(result.data) ? result.data : []);
+      }
+    } catch (error) {
+      if (isMountedRef.current) {
+        setPageError(error instanceof Error ? error.message : "Failed to load schedules");
       }
     }
-
-    void loadInitialData();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  const availableVessels = useMemo(() => {
-    return vessels.filter((vessel) => {
-      if (vessel.isActive) {
-        return true;
-      }
+  const loadAllData = useCallback(async () => {
+    if (isMountedRef.current) {
+      setLoading(true);
+      setPageError("");
+    }
 
-      return (
-        editingId !== null && form.vesselId === vessel.id
-      );
-    });
-  }, [vessels, editingId, form.vesselId]);
+    try {
+      const [schedulesResponse, vesselsResponse, terminalsResponse, berthsResponse, servicesResponse] =
+        await Promise.all([
+          fetch("/api/schedules", { method: "GET", cache: "no-store" }),
+          fetch("/api/vessels", { method: "GET", cache: "no-store" }),
+          fetch("/api/terminals", { method: "GET", cache: "no-store" }),
+          fetch("/api/berths", { method: "GET", cache: "no-store" }),
+          fetch("/api/services", { method: "GET", cache: "no-store" }),
+        ]);
+
+      const schedulesResult = (await schedulesResponse.json()) as SchedulesResponse;
+      const vesselsResult = (await vesselsResponse.json()) as VesselsResponse;
+      const terminalsResult = (await terminalsResponse.json()) as TerminalsResponse;
+      const berthsResult = (await berthsResponse.json()) as BerthsResponse;
+      const servicesResult = (await servicesResponse.json()) as ServicesResponse;
+
+      if (!schedulesResponse.ok) throw new Error(schedulesResult.error || "Failed to load schedules");
+      if (!vesselsResponse.ok) throw new Error(vesselsResult.error || "Failed to load vessels");
+      if (!terminalsResponse.ok) throw new Error(terminalsResult.error || "Failed to load terminals");
+      if (!berthsResponse.ok) throw new Error(berthsResult.error || "Failed to load berths");
+      if (!servicesResponse.ok) throw new Error(servicesResult.error || "Failed to load services");
+
+      if (isMountedRef.current) {
+        setSchedules(Array.isArray(schedulesResult.data) ? schedulesResult.data : []);
+        setVessels(Array.isArray(vesselsResult.data) ? vesselsResult.data : []);
+        setTerminals(Array.isArray(terminalsResult.data) ? terminalsResult.data : []);
+        setBerths(Array.isArray(berthsResult.data) ? berthsResult.data : []);
+        setServices(Array.isArray(servicesResult.data) ? servicesResult.data : []);
+      }
+    } catch (error) {
+      if (isMountedRef.current) {
+        setPageError(error instanceof Error ? error.message : "Failed to load schedule data");
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void loadAllData();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [loadAllData]);
+
+  const availableVessels = useMemo(() => {
+    return vessels.filter((vessel) => vessel.isActive || (editingId !== null && form.vesselId === vessel.id));
+  }, [editingId, form.vesselId, vessels]);
 
   const availableTerminals = useMemo(() => {
-    return terminals.filter((terminal) => {
-      if (terminal.isActive) {
-        return true;
-      }
-
-      return (
-        editingId !== null &&
-        form.terminalId === terminal.id
-      );
-    });
-  }, [terminals, editingId, form.terminalId]);
+    return terminals.filter((terminal) => terminal.isActive || (editingId !== null && form.terminalId === terminal.id));
+  }, [editingId, form.terminalId, terminals]);
 
   const availableBerths = useMemo(() => {
-    return berths.filter((berth) => {
-      if (berth.isActive) {
-        return true;
-      }
-
-      return (
-        editingId !== null && form.berthId === berth.id
-      );
-    });
+    return berths.filter((berth) => berth.isActive || (editingId !== null && form.berthId === berth.id));
   }, [berths, editingId, form.berthId]);
 
   const availableServices = useMemo(() => {
-    return services.filter((service) => {
-      if (service.isActive) {
-        return true;
-      }
-
-      return (
-        editingId !== null &&
-        form.serviceId === service.id
-      );
-    });
-  }, [services, editingId, form.serviceId]);
+    return services.filter((service) => service.isActive || (editingId !== null && form.serviceId === service.id));
+  }, [editingId, form.serviceId, services]);
 
   const formBerths = useMemo(() => {
-    return availableBerths.filter(
-      (berth) => berth.terminalId === form.terminalId,
-    );
+    return availableBerths.filter((berth) => berth.terminalId === form.terminalId);
   }, [availableBerths, form.terminalId]);
 
   const filteredSchedules = useMemo(() => {
@@ -521,112 +402,48 @@ export function ScheduleManager() {
     return schedules.filter((schedule) => {
       const matchesSearch =
         !searchText ||
-        schedule.vessel.name
-          .toLowerCase()
-          .includes(searchText) ||
-        (schedule.vessel.imoNumber || "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (schedule.voyageNumber || "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (schedule.service?.code || "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (schedule.service?.name || "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (schedule.service?.company.code || "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (schedule.service?.company.name || "")
-          .toLowerCase()
-          .includes(searchText) ||
-        schedule.terminal.code
-          .toLowerCase()
-          .includes(searchText) ||
-        schedule.terminal.name
-          .toLowerCase()
-          .includes(searchText) ||
-        schedule.terminal.port.code
-          .toLowerCase()
-          .includes(searchText) ||
-        schedule.terminal.port.name
-          .toLowerCase()
-          .includes(searchText) ||
-        (schedule.berth?.code || "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (schedule.berth?.name || "")
-          .toLowerCase()
-          .includes(searchText);
+        schedule.vessel.name.toLowerCase().includes(searchText) ||
+        (schedule.vessel.imoNumber || "").toLowerCase().includes(searchText) ||
+        (schedule.voyageNumber || "").toLowerCase().includes(searchText) ||
+        (schedule.service?.code || "").toLowerCase().includes(searchText) ||
+        (schedule.service?.name || "").toLowerCase().includes(searchText) ||
+        (schedule.service?.company.code || "").toLowerCase().includes(searchText) ||
+        (schedule.service?.company.name || "").toLowerCase().includes(searchText) ||
+        schedule.terminal.code.toLowerCase().includes(searchText) ||
+        schedule.terminal.name.toLowerCase().includes(searchText) ||
+        schedule.terminal.port.code.toLowerCase().includes(searchText) ||
+        schedule.terminal.port.name.toLowerCase().includes(searchText) ||
+        (schedule.berth?.code || "").toLowerCase().includes(searchText) ||
+        (schedule.berth?.name || "").toLowerCase().includes(searchText);
 
-      const matchesStatus =
-        statusFilter === "all" ||
-        schedule.status === statusFilter;
-
-      const matchesTerminal =
-        terminalFilter === "all" ||
-        schedule.terminalId === terminalFilter;
+      const matchesStatus = statusFilter === "all" || schedule.status === statusFilter;
+      const matchesTerminal = terminalFilter === "all" || schedule.terminalId === terminalFilter;
 
       const etaDate = new Date(schedule.eta);
-      const matchesDateFrom = dateFrom
-        ? etaDate >= new Date(`${dateFrom}T00:00:00`)
-        : true;
-      const matchesDateTo = dateTo
-        ? etaDate <= new Date(`${dateTo}T23:59:59.999`)
-        : true;
+      const matchesDateFrom = dateFrom ? etaDate >= new Date(`${dateFrom}T00:00:00`) : true;
+      const matchesDateTo = dateTo ? etaDate <= new Date(`${dateTo}T23:59:59.999`) : true;
 
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesTerminal &&
-        matchesDateFrom &&
-        matchesDateTo
-      );
+      return matchesSearch && matchesStatus && matchesTerminal && matchesDateFrom && matchesDateTo;
     });
-  }, [
-    schedules,
-    search,
-    statusFilter,
-    terminalFilter,
-    dateFrom,
-    dateTo,
-  ]);
+  }, [dateFrom, dateTo, schedules, search, statusFilter, terminalFilter]);
 
-  function resetForm() {
-    setForm(initialForm);
-    setEditingId(null);
-    setError("");
-    setSuccess("");
-  }
+  const hasActiveFilters =
+    search.trim() !== "" || statusFilter !== "all" || terminalFilter !== "all" || dateFrom !== "" || dateTo !== "";
+  const isFormDirty = JSON.stringify(form) !== JSON.stringify(initialFormState);
 
-  function clearFilters() {
-    setSearch("");
-    setStatusFilter("all");
-    setTerminalFilter("all");
-    setDateFrom("");
-    setDateTo("");
-  }
-
-  function updateForm<Field extends keyof ScheduleForm>(
-    field: Field,
-    value: ScheduleForm[Field],
-  ) {
+  function updateForm<Field extends keyof ScheduleForm>(field: Field, value: ScheduleForm[Field]) {
     if (field === "terminalId") {
-      const hasBerthForTerminal = berths.some(
-        (berth) =>
-          berth.id === form.berthId &&
-          berth.terminalId === value,
-      );
+      setForm((current) => {
+        const hasBerthForTerminal = berths.some(
+          (berth) => berth.id === current.berthId && berth.terminalId === value,
+        );
 
-      setForm((current) => ({
-        ...current,
-        terminalId: value as string,
-        berthId: hasBerthForTerminal
-          ? current.berthId
-          : "",
-      }));
+        return {
+          ...current,
+          terminalId: value as string,
+          berthId: hasBerthForTerminal ? current.berthId : "",
+        };
+      });
       return;
     }
 
@@ -636,9 +453,41 @@ export function ScheduleManager() {
     }));
   }
 
+  function closeDrawerImmediately() {
+    setForm(INITIAL_FORM);
+    setInitialFormState(INITIAL_FORM);
+    setEditingId(null);
+    setDrawerError("");
+    setShowDiscardChanges(false);
+    setIsDrawerOpen(false);
+  }
+
+  function requestCloseDrawer() {
+    if (saving) {
+      return;
+    }
+
+    if (isFormDirty) {
+      setShowDiscardChanges(true);
+      return;
+    }
+
+    closeDrawerImmediately();
+  }
+
+  function openCreateDrawer() {
+    setForm(INITIAL_FORM);
+    setInitialFormState(INITIAL_FORM);
+    setEditingId(null);
+    setDrawerError("");
+    setPageError("");
+    setSuccess("");
+    setShowDiscardChanges(false);
+    setIsDrawerOpen(true);
+  }
+
   function startEdit(schedule: Schedule) {
-    setEditingId(schedule.id);
-    setForm({
+    const editForm: ScheduleForm = {
       vesselId: schedule.vesselId,
       serviceId: schedule.serviceId || "",
       voyageNumber: schedule.voyageNumber || "",
@@ -652,24 +501,31 @@ export function ScheduleManager() {
       atd: toDateTimeLocalValue(schedule.atd),
       status: schedule.status,
       remarks: schedule.remarks || "",
-      berthPositionMeters:
-        schedule.berthPositionMeters?.toString() || "",
+      berthPositionMeters: schedule.berthPositionMeters?.toString() || "",
       headingReverse: schedule.headingReverse,
-    });
-    setError("");
-    setSuccess("");
+    };
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    setEditingId(schedule.id);
+    setForm(editForm);
+    setInitialFormState(editForm);
+    setDrawerError("");
+    setPageError("");
+    setSuccess("");
+    setShowDiscardChanges(false);
+    setIsDrawerOpen(true);
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  function clearFilters() {
+    setSearch("");
+    setStatusFilter("all");
+    setTerminalFilter("all");
+    setDateFrom("");
+    setDateTo("");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
+    setDrawerError("");
     setSuccess("");
 
     const etaIso = toIsoUtc(form.eta);
@@ -680,768 +536,197 @@ export function ScheduleManager() {
     const atdIso = toIsoUtc(form.atd);
 
     if (!etaIso) {
-      setError("ETA is required and must be valid");
+      setDrawerError("ETA is required and must be valid");
       return;
     }
 
     if (!etdIso) {
-      setError("ETD is required and must be valid");
+      setDrawerError("ETD is required and must be valid");
+      return;
+    }
+
+    if (!isMountedRef.current) {
       return;
     }
 
     setSaving(true);
-    setSavingLabel(
-      editingId ? "Updating..." : "Creating...",
-    );
 
     try {
-      const response = await fetch(
-        editingId
-          ? `/api/schedules/${editingId}`
-          : "/api/schedules",
-        {
-          method: editingId ? "PATCH" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            vesselId: form.vesselId,
-            serviceId: form.serviceId,
-            voyageNumber: form.voyageNumber,
-            terminalId: form.terminalId,
-            berthId: form.berthId,
-            eta: etaIso,
-            etb: etbIso ?? "",
-            etd: etdIso,
-            ata: ataIso ?? "",
-            atb: atbIso ?? "",
-            atd: atdIso ?? "",
-            status: form.status,
-            remarks: form.remarks,
-            berthPositionMeters:
-              form.berthPositionMeters,
-            headingReverse: form.headingReverse,
-          }),
+      const response = await fetch(editingId ? `/api/schedules/${editingId}` : "/api/schedules", {
+        method: editingId ? "PATCH" : "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          vesselId: form.vesselId,
+          serviceId: form.serviceId,
+          voyageNumber: form.voyageNumber,
+          terminalId: form.terminalId,
+          berthId: form.berthId,
+          eta: etaIso,
+          etb: etbIso ?? "",
+          etd: etdIso,
+          ata: ataIso ?? "",
+          atb: atbIso ?? "",
+          atd: atdIso ?? "",
+          status: form.status,
+          remarks: form.remarks,
+          berthPositionMeters: form.berthPositionMeters,
+          headingReverse: form.headingReverse,
+        }),
+      });
 
-      const result =
-        (await response.json()) as SchedulesSingleResponse;
-
+      const result = (await response.json()) as SchedulesSingleResponse;
       if (!response.ok) {
-        throw new Error(
-          result.error ||
-            `Failed to ${
-              editingId ? "update" : "create"
-            } schedule`,
-        );
+        throw new Error(result.error || `Failed to ${editingId ? "update" : "create"} schedule`);
       }
 
-      setSuccess(
-        editingId
-          ? "Schedule updated successfully"
-          : "Schedule created successfully",
-      );
-      resetForm();
       await loadSchedulesOnly();
-    } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Failed to save schedule",
-      );
+
+      if (isMountedRef.current) {
+        closeDrawerImmediately();
+        setSuccess(editingId ? "Schedule updated successfully." : "Schedule created successfully.");
+      }
+    } catch (error) {
+      if (isMountedRef.current) {
+        setDrawerError(error instanceof Error ? error.message : "Failed to save schedule");
+      }
     } finally {
-      setSaving(false);
-      setSavingLabel("");
+      if (isMountedRef.current) {
+        setSaving(false);
+      }
     }
   }
 
   return (
-    <main className="mx-auto max-w-7xl space-y-8 p-6">
-      <section>
-        <h1 className="text-3xl font-bold">
-          Vessel Schedule Management
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Create and edit vessel schedules by terminal and
-          berth.
-        </p>
-      </section>
+    <section className="mx-auto max-w-7xl">
+      <PageHeader
+        title="Vessel Schedule Management"
+        description="Create and edit vessel schedules by terminal and berth"
+        actions={<Button onClick={openCreateDrawer}>Add Schedule</Button>}
+      />
 
-      <section className="rounded-lg border bg-white p-6 shadow-sm">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">
-              {editingId
-                ? "Edit Schedule"
-                : "Create Schedule"}
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              {editingId
-                ? "Update the selected schedule."
-                : "Add a new vessel schedule."}
-            </p>
-          </div>
+      {success ? <AlertMessage type="success" message={success} className="mb-4" /> : null}
+      {pageError ? <AlertMessage type="error" message={pageError} className="mb-4" /> : null}
 
-          {editingId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50"
-            >
-              Cancel Edit
-            </button>
-          )}
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
-            {success}
-          </div>
-        )}
-
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-4 md:grid-cols-2"
-        >
-          <div>
-            <label
-              htmlFor="vesselId"
-              className="mb-1 block text-sm font-medium"
-            >
-              Vessel
-            </label>
-            <select
-              id="vesselId"
-              value={form.vesselId}
-              onChange={(event) =>
-                updateForm("vesselId", event.target.value)
-              }
-              required
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            >
-              <option value="">Select Vessel</option>
-              {availableVessels.map((vessel) => (
-                <option key={vessel.id} value={vessel.id}>
-                  {vessel.name}
-                  {vessel.imo ? ` (${vessel.imo})` : ""}
-                  {!vessel.isActive
-                    ? " (Inactive)"
-                    : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="serviceId"
-              className="mb-1 block text-sm font-medium"
-            >
-              Service
-            </label>
-            <select
-              id="serviceId"
-              value={form.serviceId}
-              onChange={(event) =>
-                updateForm("serviceId", event.target.value)
-              }
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            >
-              <option value="">No Service</option>
-              {availableServices.map((service) => (
-                <option
-                  key={service.id}
-                  value={service.id}
-                >
-                  {service.code} - {service.name}
-                  {!service.isActive
-                    ? " (Inactive)"
-                    : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="voyageNumber"
-              className="mb-1 block text-sm font-medium"
-            >
-              Voyage Number
-            </label>
-            <input
-              id="voyageNumber"
-              type="text"
-              value={form.voyageNumber}
-              onChange={(event) =>
-                updateForm(
-                  "voyageNumber",
-                  event.target.value,
-                )
-              }
-              maxLength={50}
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
+      <div className="mb-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="grid gap-3 md:grid-cols-5">
+          <FormField label="Search" htmlFor="schedule-search" className="md:col-span-2">
+            <Input
+              id="schedule-search"
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Vessel, voyage, terminal, berth"
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label
-              htmlFor="terminalId"
-              className="mb-1 block text-sm font-medium"
-            >
-              Terminal
-            </label>
-            <select
-              id="terminalId"
-              value={form.terminalId}
-              onChange={(event) =>
-                updateForm(
-                  "terminalId",
-                  event.target.value,
-                )
-              }
-              required
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            >
-              <option value="">Select Terminal</option>
-              {availableTerminals.map((terminal) => (
-                <option
-                  key={terminal.id}
-                  value={terminal.id}
-                >
-                  {terminal.port.code}/{terminal.code} -{" "}
-                  {terminal.name}
-                  {!terminal.isActive
-                    ? " (Inactive)"
-                    : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="berthId"
-              className="mb-1 block text-sm font-medium"
-            >
-              Berth
-            </label>
-            <select
-              id="berthId"
-              value={form.berthId}
-              onChange={(event) =>
-                updateForm("berthId", event.target.value)
-              }
-              disabled={saving || !form.terminalId}
-              className="w-full rounded-md border px-3 py-2"
-            >
-              <option value="">
-                {form.terminalId
-                  ? "No Berth"
-                  : "Select Terminal First"}
-              </option>
-              {formBerths.map((berth) => (
-                <option key={berth.id} value={berth.id}>
-                  {berth.code} - {berth.name}
-                  {!berth.isActive
-                    ? " (Inactive)"
-                    : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="eta"
-              className="mb-1 block text-sm font-medium"
-            >
-              ETA
-            </label>
-            <input
-              id="eta"
-              type="datetime-local"
-              value={form.eta}
-              onChange={(event) =>
-                updateForm("eta", event.target.value)
-              }
-              required
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="etb"
-              className="mb-1 block text-sm font-medium"
-            >
-              ETB
-            </label>
-            <input
-              id="etb"
-              type="datetime-local"
-              value={form.etb}
-              onChange={(event) =>
-                updateForm("etb", event.target.value)
-              }
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="etd"
-              className="mb-1 block text-sm font-medium"
-            >
-              ETD
-            </label>
-            <input
-              id="etd"
-              type="datetime-local"
-              value={form.etd}
-              onChange={(event) =>
-                updateForm("etd", event.target.value)
-              }
-              required
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="ata"
-              className="mb-1 block text-sm font-medium"
-            >
-              ATA
-            </label>
-            <input
-              id="ata"
-              type="datetime-local"
-              value={form.ata}
-              onChange={(event) =>
-                updateForm("ata", event.target.value)
-              }
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="atb"
-              className="mb-1 block text-sm font-medium"
-            >
-              ATB
-            </label>
-            <input
-              id="atb"
-              type="datetime-local"
-              value={form.atb}
-              onChange={(event) =>
-                updateForm("atb", event.target.value)
-              }
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="atd"
-              className="mb-1 block text-sm font-medium"
-            >
-              ATD
-            </label>
-            <input
-              id="atd"
-              type="datetime-local"
-              value={form.atd}
-              onChange={(event) =>
-                updateForm("atd", event.target.value)
-              }
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="status"
-              className="mb-1 block text-sm font-medium"
-            >
-              Status
-            </label>
-            <select
-              id="status"
-              value={form.status}
-              onChange={(event) =>
-                updateForm(
-                  "status",
-                  event.target.value as ScheduleStatus,
-                )
-              }
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            >
+          <FormField label="Status" htmlFor="schedule-status-filter">
+            <Select id="schedule-status-filter" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option value="all">All</option>
               {SCHEDULE_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {formatStatus(status)}
                 </option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
-          <div className="md:col-span-2">
-            <label
-              htmlFor="remarks"
-              className="mb-1 block text-sm font-medium"
-            >
-              Remarks
-            </label>
-            <textarea
-              id="remarks"
-              value={form.remarks}
-              onChange={(event) =>
-                updateForm("remarks", event.target.value)
-              }
-              rows={3}
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
+          <FormField label="Terminal" htmlFor="schedule-terminal-filter">
+            <Select id="schedule-terminal-filter" value={terminalFilter} onChange={(event) => setTerminalFilter(event.target.value)}>
+              <option value="all">All</option>
+              {terminals.map((terminal) => (
+                <option key={terminal.id} value={terminal.id}>
+                  {terminal.port.code}/{terminal.code}
+                </option>
+              ))}
+            </Select>
+          </FormField>
 
-          <div>
-            <label
-              htmlFor="berthPositionMeters"
-              className="mb-1 block text-sm font-medium"
-            >
-              Berth Position (meters)
-            </label>
-            <input
-              id="berthPositionMeters"
-              type="number"
-              min="0"
-              step="1"
-              value={form.berthPositionMeters}
-              onChange={(event) =>
-                updateForm(
-                  "berthPositionMeters",
-                  event.target.value,
-                )
-              }
-              disabled={saving}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
+          <FormField label="Date From" htmlFor="schedule-date-from">
+            <Input id="schedule-date-from" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+          </FormField>
 
-          <div className="flex items-end">
-            <label className="flex items-center gap-2 rounded-md border px-3 py-2">
-              <input
-                type="checkbox"
-                checked={form.headingReverse}
-                onChange={(event) =>
-                  updateForm(
-                    "headingReverse",
-                    event.target.checked,
-                  )
-                }
-                disabled={saving}
-              />
-              <span className="text-sm font-medium">
-                Heading Reverse
-              </span>
-            </label>
-          </div>
-
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-md bg-black px-5 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving
-                ? savingLabel
-                : editingId
-                  ? "Update Schedule"
-                  : "Create Schedule"}
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section className="rounded-lg border bg-white p-6 shadow-sm">
-        <div className="mb-5 flex flex-col gap-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">
-                Schedules
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                {filteredSchedules.length} schedule
-                {filteredSchedules.length === 1
-                  ? ""
-                  : "s"}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50"
-            >
-              Clear Filters
-            </button>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-5">
-            <div>
-              <label
-                htmlFor="search"
-                className="mb-1 block text-sm font-medium"
-              >
-                Search
-              </label>
-              <input
-                id="search"
-                type="search"
-                value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
-                placeholder="Vessel, voyage, terminal, berth"
-                className="w-full rounded-md border px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="statusFilter"
-                className="mb-1 block text-sm font-medium"
-              >
-                Status
-              </label>
-              <select
-                id="statusFilter"
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(
-                    event.target.value,
-                  )
-                }
-                className="w-full rounded-md border px-3 py-2"
-              >
-                <option value="all">All</option>
-                {SCHEDULE_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {formatStatus(status)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="terminalFilter"
-                className="mb-1 block text-sm font-medium"
-              >
-                Terminal
-              </label>
-              <select
-                id="terminalFilter"
-                value={terminalFilter}
-                onChange={(event) =>
-                  setTerminalFilter(
-                    event.target.value,
-                  )
-                }
-                className="w-full rounded-md border px-3 py-2"
-              >
-                <option value="all">All</option>
-                {terminals.map((terminal) => (
-                  <option
-                    key={terminal.id}
-                    value={terminal.id}
-                  >
-                    {terminal.port.code}/{terminal.code}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="dateFrom"
-                className="mb-1 block text-sm font-medium"
-              >
-                Date From
-              </label>
-              <input
-                id="dateFrom"
-                type="date"
-                value={dateFrom}
-                onChange={(event) =>
-                  setDateFrom(event.target.value)
-                }
-                className="w-full rounded-md border px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="dateTo"
-                className="mb-1 block text-sm font-medium"
-              >
-                Date To
-              </label>
-              <input
-                id="dateTo"
-                type="date"
-                value={dateTo}
-                onChange={(event) =>
-                  setDateTo(event.target.value)
-                }
-                className="w-full rounded-md border px-3 py-2"
-              />
-            </div>
-          </div>
+          <FormField label="Date To" htmlFor="schedule-date-to">
+            <Input id="schedule-date-to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+          </FormField>
         </div>
 
+        <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-slate-600">
+            Showing {filteredSchedules.length} of {schedules.length} schedules
+          </p>
+          {hasActiveFilters ? (
+            <Button variant="secondary" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      <TableContainer footer={`${filteredSchedules.length} ${filteredSchedules.length === 1 ? "schedule" : "schedules"}`}>
         {loading ? (
-          <div className="py-10 text-center text-sm text-gray-500">
-            Loading schedules...
-          </div>
+          <LoadingState message="Loading schedules..." />
         ) : filteredSchedules.length === 0 ? (
-          <div className="rounded-md border border-dashed py-10 text-center text-sm text-gray-500">
-            No schedules found.
+          <div className="p-4">
+            <EmptyState title="No schedules found" description="Try adjusting your search or filter settings." />
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="px-4 py-3 font-semibold">
-                    Vessel
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    IMO Number
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    Voyage
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    Service
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    Port
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    Terminal
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    Berth
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    ETA
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    ETB
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    ETD
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 font-semibold">
-                    Actions
-                  </th>
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-slate-50">
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Vessel</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">IMO Number</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Voyage</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Service</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Port</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Terminal</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Berth</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">ETA</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">ETB</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">ETD</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Status</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Actions</th>
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {filteredSchedules.map((schedule) => (
-                  <tr
-                    key={schedule.id}
-                    className="border-b last:border-b-0"
-                  >
-                    <td className="px-4 py-3 font-medium">
-                      {schedule.vessel.name}
+                  <tr key={schedule.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-medium text-slate-900">{schedule.vessel.name}</td>
+                    <td className="px-4 py-3 text-slate-700">{schedule.vessel.imoNumber || "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{schedule.voyageNumber || "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {schedule.service ? `${schedule.service.code} - ${schedule.service.name}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {schedule.terminal.port.code} - {schedule.terminal.port.name}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {schedule.terminal.code} - {schedule.terminal.name}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {schedule.berth ? `${schedule.berth.code} - ${schedule.berth.name}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {formatDateInTimezone(schedule.eta, schedule.terminal.port.timezone)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {formatDateInTimezone(schedule.etb, schedule.terminal.port.timezone)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {formatDateInTimezone(schedule.etd, schedule.terminal.port.timezone)}
                     </td>
                     <td className="px-4 py-3">
-                      {schedule.vessel.imoNumber || "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {schedule.voyageNumber || "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {schedule.service
-                        ? `${schedule.service.code} - ${schedule.service.name}`
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {schedule.terminal.port.code} -{" "}
-                      {schedule.terminal.port.name}
-                    </td>
-                    <td className="px-4 py-3">
-                      {schedule.terminal.code} -{" "}
-                      {schedule.terminal.name}
-                    </td>
-                    <td className="px-4 py-3">
-                      {schedule.berth
-                        ? `${schedule.berth.code} - ${schedule.berth.name}`
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {formatDateInTimezone(
-                        schedule.eta,
-                        schedule.terminal.port.timezone,
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {formatDateInTimezone(
-                        schedule.etb,
-                        schedule.terminal.port.timezone,
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {formatDateInTimezone(
-                        schedule.etd,
-                        schedule.terminal.port.timezone,
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${statusBadgeClass(
-                          schedule.status,
-                        )}`}
-                      >
+                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusBadgeClass(schedule.status)}`}>
                         {formatStatus(schedule.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          startEdit(schedule)
-                        }
-                        className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
-                      >
+                      <Button variant="secondary" className="h-8 px-3 text-xs" onClick={() => startEdit(schedule)}>
                         Edit
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -1449,7 +734,237 @@ export function ScheduleManager() {
             </table>
           </div>
         )}
-      </section>
-    </main>
+      </TableContainer>
+
+      <Drawer
+        isOpen={isDrawerOpen}
+        title={editingId ? "Edit Schedule" : "Create Schedule"}
+        description="Add or update vessel schedules."
+        onRequestClose={requestCloseDrawer}
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="secondary" onClick={requestCloseDrawer} disabled={saving}>
+              Cancel
+            </Button>
+            <Button type="submit" form="schedule-form" disabled={saving}>
+              {saving ? (editingId ? "Updating..." : "Creating...") : editingId ? "Update Schedule" : "Create Schedule"}
+            </Button>
+          </div>
+        }
+      >
+        {showDiscardChanges ? (
+          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm font-medium text-amber-800">You have unsaved changes.</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button variant="secondary" className="h-8 px-3 text-xs" onClick={() => setShowDiscardChanges(false)}>
+                Keep editing
+              </Button>
+              <Button variant="danger" className="h-8 px-3 text-xs" onClick={closeDrawerImmediately}>
+                Discard changes
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {drawerError ? <AlertMessage type="error" message={drawerError} className="mb-4" /> : null}
+
+        <form id="schedule-form" onSubmit={handleSubmit}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField label="Vessel" htmlFor="schedule-vessel" required>
+              <Select
+                id="schedule-vessel"
+                value={form.vesselId}
+                onChange={(event) => updateForm("vesselId", event.target.value)}
+                required
+                disabled={saving}
+              >
+                <option value="">Select Vessel</option>
+                {availableVessels.map((vessel) => (
+                  <option key={vessel.id} value={vessel.id}>
+                    {vessel.name}
+                    {vessel.imo ? ` (${vessel.imo})` : ""}
+                    {!vessel.isActive ? " (Inactive)" : ""}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+
+            <FormField label="Service" htmlFor="schedule-service">
+              <Select
+                id="schedule-service"
+                value={form.serviceId}
+                onChange={(event) => updateForm("serviceId", event.target.value)}
+                disabled={saving}
+              >
+                <option value="">No Service</option>
+                {availableServices.map((service) => (
+                  <option key={service.id} value={service.id}>
+                    {service.code} - {service.name}
+                    {!service.isActive ? " (Inactive)" : ""}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+
+            <FormField label="Voyage Number" htmlFor="schedule-voyage">
+              <Input
+                id="schedule-voyage"
+                value={form.voyageNumber}
+                onChange={(event) => updateForm("voyageNumber", event.target.value)}
+                maxLength={50}
+                disabled={saving}
+              />
+            </FormField>
+
+            <FormField label="Terminal" htmlFor="schedule-terminal" required>
+              <Select
+                id="schedule-terminal"
+                value={form.terminalId}
+                onChange={(event) => updateForm("terminalId", event.target.value)}
+                required
+                disabled={saving}
+              >
+                <option value="">Select Terminal</option>
+                {availableTerminals.map((terminal) => (
+                  <option key={terminal.id} value={terminal.id}>
+                    {terminal.port.code}/{terminal.code} - {terminal.name}
+                    {!terminal.isActive ? " (Inactive)" : ""}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+
+            <FormField label="Berth" htmlFor="schedule-berth">
+              <Select
+                id="schedule-berth"
+                value={form.berthId}
+                onChange={(event) => updateForm("berthId", event.target.value)}
+                disabled={saving || !form.terminalId}
+              >
+                <option value="">{form.terminalId ? "No Berth" : "Select Terminal First"}</option>
+                {formBerths.map((berth) => (
+                  <option key={berth.id} value={berth.id}>
+                    {berth.code} - {berth.name}
+                    {!berth.isActive ? " (Inactive)" : ""}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+
+            <FormField label="ETA" htmlFor="schedule-eta" required>
+              <Input
+                id="schedule-eta"
+                type="datetime-local"
+                value={form.eta}
+                onChange={(event) => updateForm("eta", event.target.value)}
+                required
+                disabled={saving}
+              />
+            </FormField>
+
+            <FormField label="ETB" htmlFor="schedule-etb">
+              <Input
+                id="schedule-etb"
+                type="datetime-local"
+                value={form.etb}
+                onChange={(event) => updateForm("etb", event.target.value)}
+                disabled={saving}
+              />
+            </FormField>
+
+            <FormField label="ETD" htmlFor="schedule-etd" required>
+              <Input
+                id="schedule-etd"
+                type="datetime-local"
+                value={form.etd}
+                onChange={(event) => updateForm("etd", event.target.value)}
+                required
+                disabled={saving}
+              />
+            </FormField>
+
+            <FormField label="ATA" htmlFor="schedule-ata">
+              <Input
+                id="schedule-ata"
+                type="datetime-local"
+                value={form.ata}
+                onChange={(event) => updateForm("ata", event.target.value)}
+                disabled={saving}
+              />
+            </FormField>
+
+            <FormField label="ATB" htmlFor="schedule-atb">
+              <Input
+                id="schedule-atb"
+                type="datetime-local"
+                value={form.atb}
+                onChange={(event) => updateForm("atb", event.target.value)}
+                disabled={saving}
+              />
+            </FormField>
+
+            <FormField label="ATD" htmlFor="schedule-atd">
+              <Input
+                id="schedule-atd"
+                type="datetime-local"
+                value={form.atd}
+                onChange={(event) => updateForm("atd", event.target.value)}
+                disabled={saving}
+              />
+            </FormField>
+
+            <FormField label="Status" htmlFor="schedule-status">
+              <Select
+                id="schedule-status"
+                value={form.status}
+                onChange={(event) => updateForm("status", event.target.value as ScheduleStatus)}
+                disabled={saving}
+              >
+                {SCHEDULE_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {formatStatus(status)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+
+            <FormField label="Berth Position (meters)" htmlFor="schedule-berth-position">
+              <Input
+                id="schedule-berth-position"
+                type="number"
+                min="0"
+                step="1"
+                value={form.berthPositionMeters}
+                onChange={(event) => updateForm("berthPositionMeters", event.target.value)}
+                disabled={saving}
+              />
+            </FormField>
+
+            <FormField label="Remarks" htmlFor="schedule-remarks" className="md:col-span-2">
+              <Textarea
+                id="schedule-remarks"
+                value={form.remarks}
+                onChange={(event) => updateForm("remarks", event.target.value)}
+                rows={3}
+                disabled={saving}
+              />
+            </FormField>
+
+            <div className="flex items-end pb-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.headingReverse}
+                  onChange={(event) => updateForm("headingReverse", event.target.checked)}
+                  disabled={saving}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                Heading Reverse
+              </label>
+            </div>
+          </div>
+        </form>
+      </Drawer>
+    </section>
   );
 }
