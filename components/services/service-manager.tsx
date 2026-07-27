@@ -44,7 +44,7 @@ type Service = {
     name: string;
     type: CompanyType;
     isActive: boolean;
-  };
+  } | null;
 };
 
 type ServiceForm = {
@@ -236,8 +236,8 @@ export function ServiceManager() {
         service.code.toLowerCase().includes(query) ||
         service.name.toLowerCase().includes(query) ||
         description.toLowerCase().includes(query) ||
-        service.company.code.toLowerCase().includes(query) ||
-        service.company.name.toLowerCase().includes(query);
+        service.company?.code.toLowerCase().includes(query) ||
+        service.company?.name.toLowerCase().includes(query);
 
       const matchesStatus =
         statusFilter === "all" ||
@@ -441,7 +441,7 @@ export function ServiceManager() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl">
+    <section>
       <PageHeader
         title="Service Management"
         description="Create, edit, activate, and deactivate shipping services"
@@ -532,8 +532,8 @@ export function ServiceManager() {
                     <td className="px-4 py-3 font-medium text-slate-900">{service.code}</td>
                     <td className="px-4 py-3 text-slate-900">{service.name}</td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900">{service.company.code}</div>
-                      <div className="text-xs text-slate-500">{service.company.name}</div>
+                      <div className="font-medium text-slate-900">{service.company?.code ?? "—"}</div>
+                      <div className="text-xs text-slate-500">{service.company?.name ?? "—"}</div>
                     </td>
                     <td className="px-4 py-3 text-slate-700">{service.description || "—"}</td>
                     <td className="px-4 py-3">

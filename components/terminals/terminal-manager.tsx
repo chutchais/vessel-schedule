@@ -345,7 +345,7 @@ export function TerminalManager() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl">
+    <section>
       <PageHeader
         title="Terminal Management"
         description="Create, edit, activate, and deactivate terminals"

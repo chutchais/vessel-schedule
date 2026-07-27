@@ -599,7 +599,7 @@ export function ScheduleManager() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl">
+    <section>
       <PageHeader
         title="Vessel Schedule Management"
         description="Create and edit vessel schedules by terminal and berth"

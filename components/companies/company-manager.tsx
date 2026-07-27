@@ -337,7 +337,7 @@ export function CompanyManager() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl">
+    <section>
       <PageHeader
         title="Company Management"
         description="Manage shipping lines, agents, terminal operators, and port authorities"

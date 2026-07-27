@@ -350,7 +350,7 @@ export function VesselManager() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl">
+    <section>
       <PageHeader
         title="Vessel Management"
         description="Manage vessel master data"

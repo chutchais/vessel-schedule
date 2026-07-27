@@ -335,7 +335,7 @@ export default function PortManager() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl">
+    <section>
       <PageHeader
         title="Port Management"
         description="Manage ports used in vessel schedules"
