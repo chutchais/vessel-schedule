@@ -160,7 +160,7 @@ export function SidebarNavigation({ className = "", onNavigate }: SidebarNavigat
 
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/login");
+      router.push("/");
       router.refresh();
     } finally {
       setIsLoggingOut(false);
