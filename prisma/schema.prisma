@@ -39,6 +39,21 @@ enum OrganizationRole {
   VIEWER
 }
 
+enum OrganizationInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+  DECLINED
+}
+
+enum InvitationDeliveryStatus {
+  NOT_ATTEMPTED
+  SENT
+  EXISTING_ACCOUNT
+  FAILED
+}
+
 // ─── Multi-tenant foundation ──────────────────────────────────────────────────
 
 model Organization {
@@ -49,7 +64,8 @@ model Organization {
   isActive Boolean @default(true)
 
   members                 OrganizationMember[]
-  requestsForOrganization OrganizationRequest[] @relation("OrganizationForRequest")
+  requestsForOrganization OrganizationRequest[]    @relation("OrganizationForRequest")
+  invitations             OrganizationInvitation[]
 
   companies       Company[]
   ports           Port[]
@@ -78,6 +94,9 @@ model User {
 
   memberships    OrganizationMember[]
   approvalsGiven OrganizationRequest[] @relation("ApprovedBy")
+
+  sentOrganizationInvitations     OrganizationInvitation[] @relation("OrganizationInvitationInviter")
+  acceptedOrganizationInvitations OrganizationInvitation[] @relation("OrganizationInvitationAcceptor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -146,6 +165,48 @@ model OrganizationRequest {
   @@index([reviewedById])
   @@index([createdAt])
   @@map("organization_requests")
+}
+
+model OrganizationInvitation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  email       String           @db.VarChar(255)
+  displayName String?          @db.VarChar(200)
+  role        OrganizationRole
+
+  status         OrganizationInvitationStatus @default(PENDING)
+  deliveryStatus InvitationDeliveryStatus     @default(NOT_ATTEMPTED)
+
+  pendingKey String? @unique @db.VarChar(300)
+
+  authUserId String? @db.Uuid
+
+  invitedById String @db.Uuid
+  invitedBy   User   @relation("OrganizationInvitationInviter", fields: [invitedById], references: [id], onDelete: Restrict)
+
+  acceptedById String? @db.Uuid
+  acceptedBy   User?   @relation("OrganizationInvitationAcceptor", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  invitationSentAt DateTime?
+  acceptedAt       DateTime?
+  revokedAt        DateTime?
+  expiresAt        DateTime
+
+  deliveryError String? @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([email])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([invitedById])
+  @@index([acceptedById])
+  @@map("organization_invitations")
 }
 
 // ─── Operational models ───────────────────────────────────────────────────────

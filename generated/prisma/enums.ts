@@ -39,6 +39,27 @@ export const OrganizationRole = {
 export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole]
 
 
+export const OrganizationInvitationStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  EXPIRED: 'EXPIRED',
+  REVOKED: 'REVOKED',
+  DECLINED: 'DECLINED'
+} as const
+
+export type OrganizationInvitationStatus = (typeof OrganizationInvitationStatus)[keyof typeof OrganizationInvitationStatus]
+
+
+export const InvitationDeliveryStatus = {
+  NOT_ATTEMPTED: 'NOT_ATTEMPTED',
+  SENT: 'SENT',
+  EXISTING_ACCOUNT: 'EXISTING_ACCOUNT',
+  FAILED: 'FAILED'
+} as const
+
+export type InvitationDeliveryStatus = (typeof InvitationDeliveryStatus)[keyof typeof InvitationDeliveryStatus]
+
+
 export const CompanyType = {
   SHIPPING_LINE: 'SHIPPING_LINE',
   SHIPPING_AGENT: 'SHIPPING_AGENT',

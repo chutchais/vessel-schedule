@@ -253,6 +253,40 @@ export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
 }
 
+export type EnumOrganizationInvitationStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.OrganizationInvitationStatus | Prisma.EnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.OrganizationInvitationStatus[] | Prisma.ListEnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.OrganizationInvitationStatus[] | Prisma.ListEnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumOrganizationInvitationStatusFilter<$PrismaModel> | $Enums.OrganizationInvitationStatus
+}
+
+export type EnumInvitationDeliveryStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.InvitationDeliveryStatus | Prisma.EnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.InvitationDeliveryStatus[] | Prisma.ListEnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InvitationDeliveryStatus[] | Prisma.ListEnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInvitationDeliveryStatusFilter<$PrismaModel> | $Enums.InvitationDeliveryStatus
+}
+
+export type EnumOrganizationInvitationStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.OrganizationInvitationStatus | Prisma.EnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.OrganizationInvitationStatus[] | Prisma.ListEnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.OrganizationInvitationStatus[] | Prisma.ListEnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumOrganizationInvitationStatusWithAggregatesFilter<$PrismaModel> | $Enums.OrganizationInvitationStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumOrganizationInvitationStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumOrganizationInvitationStatusFilter<$PrismaModel>
+}
+
+export type EnumInvitationDeliveryStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InvitationDeliveryStatus | Prisma.EnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.InvitationDeliveryStatus[] | Prisma.ListEnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InvitationDeliveryStatus[] | Prisma.ListEnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInvitationDeliveryStatusWithAggregatesFilter<$PrismaModel> | $Enums.InvitationDeliveryStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInvitationDeliveryStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInvitationDeliveryStatusFilter<$PrismaModel>
+}
+
 export type EnumCompanyTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.CompanyType | Prisma.EnumCompanyTypeFieldRefInput<$PrismaModel>
   in?: $Enums.CompanyType[] | Prisma.ListEnumCompanyTypeFieldRefInput<$PrismaModel>
@@ -675,6 +709,40 @@ export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumOrganizationInvitationStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.OrganizationInvitationStatus | Prisma.EnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.OrganizationInvitationStatus[] | Prisma.ListEnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.OrganizationInvitationStatus[] | Prisma.ListEnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumOrganizationInvitationStatusFilter<$PrismaModel> | $Enums.OrganizationInvitationStatus
+}
+
+export type NestedEnumInvitationDeliveryStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.InvitationDeliveryStatus | Prisma.EnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.InvitationDeliveryStatus[] | Prisma.ListEnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InvitationDeliveryStatus[] | Prisma.ListEnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInvitationDeliveryStatusFilter<$PrismaModel> | $Enums.InvitationDeliveryStatus
+}
+
+export type NestedEnumOrganizationInvitationStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.OrganizationInvitationStatus | Prisma.EnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.OrganizationInvitationStatus[] | Prisma.ListEnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.OrganizationInvitationStatus[] | Prisma.ListEnumOrganizationInvitationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumOrganizationInvitationStatusWithAggregatesFilter<$PrismaModel> | $Enums.OrganizationInvitationStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumOrganizationInvitationStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumOrganizationInvitationStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumInvitationDeliveryStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InvitationDeliveryStatus | Prisma.EnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.InvitationDeliveryStatus[] | Prisma.ListEnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InvitationDeliveryStatus[] | Prisma.ListEnumInvitationDeliveryStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInvitationDeliveryStatusWithAggregatesFilter<$PrismaModel> | $Enums.InvitationDeliveryStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInvitationDeliveryStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInvitationDeliveryStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumCompanyTypeFilter<$PrismaModel = never> = {

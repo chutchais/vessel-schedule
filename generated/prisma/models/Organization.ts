@@ -192,6 +192,7 @@ export type OrganizationWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Organization"> | Date | string
   members?: Prisma.OrganizationMemberListRelationFilter
   requestsForOrganization?: Prisma.OrganizationRequestListRelationFilter
+  invitations?: Prisma.OrganizationInvitationListRelationFilter
   companies?: Prisma.CompanyListRelationFilter
   ports?: Prisma.PortListRelationFilter
   terminals?: Prisma.TerminalListRelationFilter
@@ -210,6 +211,7 @@ export type OrganizationOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   members?: Prisma.OrganizationMemberOrderByRelationAggregateInput
   requestsForOrganization?: Prisma.OrganizationRequestOrderByRelationAggregateInput
+  invitations?: Prisma.OrganizationInvitationOrderByRelationAggregateInput
   companies?: Prisma.CompanyOrderByRelationAggregateInput
   ports?: Prisma.PortOrderByRelationAggregateInput
   terminals?: Prisma.TerminalOrderByRelationAggregateInput
@@ -231,6 +233,7 @@ export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Organization"> | Date | string
   members?: Prisma.OrganizationMemberListRelationFilter
   requestsForOrganization?: Prisma.OrganizationRequestListRelationFilter
+  invitations?: Prisma.OrganizationInvitationListRelationFilter
   companies?: Prisma.CompanyListRelationFilter
   ports?: Prisma.PortListRelationFilter
   terminals?: Prisma.TerminalListRelationFilter
@@ -273,6 +276,7 @@ export type OrganizationCreateInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
@@ -291,6 +295,7 @@ export type OrganizationUncheckedCreateInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
@@ -309,6 +314,7 @@ export type OrganizationUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
@@ -327,6 +333,7 @@ export type OrganizationUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -432,6 +439,20 @@ export type OrganizationUpdateOneWithoutRequestsForOrganizationNestedInput = {
   delete?: Prisma.OrganizationWhereInput | boolean
   connect?: Prisma.OrganizationWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutRequestsForOrganizationInput, Prisma.OrganizationUpdateWithoutRequestsForOrganizationInput>, Prisma.OrganizationUncheckedUpdateWithoutRequestsForOrganizationInput>
+}
+
+export type OrganizationCreateNestedOneWithoutInvitationsInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutInvitationsInput, Prisma.OrganizationUncheckedCreateWithoutInvitationsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutInvitationsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+}
+
+export type OrganizationUpdateOneRequiredWithoutInvitationsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutInvitationsInput, Prisma.OrganizationUncheckedCreateWithoutInvitationsInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutInvitationsInput
+  upsert?: Prisma.OrganizationUpsertWithoutInvitationsInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutInvitationsInput, Prisma.OrganizationUpdateWithoutInvitationsInput>, Prisma.OrganizationUncheckedUpdateWithoutInvitationsInput>
 }
 
 export type OrganizationCreateNestedOneWithoutCompaniesInput = {
@@ -540,6 +561,7 @@ export type OrganizationCreateWithoutMembersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
@@ -557,6 +579,7 @@ export type OrganizationUncheckedCreateWithoutMembersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
@@ -590,6 +613,7 @@ export type OrganizationUpdateWithoutMembersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
@@ -607,6 +631,7 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -624,6 +649,7 @@ export type OrganizationCreateWithoutRequestsForOrganizationInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
@@ -641,6 +667,7 @@ export type OrganizationUncheckedCreateWithoutRequestsForOrganizationInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
@@ -674,6 +701,7 @@ export type OrganizationUpdateWithoutRequestsForOrganizationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
@@ -691,6 +719,95 @@ export type OrganizationUncheckedUpdateWithoutRequestsForOrganizationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
+  companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
+  ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
+  terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
+  berths?: Prisma.BerthUncheckedUpdateManyWithoutOrganizationNestedInput
+  vessels?: Prisma.VesselUncheckedUpdateManyWithoutOrganizationNestedInput
+  services?: Prisma.ServiceUncheckedUpdateManyWithoutOrganizationNestedInput
+  vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationCreateWithoutInvitationsInput = {
+  id?: string
+  name: string
+  slug: string
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
+  requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
+  ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
+  terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
+  berths?: Prisma.BerthCreateNestedManyWithoutOrganizationInput
+  vessels?: Prisma.VesselCreateNestedManyWithoutOrganizationInput
+  services?: Prisma.ServiceCreateNestedManyWithoutOrganizationInput
+  vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationUncheckedCreateWithoutInvitationsInput = {
+  id?: string
+  name: string
+  slug: string
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
+  requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
+  ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
+  terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
+  berths?: Prisma.BerthUncheckedCreateNestedManyWithoutOrganizationInput
+  vessels?: Prisma.VesselUncheckedCreateNestedManyWithoutOrganizationInput
+  services?: Prisma.ServiceUncheckedCreateNestedManyWithoutOrganizationInput
+  vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationCreateOrConnectWithoutInvitationsInput = {
+  where: Prisma.OrganizationWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutInvitationsInput, Prisma.OrganizationUncheckedCreateWithoutInvitationsInput>
+}
+
+export type OrganizationUpsertWithoutInvitationsInput = {
+  update: Prisma.XOR<Prisma.OrganizationUpdateWithoutInvitationsInput, Prisma.OrganizationUncheckedUpdateWithoutInvitationsInput>
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutInvitationsInput, Prisma.OrganizationUncheckedCreateWithoutInvitationsInput>
+  where?: Prisma.OrganizationWhereInput
+}
+
+export type OrganizationUpdateToOneWithWhereWithoutInvitationsInput = {
+  where?: Prisma.OrganizationWhereInput
+  data: Prisma.XOR<Prisma.OrganizationUpdateWithoutInvitationsInput, Prisma.OrganizationUncheckedUpdateWithoutInvitationsInput>
+}
+
+export type OrganizationUpdateWithoutInvitationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
+  requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
+  ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
+  terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
+  berths?: Prisma.BerthUpdateManyWithoutOrganizationNestedInput
+  vessels?: Prisma.VesselUpdateManyWithoutOrganizationNestedInput
+  services?: Prisma.ServiceUpdateManyWithoutOrganizationNestedInput
+  vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
+  requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -709,6 +826,7 @@ export type OrganizationCreateWithoutCompaniesInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
   berths?: Prisma.BerthCreateNestedManyWithoutOrganizationInput
@@ -726,6 +844,7 @@ export type OrganizationUncheckedCreateWithoutCompaniesInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
   berths?: Prisma.BerthUncheckedCreateNestedManyWithoutOrganizationInput
@@ -759,6 +878,7 @@ export type OrganizationUpdateWithoutCompaniesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
   berths?: Prisma.BerthUpdateManyWithoutOrganizationNestedInput
@@ -776,6 +896,7 @@ export type OrganizationUncheckedUpdateWithoutCompaniesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
   berths?: Prisma.BerthUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -793,6 +914,7 @@ export type OrganizationCreateWithoutServicesInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
@@ -810,6 +932,7 @@ export type OrganizationUncheckedCreateWithoutServicesInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
@@ -843,6 +966,7 @@ export type OrganizationUpdateWithoutServicesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
@@ -860,6 +984,7 @@ export type OrganizationUncheckedUpdateWithoutServicesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -877,6 +1002,7 @@ export type OrganizationCreateWithoutPortsInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
   berths?: Prisma.BerthCreateNestedManyWithoutOrganizationInput
@@ -894,6 +1020,7 @@ export type OrganizationUncheckedCreateWithoutPortsInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
   berths?: Prisma.BerthUncheckedCreateNestedManyWithoutOrganizationInput
@@ -927,6 +1054,7 @@ export type OrganizationUpdateWithoutPortsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
   berths?: Prisma.BerthUpdateManyWithoutOrganizationNestedInput
@@ -944,6 +1072,7 @@ export type OrganizationUncheckedUpdateWithoutPortsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
   berths?: Prisma.BerthUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -961,6 +1090,7 @@ export type OrganizationCreateWithoutVesselsInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
@@ -978,6 +1108,7 @@ export type OrganizationUncheckedCreateWithoutVesselsInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1011,6 +1142,7 @@ export type OrganizationUpdateWithoutVesselsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
@@ -1028,6 +1160,7 @@ export type OrganizationUncheckedUpdateWithoutVesselsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1045,6 +1178,7 @@ export type OrganizationCreateWithoutTerminalsInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   berths?: Prisma.BerthCreateNestedManyWithoutOrganizationInput
@@ -1062,6 +1196,7 @@ export type OrganizationUncheckedCreateWithoutTerminalsInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   berths?: Prisma.BerthUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1095,6 +1230,7 @@ export type OrganizationUpdateWithoutTerminalsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   berths?: Prisma.BerthUpdateManyWithoutOrganizationNestedInput
@@ -1112,6 +1248,7 @@ export type OrganizationUncheckedUpdateWithoutTerminalsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   berths?: Prisma.BerthUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1129,6 +1266,7 @@ export type OrganizationCreateWithoutBerthsInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
@@ -1146,6 +1284,7 @@ export type OrganizationUncheckedCreateWithoutBerthsInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1179,6 +1318,7 @@ export type OrganizationUpdateWithoutBerthsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
@@ -1196,6 +1336,7 @@ export type OrganizationUncheckedUpdateWithoutBerthsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1213,6 +1354,7 @@ export type OrganizationCreateWithoutVesselSchedulesInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
@@ -1230,6 +1372,7 @@ export type OrganizationUncheckedCreateWithoutVesselSchedulesInput = {
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
   companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
   ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
   terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1263,6 +1406,7 @@ export type OrganizationUpdateWithoutVesselSchedulesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
@@ -1280,6 +1424,7 @@ export type OrganizationUncheckedUpdateWithoutVesselSchedulesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
   companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
   ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
   terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1296,6 +1441,7 @@ export type OrganizationUncheckedUpdateWithoutVesselSchedulesInput = {
 export type OrganizationCountOutputType = {
   members: number
   requestsForOrganization: number
+  invitations: number
   companies: number
   ports: number
   terminals: number
@@ -1308,6 +1454,7 @@ export type OrganizationCountOutputType = {
 export type OrganizationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | OrganizationCountOutputTypeCountMembersArgs
   requestsForOrganization?: boolean | OrganizationCountOutputTypeCountRequestsForOrganizationArgs
+  invitations?: boolean | OrganizationCountOutputTypeCountInvitationsArgs
   companies?: boolean | OrganizationCountOutputTypeCountCompaniesArgs
   ports?: boolean | OrganizationCountOutputTypeCountPortsArgs
   terminals?: boolean | OrganizationCountOutputTypeCountTerminalsArgs
@@ -1339,6 +1486,13 @@ export type OrganizationCountOutputTypeCountMembersArgs<ExtArgs extends runtime.
  */
 export type OrganizationCountOutputTypeCountRequestsForOrganizationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.OrganizationRequestWhereInput
+}
+
+/**
+ * OrganizationCountOutputType without action
+ */
+export type OrganizationCountOutputTypeCountInvitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrganizationInvitationWhereInput
 }
 
 /**
@@ -1400,6 +1554,7 @@ export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   updatedAt?: boolean
   members?: boolean | Prisma.Organization$membersArgs<ExtArgs>
   requestsForOrganization?: boolean | Prisma.Organization$requestsForOrganizationArgs<ExtArgs>
+  invitations?: boolean | Prisma.Organization$invitationsArgs<ExtArgs>
   companies?: boolean | Prisma.Organization$companiesArgs<ExtArgs>
   ports?: boolean | Prisma.Organization$portsArgs<ExtArgs>
   terminals?: boolean | Prisma.Organization$terminalsArgs<ExtArgs>
@@ -1441,6 +1596,7 @@ export type OrganizationOmit<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type OrganizationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | Prisma.Organization$membersArgs<ExtArgs>
   requestsForOrganization?: boolean | Prisma.Organization$requestsForOrganizationArgs<ExtArgs>
+  invitations?: boolean | Prisma.Organization$invitationsArgs<ExtArgs>
   companies?: boolean | Prisma.Organization$companiesArgs<ExtArgs>
   ports?: boolean | Prisma.Organization$portsArgs<ExtArgs>
   terminals?: boolean | Prisma.Organization$terminalsArgs<ExtArgs>
@@ -1458,6 +1614,7 @@ export type $OrganizationPayload<ExtArgs extends runtime.Types.Extensions.Intern
   objects: {
     members: Prisma.$OrganizationMemberPayload<ExtArgs>[]
     requestsForOrganization: Prisma.$OrganizationRequestPayload<ExtArgs>[]
+    invitations: Prisma.$OrganizationInvitationPayload<ExtArgs>[]
     companies: Prisma.$CompanyPayload<ExtArgs>[]
     ports: Prisma.$PortPayload<ExtArgs>[]
     terminals: Prisma.$TerminalPayload<ExtArgs>[]
@@ -1869,6 +2026,7 @@ export interface Prisma__OrganizationClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   members<T extends Prisma.Organization$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   requestsForOrganization<T extends Prisma.Organization$requestsForOrganizationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$requestsForOrganizationArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  invitations<T extends Prisma.Organization$invitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$invitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationInvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   companies<T extends Prisma.Organization$companiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$companiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ports<T extends Prisma.Organization$portsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$portsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PortPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   terminals<T extends Prisma.Organization$terminalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$terminalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TerminalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2349,6 +2507,30 @@ export type Organization$requestsForOrganizationArgs<ExtArgs extends runtime.Typ
   take?: number
   skip?: number
   distinct?: Prisma.OrganizationRequestScalarFieldEnum | Prisma.OrganizationRequestScalarFieldEnum[]
+}
+
+/**
+ * Organization.invitations
+ */
+export type Organization$invitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrganizationInvitation
+   */
+  select?: Prisma.OrganizationInvitationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrganizationInvitation
+   */
+  omit?: Prisma.OrganizationInvitationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrganizationInvitationInclude<ExtArgs> | null
+  where?: Prisma.OrganizationInvitationWhereInput
+  orderBy?: Prisma.OrganizationInvitationOrderByWithRelationInput | Prisma.OrganizationInvitationOrderByWithRelationInput[]
+  cursor?: Prisma.OrganizationInvitationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OrganizationInvitationScalarFieldEnum | Prisma.OrganizationInvitationScalarFieldEnum[]
 }
 
 /**

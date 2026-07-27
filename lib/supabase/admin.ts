@@ -23,3 +23,8 @@ export async function inviteUserByEmail(email: string) {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
   });
 }
+
+export async function inviteUserByEmailWithRedirect(email: string, redirectTo: string) {
+  const admin = getAdminClient();
+  return admin.auth.admin.inviteUserByEmail(email, { redirectTo });
+}

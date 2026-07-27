@@ -11,9 +11,13 @@ const PUBLIC_PATHS = [
   "/api/health",
 ] as const;
 
+// Paths that require auth but NOT org membership — pages use createClient() directly
+// const AUTH_ONLY_PATHS = ["/invitations"] as const;
+
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
+
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

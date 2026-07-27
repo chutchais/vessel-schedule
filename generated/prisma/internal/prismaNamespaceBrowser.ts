@@ -56,6 +56,7 @@ export const ModelName = {
   User: 'User',
   OrganizationMember: 'OrganizationMember',
   OrganizationRequest: 'OrganizationRequest',
+  OrganizationInvitation: 'OrganizationInvitation',
   Company: 'Company',
   Service: 'Service',
   Port: 'Port',
@@ -149,6 +150,30 @@ export const OrganizationRequestScalarFieldEnum = {
 } as const
 
 export type OrganizationRequestScalarFieldEnum = (typeof OrganizationRequestScalarFieldEnum)[keyof typeof OrganizationRequestScalarFieldEnum]
+
+
+export const OrganizationInvitationScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  email: 'email',
+  displayName: 'displayName',
+  role: 'role',
+  status: 'status',
+  deliveryStatus: 'deliveryStatus',
+  pendingKey: 'pendingKey',
+  authUserId: 'authUserId',
+  invitedById: 'invitedById',
+  acceptedById: 'acceptedById',
+  invitationSentAt: 'invitationSentAt',
+  acceptedAt: 'acceptedAt',
+  revokedAt: 'revokedAt',
+  expiresAt: 'expiresAt',
+  deliveryError: 'deliveryError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrganizationInvitationScalarFieldEnum = (typeof OrganizationInvitationScalarFieldEnum)[keyof typeof OrganizationInvitationScalarFieldEnum]
 
 
 export const CompanyScalarFieldEnum = {

@@ -224,6 +224,28 @@ export function SidebarNavigation({ className = "", onNavigate }: SidebarNavigat
             </ul>
           </section>
         )}
+
+        {(userContext?.membership.role === "OWNER" || userContext?.membership.role === "ADMIN") && (
+          <section>
+            <p className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Settings</p>
+            <ul className="mt-2 space-y-1">
+              <li>
+                <Link
+                  href="/settings/members"
+                  onClick={onNavigate}
+                  className={[
+                    "block rounded-md px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                    isActivePath(pathname, "/settings/members")
+                      ? "bg-blue-50 font-medium text-blue-700"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                  ].join(" ")}
+                >
+                  Members
+                </Link>
+              </li>
+            </ul>
+          </section>
+        )}
       </div>
 
       <div className="border-t border-slate-200 p-4">
