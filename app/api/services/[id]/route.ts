@@ -31,7 +31,7 @@ export async function PATCH(
       },
       select: {
         id: true,
-        companyId: true,
+        operatorCompanyId: true,
         isActive: true,
       },
     });
@@ -178,7 +178,7 @@ export async function PATCH(
     }
 
     const isChangingCompany =
-      existingService.companyId !== companyId;
+      existingService.operatorCompanyId !== companyId;
 
     if (isChangingCompany && !company.isActive) {
       return NextResponse.json(
@@ -220,7 +220,7 @@ export async function PATCH(
         id,
       },
       data: {
-        companyId,
+        operatorCompanyId: companyId,
         code,
         name,
         description: description || null,
@@ -231,7 +231,7 @@ export async function PATCH(
             : existingService.isActive,
       },
       include: {
-        company: {
+        operatorCompany: {
           select: serviceCompanySelect,
         },
       },

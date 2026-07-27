@@ -15,7 +15,7 @@ export async function GET() {
   try {
     const services = await prisma.service.findMany({
       include: {
-        company: {
+        operatorCompany: {
           select: serviceCompanySelect,
         },
       },
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingService = await prisma.service.findUnique({
+    const existingService = await prisma.service.findFirst({
       where: {
         code,
       },
@@ -208,7 +208,8 @@ export async function POST(request: NextRequest) {
 
     const service = await prisma.service.create({
       data: {
-        companyId,
+        operatorCompanyId: companyId,
+        organizationId: "00000000-0000-4000-8000-000000000001",
         code,
         name,
         description: description || null,
@@ -219,7 +220,7 @@ export async function POST(request: NextRequest) {
             : true,
       },
       include: {
-        company: {
+        operatorCompany: {
           select: serviceCompanySelect,
         },
       },

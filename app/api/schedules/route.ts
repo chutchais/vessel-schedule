@@ -162,7 +162,7 @@ export async function GET() {
             name: true,
             color: true,
             isActive: true,
-            company: {
+            operatorCompany: {
               select: {
                 id: true,
                 code: true,
@@ -506,6 +506,7 @@ export async function POST(request: NextRequest) {
 
     const schedule = await prisma.vesselSchedule.create({
       data: {
+        organizationId: "00000000-0000-4000-8000-000000000001", // TODO Prompt 2: replace with authenticated org
         vesselId,
         terminalId,
         berthId,
@@ -564,7 +565,7 @@ export async function POST(request: NextRequest) {
             name: true,
             color: true,
             isActive: true,
-            company: {
+            operatorCompany: {
               select: {
                 id: true,
                 code: true,

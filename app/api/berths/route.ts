@@ -233,12 +233,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingBerth = await prisma.berth.findUnique({
+    const existingBerth = await prisma.berth.findFirst({
       where: {
-        terminalId_code: {
-          terminalId,
-          code,
-        },
+        terminalId,
+        code,
       },
       select: {
         id: true,
@@ -257,6 +255,7 @@ export async function POST(request: NextRequest) {
 
     const berth = await prisma.berth.create({
       data: {
+        organizationId: "00000000-0000-4000-8000-000000000001", // TODO Prompt 2: replace with authenticated org
         terminalId,
         code,
         name,

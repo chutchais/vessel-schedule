@@ -137,12 +137,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingTerminal = await prisma.terminal.findUnique({
+    const existingTerminal = await prisma.terminal.findFirst({
       where: {
-        portId_code: {
-          portId,
-          code,
-        },
+        portId,
+        code,
       },
       select: {
         id: true,
@@ -162,6 +160,7 @@ export async function POST(request: NextRequest) {
 
     const terminal = await prisma.terminal.create({
       data: {
+        organizationId: "00000000-0000-4000-8000-000000000001", // TODO Prompt 2: replace with authenticated org
         portId,
         code,
         name,

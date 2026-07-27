@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     const imo = optionalString(body.imo);
 
     if (imo) {
-      const existingImo = await prisma.vessel.findUnique({
+      const existingImo = await prisma.vessel.findFirst({
         where: { imo },
         select: { id: true },
       });
@@ -124,6 +124,7 @@ export async function POST(request: NextRequest) {
 
     const vessel = await prisma.vessel.create({
       data: {
+        organizationId: "00000000-0000-4000-8000-000000000001", // TODO Prompt 2: replace with authenticated org
         code,
         name,
         type: type as VesselType,

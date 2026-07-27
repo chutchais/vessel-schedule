@@ -18,6 +18,88 @@ model HealthCheck {
   createdAt DateTime @default(now())
 }
 
+// ─── Platform-level enums ────────────────────────────────────────────────────
+
+enum PlatformRole {
+  USER
+  SUPER_ADMIN
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  PLANNER
+  VIEWER
+}
+
+// ─── Multi-tenant foundation ──────────────────────────────────────────────────
+
+model Organization {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  name     String  @db.VarChar(200)
+  slug     String  @unique @db.VarChar(100)
+  isActive Boolean @default(true)
+
+  members OrganizationMember[]
+
+  companies       Company[]
+  ports           Port[]
+  terminals       Terminal[]
+  berths          Berth[]
+  vessels         Vessel[]
+  services        Service[]
+  vesselSchedules VesselSchedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("organizations")
+}
+
+model User {
+  id String @id @db.Uuid
+  // This ID will later match Supabase Auth auth.users.id.
+
+  email       String @unique @db.VarChar(255)
+  displayName String @db.VarChar(200)
+
+  platformRole PlatformRole @default(USER)
+  isActive     Boolean      @default(true)
+
+  memberships OrganizationMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([platformRole])
+  @@index([isActive])
+  @@map("users")
+}
+
+model OrganizationMember {
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role     OrganizationRole
+  isActive Boolean          @default(true)
+
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId, role])
+  @@index([organizationId, isActive])
+  @@map("organization_members")
+}
+
+// ─── Operational models ───────────────────────────────────────────────────────
+
 enum CompanyType {
   SHIPPING_LINE
   SHIPPING_AGENT
@@ -28,7 +110,7 @@ enum CompanyType {
 
 model Company {
   id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code      String      @unique @db.VarChar(20)
+  code      String      @db.VarChar(20)
   name      String      @db.VarChar(200)
   shortName String?     @db.VarChar(100)
   type      CompanyType
@@ -37,27 +119,36 @@ model Company {
   address   String?
   isActive  Boolean     @default(true)
 
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  operatedServices Service[] @relation("OperatorCompany")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  services Service[]
-
+  @@unique([organizationId, code])
   @@index([name])
   @@index([type])
   @@index([isActive])
+  @@index([organizationId])
   @@map("companies")
 }
 
 model Service {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  code        String  @unique @db.VarChar(30)
+  code        String  @db.VarChar(30)
   name        String  @db.VarChar(200)
   description String?
   color       String  @default("#3B82F6") @db.VarChar(7)
 
-  companyId String  @db.Uuid
-  company   Company @relation(fields: [companyId], references: [id])
+  // operatorCompanyId maps to the existing "companyId" column — no column rename needed.
+  operatorCompanyId String  @map("companyId") @db.Uuid
+  operatorCompany   Company @relation("OperatorCompany", fields: [operatorCompanyId], references: [id])
+
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
 
   isActive Boolean @default(true)
 
@@ -66,17 +157,20 @@ model Service {
 
   schedules VesselSchedule[]
 
+  @@unique([organizationId, code])
   @@index([name])
-  @@index([companyId])
+  // Preserve the existing index name on the underlying "companyId" column.
+  @@index([operatorCompanyId], map: "services_companyId_idx")
   @@index([isActive])
+  @@index([organizationId])
   @@map("services")
 }
 
 model Port {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  code     String  @unique @db.VarChar(10)
-  unlocode String? @unique @db.VarChar(5)
+  code     String  @db.VarChar(10)
+  unlocode String? @db.VarChar(5)
 
   name     String @db.VarChar(200)
   country  String @db.VarChar(100)
@@ -87,13 +181,19 @@ model Port {
 
   isActive Boolean @default(true)
 
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   terminals Terminal[]
 
+  @@unique([organizationId, code])
+  @@unique([organizationId, unlocode])
   @@index([name])
   @@index([country])
+  @@index([organizationId])
   @@map("ports")
 }
 
@@ -111,7 +211,7 @@ model Vessel {
 
   code     String     @unique @db.VarChar(20)
   name     String     @db.VarChar(200)
-  imo      String?    @unique @db.VarChar(10)
+  imo      String?    @db.VarChar(10)
   callSign String?    @db.VarChar(10)
   flag     String?    @db.VarChar(3)
   type     VesselType
@@ -121,14 +221,19 @@ model Vessel {
 
   isActive Boolean @default(true)
 
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   schedules VesselSchedule[]
 
+  @@unique([organizationId, imo])
   @@index([name])
   @@index([type])
   @@index([isActive])
+  @@index([organizationId])
   @@map("vessels")
 }
 
@@ -141,6 +246,9 @@ model Terminal {
   portId String @db.Uuid
   port   Port   @relation(fields: [portId], references: [id])
 
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
   isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -149,9 +257,10 @@ model Terminal {
   berths    Berth[]
   schedules VesselSchedule[]
 
-  @@unique([portId, code])
+  @@unique([organizationId, portId, code])
   @@index([portId])
   @@index([name])
+  @@index([organizationId])
   @@map("terminals")
 }
 
@@ -176,16 +285,20 @@ model Berth {
 
   isActive Boolean @default(true)
 
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   schedules VesselSchedule[]
 
-  @@unique([terminalId, code])
+  @@unique([organizationId, terminalId, code])
   @@index([terminalId])
   @@index([name])
   @@index([sortOrder])
   @@index([isActive])
+  @@index([organizationId])
   @@map("berths")
 }
 
@@ -213,6 +326,9 @@ model VesselSchedule {
   serviceId String?  @db.Uuid
   service   Service? @relation(fields: [serviceId], references: [id])
 
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
   voyageNumber String? @db.VarChar(50)
 
   eta DateTime
@@ -236,6 +352,7 @@ model VesselSchedule {
   @@index([terminalId])
   @@index([berthId])
   @@index([serviceId])
+  @@index([organizationId])
   @@index([eta])
   @@index([etd])
   @@index([status])

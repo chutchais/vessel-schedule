@@ -528,7 +528,7 @@ export async function PATCH(
             name: true,
             color: true,
             isActive: true,
-            company: {
+            operatorCompany: {
               select: {
                 id: true,
                 code: true,

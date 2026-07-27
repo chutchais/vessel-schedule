@@ -13,7 +13,7 @@ export const companyRepository = {
   },
 
   findByCode(code: string) {
-    return prisma.company.findUnique({
+    return prisma.company.findFirst({
       where: {
         code,
       },

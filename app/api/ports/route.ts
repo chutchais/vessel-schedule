@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     const country = body.country.trim();
     const timezone = body.timezone.trim();
 
-    const existingPort = await prisma.port.findUnique({
+    const existingPort = await prisma.port.findFirst({
       where: {
         code,
       },
@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
 
     const port = await prisma.port.create({
       data: {
+        organizationId: "00000000-0000-4000-8000-000000000001", // TODO Prompt 2: replace with authenticated org
         code,
         name,
         country,

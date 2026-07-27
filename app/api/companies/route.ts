@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     }
 
 
-    const existingCompany = await prisma.company.findUnique({
+    const existingCompany = await prisma.company.findFirst({
       where: { code },
       select: { id: true },
     });
@@ -162,6 +162,7 @@ export async function POST(request: NextRequest) {
 
     const company = await prisma.company.create({
       data: {
+        organizationId: "00000000-0000-4000-8000-000000000001", // TODO Prompt 2: replace with authenticated org
         code,
         name,
         shortName: optionalString(body.shortName),
