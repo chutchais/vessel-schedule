@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AuthError } from "@/lib/auth/auth-errors";
+import { requireCurrentUser } from "@/lib/auth/current-user";
+import { canManageMasterData } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 
 type RouteContext = {
@@ -8,29 +11,15 @@ type RouteContext = {
 };
 
 function optionalCoordinate(value: unknown): number | null {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
+  if (value === null || value === undefined || value === "") {
     return null;
   }
 
   const coordinate = Number(value);
-
-  if (!Number.isFinite(coordinate)) {
-    return null;
-  }
-
-  return coordinate;
+  return Number.isFinite(coordinate) ? coordinate : null;
 }
 
-function serializePort<
-  T extends {
-    latitude: { toNumber(): number } | null;
-    longitude: { toNumber(): number } | null;
-  },
->(port: T) {
+function serializePort<T extends { latitude: { toNumber(): number } | null; longitude: { toNumber(): number } | null }>(port: T) {
   return {
     ...port,
     latitude: port.latitude?.toNumber() ?? null,
@@ -38,133 +27,74 @@ function serializePort<
   };
 }
 
-export async function PATCH(
-  request: NextRequest,
-  context: RouteContext,
-) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    const currentUser = await requireCurrentUser();
+    const organizationId = currentUser.activeOrganization.id;
+
+    if (!canManageMasterData(currentUser.membership.role)) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
+
     const { id } = await context.params;
     const body = await request.json();
 
-    const existingPort = await prisma.port.findUnique({
-      where: {
-        id,
-      },
+    const existingPort = await prisma.port.findFirst({
+      where: { id, organizationId },
     });
 
     if (!existingPort) {
-      return NextResponse.json(
-        { error: "Port not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Port not found" }, { status: 404 });
     }
 
     if (!body.code || typeof body.code !== "string") {
-      return NextResponse.json(
-        { error: "Port code is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Port code is required" }, { status: 400 });
     }
 
     if (!body.name || typeof body.name !== "string") {
-      return NextResponse.json(
-        { error: "Port name is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Port name is required" }, { status: 400 });
     }
 
-    if (
-      !body.country ||
-      typeof body.country !== "string"
-    ) {
-      return NextResponse.json(
-        { error: "Country is required" },
-        { status: 400 },
-      );
+    if (!body.country || typeof body.country !== "string") {
+      return NextResponse.json({ error: "Country is required" }, { status: 400 });
     }
 
-    if (
-      !body.timezone ||
-      typeof body.timezone !== "string"
-    ) {
-      return NextResponse.json(
-        { error: "Timezone is required" },
-        { status: 400 },
-      );
+    if (!body.timezone || typeof body.timezone !== "string") {
+      return NextResponse.json({ error: "Timezone is required" }, { status: 400 });
     }
 
     const code = body.code.trim().toUpperCase();
     const name = body.name.trim();
     const country = body.country.trim();
     const timezone = body.timezone.trim();
-
-    const unlocode =
-      typeof body.unlocode === "string" &&
-      body.unlocode.trim()
-        ? body.unlocode.trim().toUpperCase()
-        : null;
-
+    const unlocode = typeof body.unlocode === "string" && body.unlocode.trim() ? body.unlocode.trim().toUpperCase() : null;
     const latitude = optionalCoordinate(body.latitude);
     const longitude = optionalCoordinate(body.longitude);
 
     if (latitude !== null && (latitude < -90 || latitude > 90)) {
-      return NextResponse.json(
-        { error: "Latitude must be between -90 and 90" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Latitude must be between -90 and 90" }, { status: 400 });
     }
 
-    if (
-      longitude !== null &&
-      (longitude < -180 || longitude > 180)
-    ) {
-      return NextResponse.json(
-        { error: "Longitude must be between -180 and 180" },
-        { status: 400 },
-      );
+    if (longitude !== null && (longitude < -180 || longitude > 180)) {
+      return NextResponse.json({ error: "Longitude must be between -180 and 180" }, { status: 400 });
     }
 
     const duplicatePort = await prisma.port.findFirst({
       where: {
-        id: {
-          not: id,
-        },
-        OR: [
-          {
-            code,
-          },
-          ...(unlocode
-            ? [
-                {
-                  unlocode,
-                },
-              ]
-            : []),
-        ],
+        organizationId,
+        id: { not: id },
+        OR: [{ code }, ...(unlocode ? [{ unlocode }] : [])],
       },
-      select: {
-        id: true,
-        code: true,
-        unlocode: true,
-      },
+      select: { id: true, code: true, unlocode: true },
     });
 
     if (duplicatePort) {
-      const duplicateField =
-        duplicatePort.code === code
-          ? "Port code"
-          : "UN/LOCODE";
-
-      return NextResponse.json(
-        { error: `${duplicateField} already exists` },
-        { status: 409 },
-      );
+      const duplicateField = duplicatePort.code === code ? "Port code" : "UN/LOCODE";
+      return NextResponse.json({ error: `${duplicateField} already exists` }, { status: 409 });
     }
 
     const port = await prisma.port.update({
-      where: {
-        id,
-      },
+      where: { id },
       data: {
         code,
         unlocode,
@@ -173,22 +103,17 @@ export async function PATCH(
         timezone,
         latitude,
         longitude,
-        isActive:
-          typeof body.isActive === "boolean"
-            ? body.isActive
-            : existingPort.isActive,
+        isActive: typeof body.isActive === "boolean" ? body.isActive : existingPort.isActive,
       },
     });
 
-    return NextResponse.json({
-      data: serializePort(port),
-    });
+    return NextResponse.json({ data: serializePort(port) });
   } catch (error) {
-    console.error("Failed to update port:", error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
 
-    return NextResponse.json(
-      { error: "Failed to update port" },
-      { status: 500 },
-    );
+    console.error("Failed to update port:", error);
+    return NextResponse.json({ error: "Failed to update port" }, { status: 500 });
   }
 }

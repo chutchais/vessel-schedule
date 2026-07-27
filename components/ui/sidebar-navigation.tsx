@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export type NavigationItem = {
   label: string;
@@ -34,6 +35,22 @@ export const NAVIGATION_GROUPS: NavigationGroup[] = [
   },
 ];
 
+type UserContext = {
+  id: string;
+  displayName: string;
+  email: string;
+  activeOrganization: { id: string; name: string; slug: string };
+  membership: { role: string };
+  availableOrganizations: Array<{ id: string; name: string; slug: string; role: string }>;
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  OWNER: "bg-purple-100 text-purple-700",
+  ADMIN: "bg-blue-100 text-blue-700",
+  PLANNER: "bg-green-100 text-green-700",
+  VIEWER: "bg-slate-100 text-slate-600",
+};
+
 function isActivePath(pathname: string, href: string): boolean {
   if (pathname === href) {
     return true;
@@ -49,6 +66,106 @@ type SidebarNavigationProps = {
 
 export function SidebarNavigation({ className = "", onNavigate }: SidebarNavigationProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [userContext, setUserContext] = useState<UserContext | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [isSwitchingOrg, setIsSwitchingOrg] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadUser() {
+      try {
+        const response = await fetch("/api/auth/me", { cache: "no-store" });
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            router.replace("/login");
+          }
+          return;
+        }
+
+        const payload = (await response.json()) as { data?: UserContext };
+        if (active) {
+          setUserContext(payload.data ?? null);
+        }
+      } catch {
+        if (active) {
+          setUserContext(null);
+        }
+      } finally {
+        if (active) {
+          setIsLoadingUser(false);
+        }
+      }
+    }
+
+    void loadUser();
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  async function handleOrganizationChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const organizationId = event.target.value;
+    if (!organizationId || organizationId === userContext?.activeOrganization.id) {
+      return;
+    }
+
+    setIsSwitchingOrg(true);
+
+    try {
+      const response = await fetch("/api/auth/active-organization", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ organizationId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to switch organization");
+      }
+
+      const nextOrganization = userContext?.availableOrganizations.find(
+        (organization) => organization.id === organizationId,
+      );
+
+      setUserContext((current) =>
+        current && nextOrganization
+          ? {
+              ...current,
+              activeOrganization: {
+                id: nextOrganization.id,
+                name: nextOrganization.name,
+                slug: nextOrganization.slug,
+              },
+              membership: { role: nextOrganization.role },
+            }
+          : current,
+      );
+
+      router.refresh();
+    } catch {
+      event.target.value = userContext?.activeOrganization.id ?? "";
+    } finally {
+      setIsSwitchingOrg(false);
+    }
+  }
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/login");
+      router.refresh();
+    } finally {
+      setIsLoggingOut(false);
+      onNavigate?.();
+    }
+  }
 
   return (
     <nav className={["flex h-full flex-col", className].filter(Boolean).join(" ")}>
@@ -84,6 +201,70 @@ export function SidebarNavigation({ className = "", onNavigate }: SidebarNavigat
             </ul>
           </section>
         ))}
+      </div>
+
+      <div className="border-t border-slate-200 p-4">
+        {isLoadingUser ? (
+          <p className="text-sm text-slate-500">Loading account...</p>
+        ) : userContext ? (
+          <div className="space-y-3">
+            {userContext.availableOrganizations.length > 1 ? (
+              <div>
+                <label htmlFor="active-organization" className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                  Organization
+                </label>
+                <select
+                  id="active-organization"
+                  value={userContext.activeOrganization.id}
+                  onChange={handleOrganizationChange}
+                  disabled={isSwitchingOrg}
+                  className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {userContext.availableOrganizations.map((organization) => (
+                    <option key={organization.id} value={organization.id}>
+                      {organization.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Organization</p>
+                <p className="mt-1 text-sm font-medium text-slate-900">{userContext.activeOrganization.name}</p>
+              </div>
+            )}
+
+            <div className="rounded-lg bg-slate-50 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-900">{userContext.displayName}</p>
+                  <p className="truncate text-xs text-slate-500">{userContext.email}</p>
+                </div>
+                <span
+                  className={[
+                    "rounded-full px-2 py-0.5 text-xs font-medium",
+                    ROLE_COLORS[userContext.membership.role] ?? ROLE_COLORS.VIEWER,
+                  ].join(" ")}
+                >
+                  {userContext.membership.role}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isLoggingOut ? "Signing out..." : "Sign out"}
+            </button>
+          </div>
+        ) : (
+          <Link href="/login" className="text-sm font-medium text-blue-600 hover:underline">
+            Sign in
+          </Link>
+        )}
       </div>
     </nav>
   );

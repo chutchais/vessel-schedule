@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AuthError } from "@/lib/auth/auth-errors";
+import { requireCurrentUser } from "@/lib/auth/current-user";
+import { canManageMasterData } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 
 const COMPANY_TYPES = [
@@ -33,46 +36,27 @@ function optionalString(value: unknown): string | null {
 
 export async function GET(request: NextRequest) {
   try {
-
-
+    const currentUser = await requireCurrentUser();
+    const organizationId = currentUser.activeOrganization.id;
     const search = request.nextUrl.searchParams.get("search")?.trim();
     const type = request.nextUrl.searchParams.get("type");
     const isActiveParam = request.nextUrl.searchParams.get("isActive");
 
-    const isValidType =
-      type && COMPANY_TYPES.includes(type as CompanyType);
+    const isValidType = type && COMPANY_TYPES.includes(type as CompanyType);
 
     const companies = await prisma.company.findMany({
       where: {
+        organizationId,
         ...(search
           ? {
               OR: [
-                {
-                  code: {
-                    contains: search,
-                    mode: "insensitive",
-                  },
-                },
-                {
-                  name: {
-                    contains: search,
-                    mode: "insensitive",
-                  },
-                },
-                {
-                  shortName: {
-                    contains: search,
-                    mode: "insensitive",
-                  },
-                },
+                { code: { contains: search, mode: "insensitive" } },
+                { name: { contains: search, mode: "insensitive" } },
+                { shortName: { contains: search, mode: "insensitive" } },
               ],
             }
           : {}),
-        ...(isValidType
-          ? {
-              type: type as CompanyType,
-            }
-          : {}),
+        ...(isValidType ? { type: type as CompanyType } : {}),
         ...(isActiveParam === "true"
           ? { isActive: true }
           : isActiveParam === "false"
@@ -89,80 +73,56 @@ export async function GET(request: NextRequest) {
       count: companies.length,
     });
   } catch (error) {
-    console.error("Failed to list companies:", error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
 
-    return NextResponse.json(
-      {
-        error: "Failed to list companies",
-      },
-      { status: 500 },
-    );
+    console.error("Failed to list companies:", error);
+    return NextResponse.json({ error: "Failed to list companies" }, { status: 500 });
   }
 }
 
-
-
 export async function POST(request: NextRequest) {
   try {
+    const currentUser = await requireCurrentUser();
+    const organizationId = currentUser.activeOrganization.id;
+
+    if (!canManageMasterData(currentUser.membership.role)) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
+
     const body = (await request.json()) as CreateCompanyBody;
-
-    const code =
-      typeof body.code === "string"
-        ? body.code.trim().toUpperCase()
-        : "";
-
-    const name =
-      typeof body.name === "string"
-        ? body.name.trim()
-        : "";
-
-    const type =
-      typeof body.type === "string"
-        ? body.type
-        : "";
+    const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    const type = typeof body.type === "string" ? body.type : "";
 
     if (!code) {
-      return NextResponse.json(
-        { error: "Company code is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Company code is required" }, { status: 400 });
     }
 
     if (!name) {
-      return NextResponse.json(
-        { error: "Company name is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Company name is required" }, { status: 400 });
     }
 
     if (!COMPANY_TYPES.includes(type as CompanyType)) {
       return NextResponse.json(
-        {
-          error: "Invalid company type",
-          allowedTypes: COMPANY_TYPES,
-        },
+        { error: "Invalid company type", allowedTypes: COMPANY_TYPES },
         { status: 400 },
       );
     }
 
-
     const existingCompany = await prisma.company.findFirst({
-      where: { code },
+      where: { organizationId, code },
       select: { id: true },
     });
 
     if (existingCompany) {
-      return NextResponse.json(
-        {
-          error: `Company code '${code}' already exists`,
-        },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: `Company code '${code}' already exists` }, { status: 409 });
     }
 
     const company = await prisma.company.create({
       data: {
-        organizationId: "00000000-0000-4000-8000-000000000001", // TODO Prompt 2: replace with authenticated org
+        organizationId,
         code,
         name,
         shortName: optionalString(body.shortName),
@@ -170,27 +130,17 @@ export async function POST(request: NextRequest) {
         email: optionalString(body.email),
         phone: optionalString(body.phone),
         address: optionalString(body.address),
-        isActive:
-          typeof body.isActive === "boolean"
-            ? body.isActive
-            : true,
+        isActive: typeof body.isActive === "boolean" ? body.isActive : true,
       },
     });
 
-    return NextResponse.json(
-      {
-        data: company,
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({ data: company }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create company:", error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
 
-    return NextResponse.json(
-      {
-        error: "Failed to create company",
-      },
-      { status: 500 },
-    );
+    console.error("Failed to create company:", error);
+    return NextResponse.json({ error: "Failed to create company" }, { status: 500 });
   }
 }

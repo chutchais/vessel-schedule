@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AuthError } from "@/lib/auth/auth-errors";
+import { requireCurrentUser } from "@/lib/auth/current-user";
+import { canManageMasterData } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 
 const COLOR_HEX_PATTERN = /^#[0-9A-F]{6}$/i;
@@ -7,172 +10,103 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-function serializeBerth<
-  T extends {
-    berthLength: { toNumber(): number };
-  },
->(berth: T) {
+function serializeBerth<T extends { berthLength: { toNumber(): number } }>(berth: T) {
   return {
     ...berth,
     berthLength: berth.berthLength.toNumber(),
   };
 }
 
-export async function PATCH(
-  request: NextRequest,
-  context: RouteContext,
-) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    const currentUser = await requireCurrentUser();
+    const organizationId = currentUser.activeOrganization.id;
+
+    if (!canManageMasterData(currentUser.membership.role)) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
+
     const { id } = await context.params;
     const body = await request.json();
 
-    const existingBerth = await prisma.berth.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        isActive: true,
-      },
+    const existingBerth = await prisma.berth.findFirst({
+      where: { id, organizationId },
+      select: { id: true, isActive: true },
     });
 
     if (!existingBerth) {
-      return NextResponse.json(
-        { error: "Berth not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Berth not found" }, { status: 404 });
     }
 
-    if (
-      !body.terminalId ||
-      typeof body.terminalId !== "string"
-    ) {
-      return NextResponse.json(
-        { error: "Terminal is required" },
-        { status: 400 },
-      );
+    if (!body.terminalId || typeof body.terminalId !== "string") {
+      return NextResponse.json({ error: "Terminal is required" }, { status: 400 });
     }
 
     if (!body.code || typeof body.code !== "string") {
-      return NextResponse.json(
-        { error: "Berth code is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Berth code is required" }, { status: 400 });
     }
 
     if (!body.name || typeof body.name !== "string") {
-      return NextResponse.json(
-        { error: "Berth name is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Berth name is required" }, { status: 400 });
     }
 
     const terminalId = body.terminalId.trim();
     const code = body.code.trim().toUpperCase();
     const name = body.name.trim();
-    const color =
-      typeof body.color === "string"
-        ? body.color.trim().toUpperCase()
-        : "#3B82F6";
-    const zeroOriginSideRaw =
-      typeof body.zeroOriginSide === "string"
-        ? body.zeroOriginSide.trim().toLowerCase()
-        : "left";
+    const color = typeof body.color === "string" ? body.color.trim().toUpperCase() : "#3B82F6";
+    const zeroOriginSideRaw = typeof body.zeroOriginSide === "string" ? body.zeroOriginSide.trim().toLowerCase() : "left";
     const berthLength = Number(body.berthLength);
     const sortOrder = Number(body.sortOrder);
 
     if (!terminalId) {
-      return NextResponse.json(
-        { error: "Terminal is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Terminal is required" }, { status: 400 });
     }
 
     if (!code) {
-      return NextResponse.json(
-        { error: "Berth code is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Berth code is required" }, { status: 400 });
     }
 
     if (!name) {
-      return NextResponse.json(
-        { error: "Berth name is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Berth name is required" }, { status: 400 });
     }
 
     if (!Number.isFinite(berthLength) || berthLength <= 0) {
-      return NextResponse.json(
-        { error: "Berth length must be greater than zero" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Berth length must be greater than zero" }, { status: 400 });
     }
 
     if (!COLOR_HEX_PATTERN.test(color)) {
-      return NextResponse.json(
-        { error: "Color must match #RRGGBB" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Color must match #RRGGBB" }, { status: 400 });
     }
 
-    if (
-      zeroOriginSideRaw !== "left" &&
-      zeroOriginSideRaw !== "right"
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Zero origin side must be left or right",
-        },
-        { status: 400 },
-      );
+    if (zeroOriginSideRaw !== "left" && zeroOriginSideRaw !== "right") {
+      return NextResponse.json({ error: "Zero origin side must be left or right" }, { status: 400 });
     }
 
     if (!Number.isInteger(sortOrder) || sortOrder < 0) {
-      return NextResponse.json(
-        {
-          error: "Sort order must be a non-negative integer",
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Sort order must be a non-negative integer" }, { status: 400 });
     }
 
-    const terminal = await prisma.terminal.findUnique({
-      where: {
-        id: terminalId,
-      },
-      select: {
-        id: true,
-      },
+    const terminal = await prisma.terminal.findFirst({
+      where: { id: terminalId, organizationId },
+      select: { id: true },
     });
 
     if (!terminal) {
-      return NextResponse.json(
-        { error: "Terminal not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Terminal not found" }, { status: 404 });
     }
 
     const duplicateBerth = await prisma.berth.findFirst({
       where: {
-        id: {
-          not: id,
-        },
+        organizationId,
+        id: { not: id },
         terminalId,
         code,
       },
-      select: {
-        id: true,
-      },
+      select: { id: true },
     });
 
     if (duplicateBerth) {
-      return NextResponse.json(
-        {
-          error:
-            "Berth code already exists for this terminal",
-        },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: "Berth code already exists for this terminal" }, { status: 409 });
     }
 
     const berth = await prisma.berth.update({
@@ -183,15 +117,9 @@ export async function PATCH(
         name,
         berthLength,
         color,
-        zeroOriginSide:
-          zeroOriginSideRaw === "right"
-            ? "RIGHT"
-            : "LEFT",
+        zeroOriginSide: zeroOriginSideRaw === "right" ? "RIGHT" : "LEFT",
         sortOrder,
-        isActive:
-          typeof body.isActive === "boolean"
-            ? body.isActive
-            : existingBerth.isActive,
+        isActive: typeof body.isActive === "boolean" ? body.isActive : existingBerth.isActive,
       },
       include: {
         terminal: {
@@ -211,15 +139,13 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({
-      data: serializeBerth(berth),
-    });
+    return NextResponse.json({ data: serializeBerth(berth) });
   } catch (error) {
-    console.error("Failed to update berth:", error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
 
-    return NextResponse.json(
-      { error: "Failed to update berth" },
-      { status: 500 },
-    );
+    console.error("Failed to update berth:", error);
+    return NextResponse.json({ error: "Failed to update berth" }, { status: 500 });
   }
 }

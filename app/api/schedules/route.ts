@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AuthError } from "@/lib/auth/auth-errors";
+import { requireCurrentUser } from "@/lib/auth/current-user";
+import { canManageSchedules } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 
 const SCHEDULE_STATUSES = [
@@ -48,9 +51,7 @@ function parseOptionalInteger(value: unknown): number | null {
     return null;
   }
 
-  const parsed =
-    typeof value === "number" ? value : Number(value);
-
+  const parsed = typeof value === "number" ? value : Number(value);
   if (!Number.isInteger(parsed)) {
     return null;
   }
@@ -59,12 +60,7 @@ function parseOptionalInteger(value: unknown): number | null {
 }
 
 function mapSchedule<T extends {
-  vessel: {
-    id: string;
-    imo: string | null;
-    name: string;
-    callSign: string | null;
-  };
+  vessel: { id: string; imo: string | null; name: string; callSign: string | null };
 }>(schedule: T) {
   return {
     ...schedule,
@@ -77,7 +73,21 @@ function mapSchedule<T extends {
   };
 }
 
+function serializeSchedule<T extends {
+  vessel: { id: string; imo: string | null; name: string; callSign: string | null };
+} & Record<string, unknown>>(schedule: T) {
+  const normalized = mapSchedule(schedule);
+  return {
+    ...normalized,
+    berthPositionMeters:
+      typeof normalized.berthPositionMeters === "number" || normalized.berthPositionMeters === null
+        ? normalized.berthPositionMeters
+        : normalized.berthPositionMeters,
+  };
+}
+
 async function hasBerthOverlap(input: {
+  organizationId: string;
   berthId: string;
   eta: Date;
   etb: Date | null;
@@ -86,17 +96,10 @@ async function hasBerthOverlap(input: {
 }) {
   const existingSchedules = await prisma.vesselSchedule.findMany({
     where: {
+      organizationId: input.organizationId,
       berthId: input.berthId,
-      status: {
-        not: "CANCELLED",
-      },
-      ...(input.excludeScheduleId
-        ? {
-            id: {
-              not: input.excludeScheduleId,
-            },
-          }
-        : {}),
+      status: { not: "CANCELLED" },
+      ...(input.excludeScheduleId ? { id: { not: input.excludeScheduleId } } : {}),
     },
     select: {
       eta: true,
@@ -111,17 +114,17 @@ async function hasBerthOverlap(input: {
   return existingSchedules.some((schedule) => {
     const existingStart = schedule.etb ?? schedule.eta;
     const existingEnd = schedule.etd;
-
-    return (
-      newStart < existingEnd &&
-      newEnd > existingStart
-    );
+    return newStart < existingEnd && newEnd > existingStart;
   });
 }
 
 export async function GET() {
   try {
+    const currentUser = await requireCurrentUser();
+    const organizationId = currentUser.activeOrganization.id;
+
     const schedules = await prisma.vesselSchedule.findMany({
+      where: { organizationId },
       include: {
         vessel: {
           select: {
@@ -177,56 +180,42 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({
-      data: schedules.map(mapSchedule),
-    });
+    return NextResponse.json({ data: schedules.map(serializeSchedule) });
   } catch (error) {
-    console.error("Failed to load schedules:", error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
 
-    return NextResponse.json(
-      {
-        error: "Failed to load schedules",
-      },
-      {
-        status: 500,
-      },
-    );
+    console.error("Failed to load schedules:", error);
+    return NextResponse.json({ error: "Failed to load schedules" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const currentUser = await requireCurrentUser();
+    const organizationId = currentUser.activeOrganization.id;
+
+    if (!canManageSchedules(currentUser.membership.role)) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
+
     const body = await request.json();
 
     if (!body.vesselId || typeof body.vesselId !== "string") {
-      return NextResponse.json(
-        { error: "Vessel is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Vessel is required" }, { status: 400 });
     }
 
-    if (
-      !body.terminalId ||
-      typeof body.terminalId !== "string"
-    ) {
-      return NextResponse.json(
-        { error: "Terminal is required" },
-        { status: 400 },
-      );
+    if (!body.terminalId || typeof body.terminalId !== "string") {
+      return NextResponse.json({ error: "Terminal is required" }, { status: 400 });
     }
 
     if (!body.eta || typeof body.eta !== "string") {
-      return NextResponse.json(
-        { error: "ETA is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "ETA is required" }, { status: 400 });
     }
 
     if (!body.etd || typeof body.etd !== "string") {
-      return NextResponse.json(
-        { error: "ETD is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "ETD is required" }, { status: 400 });
     }
 
     const vesselId = body.vesselId.trim();
@@ -239,122 +228,52 @@ export async function POST(request: NextRequest) {
     const ata = parseOptionalDate(body.ata);
     const atb = parseOptionalDate(body.atb);
     const atd = parseOptionalDate(body.atd);
-    const status =
-      typeof body.status === "string"
-        ? body.status.trim().toUpperCase()
-        : "PLANNED";
-    const berthPositionMeters = parseOptionalInteger(
-      body.berthPositionMeters,
-    );
-    const headingReverse =
-      typeof body.headingReverse === "boolean"
-        ? body.headingReverse
-        : false;
+    const status = typeof body.status === "string" ? body.status.trim().toUpperCase() : "PLANNED";
+    const berthPositionMeters = parseOptionalInteger(body.berthPositionMeters);
+    const headingReverse = typeof body.headingReverse === "boolean" ? body.headingReverse : false;
 
     if (!vesselId) {
-      return NextResponse.json(
-        { error: "Vessel is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Vessel is required" }, { status: 400 });
     }
 
     if (!terminalId) {
-      return NextResponse.json(
-        { error: "Terminal is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Terminal is required" }, { status: 400 });
     }
 
     if (!eta) {
-      return NextResponse.json(
-        { error: "ETA must be a valid date" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "ETA must be a valid date" }, { status: 400 });
     }
 
     if (!etd) {
-      return NextResponse.json(
-        { error: "ETD must be a valid date" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "ETD must be a valid date" }, { status: 400 });
     }
 
     if (etd <= eta) {
-      return NextResponse.json(
-        { error: "ETD must be later than ETA" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "ETD must be later than ETA" }, { status: 400 });
     }
 
-    if (
-      body.etb !== undefined &&
-      body.etb !== null &&
-      body.etb !== "" &&
-      !etb
-    ) {
-      return NextResponse.json(
-        { error: "ETB must be a valid date" },
-        { status: 400 },
-      );
+    if (body.etb !== undefined && body.etb !== null && body.etb !== "" && !etb) {
+      return NextResponse.json({ error: "ETB must be a valid date" }, { status: 400 });
     }
 
     if (etb && (etb < eta || etb > etd)) {
-      return NextResponse.json(
-        {
-          error:
-            "ETB must be between ETA and ETD",
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "ETB must be between ETA and ETD" }, { status: 400 });
     }
 
-    if (
-      body.ata !== undefined &&
-      body.ata !== null &&
-      body.ata !== "" &&
-      !ata
-    ) {
-      return NextResponse.json(
-        { error: "ATA must be a valid date" },
-        { status: 400 },
-      );
+    if (body.ata !== undefined && body.ata !== null && body.ata !== "" && !ata) {
+      return NextResponse.json({ error: "ATA must be a valid date" }, { status: 400 });
     }
 
-    if (
-      body.atb !== undefined &&
-      body.atb !== null &&
-      body.atb !== "" &&
-      !atb
-    ) {
-      return NextResponse.json(
-        { error: "ATB must be a valid date" },
-        { status: 400 },
-      );
+    if (body.atb !== undefined && body.atb !== null && body.atb !== "" && !atb) {
+      return NextResponse.json({ error: "ATB must be a valid date" }, { status: 400 });
     }
 
-    if (
-      body.atd !== undefined &&
-      body.atd !== null &&
-      body.atd !== "" &&
-      !atd
-    ) {
-      return NextResponse.json(
-        { error: "ATD must be a valid date" },
-        { status: 400 },
-      );
+    if (body.atd !== undefined && body.atd !== null && body.atd !== "" && !atd) {
+      return NextResponse.json({ error: "ATD must be a valid date" }, { status: 400 });
     }
 
-    if (
-      !SCHEDULE_STATUSES.includes(
-        status as ScheduleStatus,
-      )
-    ) {
-      return NextResponse.json(
-        {
-          error: "Invalid schedule status",
-        },
-        { status: 400 },
-      );
+    if (!SCHEDULE_STATUSES.includes(status as ScheduleStatus)) {
+      return NextResponse.json({ error: "Invalid schedule status" }, { status: 400 });
     }
 
     if (
@@ -363,142 +282,75 @@ export async function POST(request: NextRequest) {
       body.berthPositionMeters !== "" &&
       berthPositionMeters === null
     ) {
-      return NextResponse.json(
-        {
-          error:
-            "Berth position meters must be an integer",
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Berth position meters must be an integer" }, { status: 400 });
     }
 
-    const vessel = await prisma.vessel.findUnique({
-      where: { id: vesselId },
-      select: {
-        id: true,
-        isActive: true,
-      },
+    const vessel = await prisma.vessel.findFirst({
+      where: { id: vesselId, organizationId },
+      select: { id: true, isActive: true },
     });
 
     if (!vessel) {
-      return NextResponse.json(
-        { error: "Vessel not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Vessel not found" }, { status: 404 });
     }
 
     if (!vessel.isActive) {
-      return NextResponse.json(
-        {
-          error:
-            "Only active vessels can be selected",
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Only active vessels can be selected" }, { status: 400 });
     }
 
-    const terminal = await prisma.terminal.findUnique({
-      where: { id: terminalId },
-      select: {
-        id: true,
-        isActive: true,
-      },
+    const terminal = await prisma.terminal.findFirst({
+      where: { id: terminalId, organizationId },
+      select: { id: true, isActive: true },
     });
 
     if (!terminal) {
-      return NextResponse.json(
-        { error: "Terminal not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Terminal not found" }, { status: 404 });
     }
 
     if (!terminal.isActive) {
-      return NextResponse.json(
-        {
-          error:
-            "Only active terminals can be selected",
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Only active terminals can be selected" }, { status: 400 });
     }
 
     if (serviceId) {
-      const service = await prisma.service.findUnique({
-        where: { id: serviceId },
-        select: {
-          id: true,
-          isActive: true,
-        },
+      const service = await prisma.service.findFirst({
+        where: { id: serviceId, organizationId },
+        select: { id: true, isActive: true },
       });
 
       if (!service) {
-        return NextResponse.json(
-          { error: "Service not found" },
-          { status: 404 },
-        );
+        return NextResponse.json({ error: "Service not found" }, { status: 404 });
       }
 
       if (!service.isActive) {
-        return NextResponse.json(
-          {
-            error:
-              "Only active services can be selected",
-          },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: "Only active services can be selected" }, { status: 400 });
       }
     }
 
     if (berthId) {
-      const berth = await prisma.berth.findUnique({
-        where: { id: berthId },
-        select: {
-          id: true,
-          terminalId: true,
-          isActive: true,
-        },
+      const berth = await prisma.berth.findFirst({
+        where: { id: berthId, organizationId },
+        select: { id: true, terminalId: true, isActive: true },
       });
 
       if (!berth) {
-        return NextResponse.json(
-          { error: "Berth not found" },
-          { status: 404 },
-        );
+        return NextResponse.json({ error: "Berth not found" }, { status: 404 });
       }
 
       if (berth.terminalId !== terminalId) {
         return NextResponse.json(
-          {
-            error:
-              "The selected berth does not belong to the selected terminal",
-          },
+          { error: "The selected berth does not belong to the selected terminal" },
           { status: 400 },
         );
       }
 
       if (!berth.isActive) {
-        return NextResponse.json(
-          {
-            error:
-              "Only active berths can be selected",
-          },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: "Only active berths can be selected" }, { status: 400 });
       }
 
-      const overlap = await hasBerthOverlap({
-        berthId,
-        eta,
-        etb,
-        etd,
-      });
-
+      const overlap = await hasBerthOverlap({ organizationId, berthId, eta, etb, etd });
       if (overlap) {
         return NextResponse.json(
-          {
-            error:
-              "The selected berth already has an overlapping schedule",
-          },
+          { error: "The selected berth already has an overlapping schedule" },
           { status: 409 },
         );
       }
@@ -506,14 +358,12 @@ export async function POST(request: NextRequest) {
 
     const schedule = await prisma.vesselSchedule.create({
       data: {
-        organizationId: "00000000-0000-4000-8000-000000000001", // TODO Prompt 2: replace with authenticated org
+        organizationId,
         vesselId,
         terminalId,
         berthId,
         serviceId,
-        voyageNumber: trimOptionalString(
-          body.voyageNumber,
-        ),
+        voyageNumber: trimOptionalString(body.voyageNumber),
         eta,
         etb,
         etd,
@@ -527,12 +377,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         vessel: {
-          select: {
-            id: true,
-            imo: true,
-            name: true,
-            callSign: true,
-          },
+          select: { id: true, imo: true, name: true, callSign: true },
         },
         terminal: {
           select: {
@@ -540,23 +385,12 @@ export async function POST(request: NextRequest) {
             code: true,
             name: true,
             port: {
-              select: {
-                id: true,
-                code: true,
-                name: true,
-                timezone: true,
-              },
+              select: { id: true, code: true, name: true, timezone: true },
             },
           },
         },
         berth: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            color: true,
-            zeroOriginSide: true,
-          },
+          select: { id: true, code: true, name: true, color: true, zeroOriginSide: true },
         },
         service: {
           select: {
@@ -565,36 +399,19 @@ export async function POST(request: NextRequest) {
             name: true,
             color: true,
             isActive: true,
-            operatorCompany: {
-              select: {
-                id: true,
-                code: true,
-                name: true,
-              },
-            },
+            operatorCompany: { select: { id: true, code: true, name: true } },
           },
         },
       },
     });
 
-    return NextResponse.json(
-      {
-        data: mapSchedule(schedule),
-      },
-      {
-        status: 201,
-      },
-    );
+    return NextResponse.json({ data: serializeSchedule(schedule) }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create schedule:", error);
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
 
-    return NextResponse.json(
-      {
-        error: "Failed to create schedule",
-      },
-      {
-        status: 500,
-      },
-    );
+    console.error("Failed to create schedule:", error);
+    return NextResponse.json({ error: "Failed to create schedule" }, { status: 500 });
   }
 }
