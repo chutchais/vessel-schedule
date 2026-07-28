@@ -6,6 +6,7 @@ import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 import { formatVesselScheduleAuditEntityName } from "@/lib/audit/entity-name";
 import { prisma } from "@/lib/db/prisma";
+import { isResizeVersionCurrent } from "@/lib/berth-planner/duration-resize";
 
 const SCHEDULE_STATUSES = [
   "PLANNED",
@@ -179,6 +180,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         remarks: true,
         berthPositionMeters: true,
         headingReverse: true,
+        updatedAt: true,
       },
     });
 
@@ -210,11 +212,42 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const existingSchedule = await prisma.vesselSchedule.findFirst({
       where: { id, organizationId },
-      select: { id: true, vesselId: true, terminalId: true, berthId: true, serviceId: true },
+      select: {
+        id: true, vesselId: true, terminalId: true, berthId: true, serviceId: true,
+        eta: true, etb: true, etd: true, berthPositionMeters: true, updatedAt: true,
+        status: true,
+      },
     });
 
     if (!existingSchedule) {
       return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+    }
+
+    const isPlannerResize = body.plannerAction === "resize";
+    if (isPlannerResize) {
+      if (existingSchedule.status === "CANCELLED") {
+        return NextResponse.json({ error: "Cancelled schedules cannot be resized" }, { status: 409 });
+      }
+      if (!isResizeVersionCurrent(existingSchedule.updatedAt, body.expectedUpdatedAt)) {
+        return NextResponse.json(
+          { error: "This schedule changed after resizing began. Refresh and try again." },
+          { status: 409 },
+        );
+      }
+      if (body.resizeEdge !== "start" && body.resizeEdge !== "end") {
+        return NextResponse.json({ error: "Invalid resize edge" }, { status: 400 });
+      }
+      if (
+        body.vesselId !== existingSchedule.vesselId ||
+        body.terminalId !== existingSchedule.terminalId ||
+        trimOptionalId(body.berthId) !== existingSchedule.berthId ||
+        parseOptionalInteger(body.berthPositionMeters) !== existingSchedule.berthPositionMeters
+      ) {
+        return NextResponse.json(
+          { error: "A duration resize cannot change the vessel or berth geometry" },
+          { status: 400 },
+        );
+      }
     }
 
     if (!body.vesselId || typeof body.vesselId !== "string") {
@@ -273,6 +306,36 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (etb && (etb < eta || etb > etd)) {
       return NextResponse.json({ error: "ETB must be between ETA and ETD" }, { status: 400 });
+    }
+
+    const effectiveStart = etb ?? eta;
+    if (etd <= effectiveStart) {
+      return NextResponse.json({ error: "ETD must be later than ETB/ETA" }, { status: 400 });
+    }
+    if (isPlannerResize && etd.getTime() - effectiveStart.getTime() < 30 * 60 * 1000) {
+      return NextResponse.json(
+        { error: "Schedule duration must be at least 30 minutes" },
+        { status: 400 },
+      );
+    }
+    if (isPlannerResize && body.resizeEdge === "start") {
+      if (existingSchedule.etb && eta.getTime() !== existingSchedule.eta.getTime()) {
+        return NextResponse.json({ error: "ETA cannot change when resizing ETB" }, { status: 400 });
+      }
+      if (!existingSchedule.etb && etb !== null) {
+        return NextResponse.json({ error: "Start resize must update ETA when ETB is absent" }, { status: 400 });
+      }
+      if (etd.getTime() !== existingSchedule.etd.getTime()) {
+        return NextResponse.json({ error: "Start resize cannot change ETD" }, { status: 400 });
+      }
+    }
+    if (isPlannerResize && body.resizeEdge === "end") {
+      if (
+        eta.getTime() !== existingSchedule.eta.getTime() ||
+        (etb?.getTime() ?? null) !== (existingSchedule.etb?.getTime() ?? null)
+      ) {
+        return NextResponse.json({ error: "End resize can only change ETD" }, { status: 400 });
+      }
     }
 
     if (body.ata !== undefined && body.ata !== null && body.ata !== "" && !ata) {
@@ -390,6 +453,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       if (!beforeSchedule) {
         throw new Error("Schedule not found during update");
       }
+      if (
+        isPlannerResize &&
+        beforeSchedule.updatedAt.toISOString() !== body.expectedUpdatedAt
+      ) {
+        throw new Error("STALE_SCHEDULE");
+      }
 
       const updated = await tx.vesselSchedule.update({
         where: { id },
@@ -452,6 +521,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         }),
         beforeData: beforeSchedule,
         afterData: updated,
+        metadata: isPlannerResize ? {
+          context: "Berth Planner resize",
+          resizeEdge: body.resizeEdge,
+          changedFields: (["eta", "etb", "etd"] as const).filter((field) => {
+            const before = beforeSchedule[field]?.toISOString() ?? null;
+            const after = updated[field]?.toISOString() ?? null;
+            return before !== after;
+          }),
+        } : undefined,
       });
 
       return updated;
@@ -463,6 +541,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
+    if (error instanceof Error && error.message === "STALE_SCHEDULE") {
+      return NextResponse.json(
+        { error: "This schedule changed before it could be saved. Refresh and try again." },
+        { status: 409 },
+      );
+    }
     console.error("Failed to update schedule:", error);
     return NextResponse.json({ error: "Failed to update schedule" }, { status: 500 });
   }

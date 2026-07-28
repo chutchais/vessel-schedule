@@ -32,6 +32,12 @@ import {
   type DragGrab,
   type DragProposal,
 } from "@/lib/berth-planner/drag-drop";
+import {
+  computeResizeProposal,
+  getResizeEdgeAtPoint,
+  type ResizeEdge,
+  type ResizeProposal,
+} from "@/lib/berth-planner/duration-resize";
 import { ScheduleTooltip } from "./schedule-tooltip";
 import { ScheduleDetailsDrawer } from "./schedule-details-drawer";
 import type {
@@ -63,6 +69,12 @@ type ActiveDrag = {
   proposal: DragProposal | null;
 };
 
+type ActiveResize = {
+  hit: HitTarget;
+  edge: ResizeEdge;
+  proposal: ResizeProposal;
+};
+
 export type DragDropRequest = {
   scheduleId: string;
   vesselName: string;
@@ -77,6 +89,17 @@ export type DragDropRequest = {
   newStartTime: Date;
   newEndTime: Date;
   vesselLoa: number;
+};
+
+export type DurationResizeRequest = {
+  scheduleId: string;
+  vesselName: string;
+  edge: ResizeEdge;
+  originalStartTime: Date;
+  originalEndTime: Date;
+  newStartTime: Date;
+  newEndTime: Date;
+  expectedUpdatedAt: string;
 };
 
 type TooltipState = {
@@ -110,6 +133,7 @@ export type BerthPlannerCanvasProps = {
   }) => void;
   onEditRequest?: (scheduleId: string) => void;
   onDragDropRequest?: (request: DragDropRequest) => void;
+  onDurationResizeRequest?: (request: DurationResizeRequest) => void;
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -189,6 +213,76 @@ function drawVesselShape(params: {
   }
 }
 
+function drawResizePreview(params: {
+  ctx: CanvasRenderingContext2D;
+  polygon: [number, number][];
+  bounds: { left: number; right: number; top: number; bottom: number };
+  proposal: ResizeProposal;
+  timezone: string;
+}) {
+  const { ctx, polygon, bounds, proposal, timezone } = params;
+  const color = proposal.hasConflict ? "#EF4444" : proposal.isValid ? "#3B82F6" : "#64748B";
+  ctx.save();
+  ctx.globalAlpha = 0.62;
+  drawPath(ctx, polygon);
+  ctx.fillStyle = proposal.hasConflict ? "rgba(239,68,68,.35)" : proposal.isValid ? "rgba(59,130,246,.35)" : "rgba(100,116,139,.35)";
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([5, 3]);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  const minutes = Math.round(proposal.durationMs / 60_000);
+  const duration = minutes >= 60
+    ? `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+    : `${minutes}m`;
+  ctx.fillStyle = color;
+  ctx.font = "bold 9px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const cx = (bounds.left + bounds.right) / 2;
+  const cy = (bounds.top + bounds.bottom) / 2;
+  ctx.fillText(
+    `${formatTime(proposal.newStartTime, timezone)}–${formatTime(proposal.newEndTime, timezone)}`,
+    cx,
+    cy - 5,
+  );
+  ctx.fillText(
+    proposal.hasConflict ? `Conflict · ${duration}` : proposal.isValid ? duration : `Invalid · ${duration}`,
+    cx,
+    cy + 6,
+  );
+}
+
+function drawResizeHandles(
+  ctx: CanvasRenderingContext2D,
+  bounds: { left: number; right: number; top: number; bottom: number },
+  domain: PlannerDomain,
+) {
+  const cx = (bounds.left + bounds.right) / 2;
+  const cy = (bounds.top + bounds.bottom) / 2;
+  ctx.save();
+  ctx.strokeStyle = "rgba(30,41,59,.7)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (domain === "position") {
+    const half = Math.min(8, (bounds.right - bounds.left) / 3);
+    ctx.moveTo(cx - half, bounds.top + 1);
+    ctx.lineTo(cx + half, bounds.top + 1);
+    ctx.moveTo(cx - half, bounds.bottom - 1);
+    ctx.lineTo(cx + half, bounds.bottom - 1);
+  } else {
+    const half = Math.min(8, (bounds.bottom - bounds.top) / 3);
+    ctx.moveTo(bounds.left + 1, cy - half);
+    ctx.lineTo(bounds.left + 1, cy + half);
+    ctx.moveTo(bounds.right - 1, cy - half);
+    ctx.lineTo(bounds.right - 1, cy + half);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function BerthPlannerCanvas({
   berths,
   weekStart,
@@ -200,6 +294,7 @@ export function BerthPlannerCanvas({
   onGridCreateRequest,
   onEditRequest,
   onDragDropRequest,
+  onDurationResizeRequest,
 }: BerthPlannerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -215,13 +310,19 @@ export function BerthPlannerCanvas({
   // Drag state
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
   const activeDragRef = useRef<ActiveDrag | null>(null);
-  const pendingDragRef = useRef<{ hit: HitTarget; startX: number; startY: number } | null>(null);
+  const [activeResize, setActiveResize] = useState<ActiveResize | null>(null);
+  const activeResizeRef = useRef<ActiveResize | null>(null);
+  const pendingDragRef = useRef<{ hit: HitTarget; startX: number; startY: number; resizeEdge: ResizeEdge | null } | null>(null);
   const dragJustCompletedRef = useRef(false);
+  const [hoverResizeEdge, setHoverResizeEdge] = useState<ResizeEdge | null>(null);
 
   // Keep activeDragRef in sync with activeDrag state so pointer handlers see the latest value
   useEffect(() => {
     activeDragRef.current = activeDrag;
   }, [activeDrag]);
+  useEffect(() => {
+    activeResizeRef.current = activeResize;
+  }, [activeResize]);
 
   const classifiedBerths = useMemo(
     () => berths.map((berth) => {
@@ -490,7 +591,9 @@ export function BerthPlannerCanvas({
             : (schedule.headingReverse ? rightPx : leftPx);
 
           const polygon = getVesselPolygon(xHead, xTail, topPy, bottomPy);
-          const isDraggedVessel = activeDrag?.grab.scheduleId === schedule.id;
+          const isDraggedVessel =
+            activeDrag?.grab.scheduleId === schedule.id ||
+            activeResize?.hit.scheduleId === schedule.id;
           if (isDraggedVessel) ctx.globalAlpha = 0.25;
           drawVesselShape({
             ctx,
@@ -500,7 +603,21 @@ export function BerthPlannerCanvas({
             isSelected,
             bounds: { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy },
           });
+          drawResizeHandles(ctx, { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy }, domain);
           if (isDraggedVessel) ctx.globalAlpha = 1.0;
+
+          if (activeResize?.hit.scheduleId === schedule.id) {
+            const resizeTop = toY(activeResize.proposal.newStartTime);
+            const resizeBottom = toY(activeResize.proposal.newEndTime);
+            const resizePolygon = getVesselPolygon(xHead, xTail, resizeTop, resizeBottom);
+            drawResizePreview({
+              ctx,
+              polygon: resizePolygon,
+              bounds: { left: leftPx, right: rightPx, top: resizeTop, bottom: resizeBottom },
+              proposal: activeResize.proposal,
+              timezone: portTimezone,
+            });
+          }
 
           newHitTargets.push({
             scheduleId: schedule.id,
@@ -764,7 +881,9 @@ export function BerthPlannerCanvas({
           const yHead = bowAtTop ? topPy : bottomPy;
           const yTail = bowAtTop ? bottomPy : topPy;
           const polygon = getVesselPolygonVertical(yHead, yTail, leftPx, rightPx);
-          const isDraggedVessel = activeDrag?.grab.scheduleId === schedule.id;
+          const isDraggedVessel =
+            activeDrag?.grab.scheduleId === schedule.id ||
+            activeResize?.hit.scheduleId === schedule.id;
           if (isDraggedVessel) ctx.globalAlpha = 0.25;
           drawVesselShape({
             ctx,
@@ -774,7 +893,21 @@ export function BerthPlannerCanvas({
             isSelected,
             bounds: { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy },
           });
+          drawResizeHandles(ctx, { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy }, domain);
           if (isDraggedVessel) ctx.globalAlpha = 1.0;
+
+          if (activeResize?.hit.scheduleId === schedule.id) {
+            const resizeLeft = toX(activeResize.proposal.newStartTime);
+            const resizeRight = toX(activeResize.proposal.newEndTime);
+            const resizePolygon = getVesselPolygonVertical(yHead, yTail, resizeLeft, resizeRight);
+            drawResizePreview({
+              ctx,
+              polygon: resizePolygon,
+              bounds: { left: resizeLeft, right: resizeRight, top: topPy, bottom: bottomPy },
+              proposal: activeResize.proposal,
+              timezone: portTimezone,
+            });
+          }
 
           newHitTargets.push({
             scheduleId: schedule.id,
@@ -875,6 +1008,7 @@ export function BerthPlannerCanvas({
     conflictedIds,
     classifiedBerths,
     activeDrag,
+    activeResize,
   ]);
 
   const datetimeLanes = useMemo<DatetimeBerthLane[]>(() => {
@@ -908,10 +1042,13 @@ export function BerthPlannerCanvas({
     if (!hit) return;
     if (hit.schedule.status === "CANCELLED") return;
     const rect = canvasRef.current!.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     pendingDragRef.current = {
       hit,
-      startX: e.clientX - rect.left,
-      startY: e.clientY - rect.top,
+      startX: x,
+      startY: y,
+      resizeEdge: getResizeEdgeAtPoint({ x, y, bounds: hit.bounds, domain }),
     };
     canvasRef.current!.setPointerCapture(e.pointerId);
     e.preventDefault();
@@ -922,6 +1059,31 @@ export function BerthPlannerCanvas({
     if (!rect) return;
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    const resizing = activeResizeRef.current;
+    if (resizing) {
+      const drawW = canvasWidth - LEFT_AXIS_W;
+      const drawH = canvasHeight - TOP_HEADER_H - BOTTOM_PAD;
+      const otherSchedules = classifiedBerths
+        .flatMap((cb) => cb.valid)
+        .filter((schedule) => schedule.id !== resizing.hit.scheduleId);
+      const proposal = computeResizeProposal({
+        schedule: resizing.hit.schedule,
+        edge: resizing.edge,
+        pointerX: x,
+        pointerY: y,
+        domain,
+        frame: { leftAxisWidth: LEFT_AXIS_W, topHeaderHeight: TOP_HEADER_H, drawWidth: drawW, drawHeight: drawH },
+        weekStart,
+        weekEnd,
+        otherSchedules,
+      });
+      const next = { ...resizing, proposal };
+      activeResizeRef.current = next;
+      setActiveResize(next);
+      setTooltip(null);
+      return;
+    }
 
     const current = activeDragRef.current;
     if (current) {
@@ -953,6 +1115,28 @@ export function BerthPlannerCanvas({
       if (isDragThresholdExceeded(pending.startX, pending.startY, x, y)) {
         const drawW = canvasWidth - LEFT_AXIS_W;
         const drawH = canvasHeight - TOP_HEADER_H - BOTTOM_PAD;
+        if (pending.resizeEdge) {
+          const otherSchedules = classifiedBerths
+            .flatMap((cb) => cb.valid)
+            .filter((schedule) => schedule.id !== pending.hit.scheduleId);
+          const proposal = computeResizeProposal({
+            schedule: pending.hit.schedule,
+            edge: pending.resizeEdge,
+            pointerX: x,
+            pointerY: y,
+            domain,
+            frame: { leftAxisWidth: LEFT_AXIS_W, topHeaderHeight: TOP_HEADER_H, drawWidth: drawW, drawHeight: drawH },
+            weekStart,
+            weekEnd,
+            otherSchedules,
+          });
+          const next = { hit: pending.hit, edge: pending.resizeEdge, proposal };
+          pendingDragRef.current = null;
+          activeResizeRef.current = next;
+          setActiveResize(next);
+          setTooltip(null);
+          return;
+        }
         const grab = computeDragGrab({
           schedule: pending.hit.schedule,
           berthId: pending.hit.berthId,
@@ -978,19 +1162,24 @@ export function BerthPlannerCanvas({
     // Normal hover
     const t = findHit(e.clientX, e.clientY);
     if (t) {
+      setHoverResizeEdge(getResizeEdgeAtPoint({ x, y, bounds: t.bounds, domain }));
       setTooltip({ x, y, schedule: t.schedule, berthName: t.berthName, isConflict: t.isConflict });
     } else {
+      setHoverResizeEdge(null);
       setTooltip(null);
     }
   }
 
   function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
     const current = activeDragRef.current;
-    const wasDragging = current !== null;
+    const resize = activeResizeRef.current;
+    const wasDragging = current !== null || resize !== null;
 
     pendingDragRef.current = null;
     activeDragRef.current = null;
+    activeResizeRef.current = null;
     setActiveDrag(null);
+    setActiveResize(null);
 
     if (wasDragging) {
       dragJustCompletedRef.current = true;
@@ -1020,6 +1209,18 @@ export function BerthPlannerCanvas({
         vesselLoa: current.grab.vesselLoa,
       });
     }
+    if (resize?.proposal.isValid && !resize.proposal.hasConflict) {
+      onDurationResizeRequest?.({
+        scheduleId: resize.hit.scheduleId,
+        vesselName: resize.hit.schedule.vesselName,
+        edge: resize.edge,
+        originalStartTime: resize.hit.schedule.startTime,
+        originalEndTime: resize.hit.schedule.endTime,
+        newStartTime: resize.proposal.newStartTime,
+        newEndTime: resize.proposal.newEndTime,
+        expectedUpdatedAt: resize.hit.schedule.updatedAt ?? "",
+      });
+    }
 
     if (canvasRef.current) {
       try { canvasRef.current.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
@@ -1029,7 +1230,9 @@ export function BerthPlannerCanvas({
   function handlePointerCancel() {
     pendingDragRef.current = null;
     activeDragRef.current = null;
+    activeResizeRef.current = null;
     setActiveDrag(null);
+    setActiveResize(null);
   }
 
   function handleClick(e: React.MouseEvent<HTMLCanvasElement>) {
@@ -1095,10 +1298,12 @@ export function BerthPlannerCanvas({
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLCanvasElement>) {
     if (e.key === "Escape") {
-      if (activeDragRef.current || pendingDragRef.current) {
+      if (activeDragRef.current || activeResizeRef.current || pendingDragRef.current) {
         pendingDragRef.current = null;
         activeDragRef.current = null;
+        activeResizeRef.current = null;
         setActiveDrag(null);
+        setActiveResize(null);
         return;
       }
       setSelectedSchedule(null);
@@ -1125,13 +1330,23 @@ export function BerthPlannerCanvas({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerCancel}
-          onMouseLeave={() => setTooltip(null)}
+          onMouseLeave={() => {
+            setTooltip(null);
+            setHoverResizeEdge(null);
+          }}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
           tabIndex={0}
-          aria-label="Berth planner canvas. Hover over vessels to see details. Click a vessel to view, drag to reschedule."
+          aria-label="Berth planner canvas. Hover over vessels to see details. Drag inside a vessel to move it, or drag a time edge to resize its duration."
           className="block cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          style={{ cursor: activeDrag ? "grabbing" : "default" }}
+          style={{
+            cursor: activeDrag
+              ? "grabbing"
+              : activeResize || hoverResizeEdge
+                ? domain === "position" ? "ns-resize" : "ew-resize"
+                : "default",
+            touchAction: "none",
+          }}
         />
 
         {tooltip && (

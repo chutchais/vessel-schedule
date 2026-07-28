@@ -1,4 +1,14 @@
 2026-07-28
+- Berth Planner duration resizing
+  - Position view supports top/start and bottom/end time-edge resizing; Datetime view supports left/start and right/end resizing with an 8 px zoom-independent hit area
+  - Vessel interiors retain drag-to-move behavior; resize uses pointer capture, touch support, Escape/pointer cancellation, 30-minute snapping, translucent validity/conflict previews, proposed times and duration
+  - Added a dedicated confirmation dialog showing old/new start, end and duration; planner refreshes in place after confirmation without resetting terminal, week, view, filters or selection state
+  - Start resize changes ETB when present and ETA otherwise; end resize changes ETD only, preserving terminal, berth, position and vessel/LOA
+  - Schedule PATCH now revalidates resize authorization, organization ownership, cancelled state, minimum duration, immutable geometry, conflicts and `updatedAt` optimistic concurrency
+  - Resize audit entries include `Berth Planner resize`, edge and changed time fields in metadata
+  - Added focused duration-resize tests for both views, edge detection, snapping, start/end behavior, ETA/ETB selection, minimum duration, conflicts, permissions and stale versions
+
+2026-07-28
 - Berth Planner drag-and-drop rescheduling
   - lib/berth-planner/drag-drop.ts — pure helpers: computeDragGrab, computeDragProposal, isDragThresholdExceeded, DragGrab, DragProposal, DragBerth types; 30-min time snap, 5-m position snap, zeroOriginSide support, conflict detection via hasTimeOverlap + hasPositionOverlap, null on out-of-bounds
   - lib/berth-planner/drag-drop.test.ts — 14 unit tests covering both domains, snapping, RIGHT-origin berths, cross-berth movement, fit validation, time-range validation, conflict detection, cancelled schedule exclusion

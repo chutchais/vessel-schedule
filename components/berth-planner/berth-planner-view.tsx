@@ -6,8 +6,10 @@ import { AlertMessage } from "@/components/ui/alert-message";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { BerthPlannerControls } from "./berth-planner-controls";
-import { BerthPlannerCanvas, type DragDropRequest } from "./berth-planner-canvas";
+import { BerthPlannerCanvas, type DragDropRequest, type DurationResizeRequest } from "./berth-planner-canvas";
 import { DragConfirmDialog } from "./drag-confirm-dialog";
+import { ResizeConfirmDialog } from "./resize-confirm-dialog";
+import { applyResizeTimes } from "@/lib/berth-planner/duration-resize";
 import { ScheduleFormFields, type ScheduleFormValues } from "@/components/schedules/schedule-form-fields";
 import {
   getWeekStart,
@@ -165,6 +167,9 @@ export function BerthPlannerView() {
   const [isDragConfirmOpen, setIsDragConfirmOpen] = useState(false);
   const [isDragSaving, setIsDragSaving] = useState(false);
   const [dragSaveError, setDragSaveError] = useState("");
+  const [resizePending, setResizePending] = useState<DurationResizeRequest | null>(null);
+  const [isResizeSaving, setIsResizeSaving] = useState(false);
+  const [resizeSaveError, setResizeSaveError] = useState("");
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -583,6 +588,75 @@ export function BerthPlannerView() {
     }
   }, [dragDropPending, refreshPlanner]);
 
+  const handleDurationResizeRequest = useCallback((request: DurationResizeRequest) => {
+    setResizePending(request);
+    setResizeSaveError("");
+  }, []);
+
+  const handleDurationResizeConfirm = useCallback(async () => {
+    if (!resizePending) return;
+    setIsResizeSaving(true);
+    setResizeSaveError("");
+    try {
+      const scheduleRes = await fetch(`/api/schedules/${resizePending.scheduleId}`, { cache: "no-store" });
+      if (!scheduleRes.ok) {
+        const body = await scheduleRes.json().catch(() => ({})) as { error?: string };
+        setResizeSaveError(body.error ?? "This schedule is no longer available.");
+        return;
+      }
+      const payload = await scheduleRes.json() as { data?: EditableSchedule };
+      if (!payload.data) {
+        setResizeSaveError("Failed to load current schedule data.");
+        return;
+      }
+      const full = payload.data;
+      const resized = applyResizeTimes({
+        eta: full.eta,
+        etb: full.etb,
+        etd: full.etd,
+        edge: resizePending.edge,
+        newStartTime: resizePending.newStartTime,
+        newEndTime: resizePending.newEndTime,
+      });
+      const patchRes = await fetch(`/api/schedules/${resizePending.scheduleId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vesselId: full.vesselId,
+          serviceId: full.serviceId ?? "",
+          voyageNumber: full.voyageNumber ?? "",
+          terminalId: full.terminalId,
+          berthId: full.berthId ?? "",
+          eta: resized.eta,
+          etb: resized.etb ?? "",
+          etd: resized.etd,
+          ata: full.ata ?? "",
+          atb: full.atb ?? "",
+          atd: full.atd ?? "",
+          status: full.status,
+          remarks: full.remarks ?? "",
+          berthPositionMeters: full.berthPositionMeters,
+          headingReverse: full.headingReverse,
+          plannerAction: "resize",
+          resizeEdge: resizePending.edge,
+          expectedUpdatedAt: resizePending.expectedUpdatedAt,
+        }),
+      });
+      const body = await patchRes.json().catch(() => ({})) as { error?: string };
+      if (!patchRes.ok) {
+        setResizeSaveError(body.error ?? "Failed to resize schedule.");
+        return;
+      }
+      setResizePending(null);
+      setCreateSuccess("Schedule duration resized successfully.");
+      await refreshPlanner();
+    } catch {
+      setResizeSaveError("Network error. Please try again.");
+    } finally {
+      setIsResizeSaving(false);
+    }
+  }, [resizePending, refreshPlanner]);
+
   const updateEditForm = useCallback(
     <Field extends keyof ScheduleFormValues>(field: Field, value: ScheduleFormValues[Field]) => {
       if (field === "terminalId") {
@@ -868,6 +942,7 @@ export function BerthPlannerView() {
               onGridCreateRequest={handleGridCreateRequest}
               onEditRequest={handleEditRequest}
               onDragDropRequest={handleDragDropRequest}
+              onDurationResizeRequest={handleDurationResizeRequest}
             />
           </>
         )}
@@ -992,6 +1067,24 @@ export function BerthPlannerView() {
             setIsDragConfirmOpen(false);
             setDragDropPending(null);
             setDragSaveError("");
+          }}
+        />
+      )}
+      {resizePending && (
+        <ResizeConfirmDialog
+          isOpen
+          vesselName={resizePending.vesselName}
+          oldStartTime={resizePending.originalStartTime}
+          oldEndTime={resizePending.originalEndTime}
+          newStartTime={resizePending.newStartTime}
+          newEndTime={resizePending.newEndTime}
+          portTimezone={portTimezone}
+          isSaving={isResizeSaving}
+          saveError={resizeSaveError}
+          onConfirm={handleDurationResizeConfirm}
+          onCancel={() => {
+            setResizePending(null);
+            setResizeSaveError("");
           }}
         />
       )}

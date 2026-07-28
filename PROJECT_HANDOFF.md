@@ -75,6 +75,25 @@ npx prisma generate
 ### Berth Planner Datetime Domain — ✅ complete
 ### Berth Planner Conflict Panel — ✅ complete
 ### Berth Planner Drag-and-Drop Rescheduling — ✅ complete
+### Berth Planner Duration Resizing — ✅ complete
+
+**Duration resize behavior:**
+- Position domain: top edge resizes start and bottom edge resizes end
+- Datetime domain: left edge resizes start and right edge resizes end
+- Edge hit testing is a fixed 8 CSS pixels; vessel interiors continue to drag/move
+- Pointer/touch capture, 5 px activation threshold, Escape/pointer cancellation, 30-minute snapping and the existing conflict engine are reused
+- Preview retains the original as a translucent ghost and shows proposed times, duration, invalid state or conflict state
+- Start resize updates ETB when present, otherwise ETA; ETA is never shifted when ETB exists
+- End resize updates ETD only; berth, terminal, berth position, vessel and LOA remain unchanged
+- Confirmation is required before PATCH; successful saves refresh planner data without a page reload or planner-context reset
+- Planner payload includes schedule `updatedAt`; PATCH checks it before and inside the transaction to reject stale updates
+- Server resize validation rechecks role, active organization ownership, cancelled state, minimum 30-minute duration, immutable geometry and conflicts
+- Audit metadata records `context: "Berth Planner resize"`, resize edge and changed time fields
+
+New files:
+- `lib/berth-planner/duration-resize.ts`
+- `lib/berth-planner/duration-resize.test.ts`
+- `components/berth-planner/resize-confirm-dialog.tsx`
 
 **Weekly viewport with switchable planner domain**
 

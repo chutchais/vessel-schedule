@@ -19,6 +19,7 @@ export type EditableSchedule = {
   remarks: string | null;
   berthPositionMeters: number | null;
   headingReverse: boolean;
+  updatedAt?: string;
 };
 
 /**

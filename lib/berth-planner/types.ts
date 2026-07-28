@@ -27,6 +27,7 @@ export type PlannerScheduleRaw = {
   headingReverse: boolean;
   berthId: string;
   voyageNumber: string | null;
+  updatedAt: string;
 };
 
 /** A schedule with parsed Date objects, ready for layout and rendering. */
@@ -45,6 +46,7 @@ export type PlannerSchedule = {
   headingReverse: boolean;
   berthId: string;
   voyageNumber: string | null;
+  updatedAt?: string;
 };
 
 /** A schedule that has passed all geometry validation and can be drawn on canvas. */

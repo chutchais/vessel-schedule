@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
         berthPositionMeters: true,
         headingReverse: true,
         voyageNumber: true,
+        updatedAt: true,
         vessel: {
           select: {
             name: true,
@@ -145,6 +146,7 @@ export async function GET(request: NextRequest) {
           vesselColor: "#3B82F6",
           serviceName: s.service?.name ?? null,
           serviceColor: s.service?.color ?? null,
+          updatedAt: s.updatedAt.toISOString(),
         })),
       })),
     };
