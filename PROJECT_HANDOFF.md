@@ -74,6 +74,7 @@ npx prisma generate
 ### Berth Planner Phase 3 (part) — ✅ click-to-create and click-to-edit complete
 ### Berth Planner Datetime Domain — ✅ complete
 ### Berth Planner Conflict Panel — ✅ complete
+### Berth Planner Drag-and-Drop Rescheduling — ✅ complete
 
 **Weekly viewport with switchable planner domain**
 

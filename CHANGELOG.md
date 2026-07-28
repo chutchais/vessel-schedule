@@ -1,3 +1,11 @@
+2026-07-28
+- Berth Planner drag-and-drop rescheduling
+  - lib/berth-planner/drag-drop.ts — pure helpers: computeDragGrab, computeDragProposal, isDragThresholdExceeded, DragGrab, DragProposal, DragBerth types; 30-min time snap, 5-m position snap, zeroOriginSide support, conflict detection via hasTimeOverlap + hasPositionOverlap, null on out-of-bounds
+  - lib/berth-planner/drag-drop.test.ts — 14 unit tests covering both domains, snapping, RIGHT-origin berths, cross-berth movement, fit validation, time-range validation, conflict detection, cancelled schedule exclusion
+  - components/berth-planner/drag-confirm-dialog.tsx — modal showing old/new berth, position, ETB/ETA, ETD; Confirm Move / Cancel buttons; error state
+  - berth-planner-canvas.tsx — pointer event handlers (onPointerDown/Move/Up/Cancel) with pointer capture, 5 px drag threshold, Escape-to-cancel; ghost (25% opacity) original vessel during drag; live translucent preview (blue = valid, red = conflict, grey = invalid) with label overlay; berthId + bounds added to HitTarget; onClick guard via dragJustCompletedRef
+  - berth-planner-view.tsx — handleDragDropRequest opens DragConfirmDialog; handleDragDropConfirm fetches full schedule, shifts ETA/ETB/ETD by time delta, PATCHes /api/schedules/[id], handles 404/409/network errors, refreshes planner on success
+
 2026-07-26
 - Finished Company CRUD
 - Finished Port CRUD

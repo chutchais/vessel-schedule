@@ -6,7 +6,8 @@ import { AlertMessage } from "@/components/ui/alert-message";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { BerthPlannerControls } from "./berth-planner-controls";
-import { BerthPlannerCanvas } from "./berth-planner-canvas";
+import { BerthPlannerCanvas, type DragDropRequest } from "./berth-planner-canvas";
+import { DragConfirmDialog } from "./drag-confirm-dialog";
 import { ScheduleFormFields, type ScheduleFormValues } from "@/components/schedules/schedule-form-fields";
 import {
   getWeekStart,
@@ -158,6 +159,12 @@ export function BerthPlannerView() {
   const [selectedConflictId, setSelectedConflictId] = useState<string | null>(null);
   const [onlyConflicts, setOnlyConflicts] = useState(false);
   const [highlightedScheduleIds, setHighlightedScheduleIds] = useState<Set<string>>(new Set());
+
+  // Drag-and-drop confirmation state
+  const [dragDropPending, setDragDropPending] = useState<DragDropRequest | null>(null);
+  const [isDragConfirmOpen, setIsDragConfirmOpen] = useState(false);
+  const [isDragSaving, setIsDragSaving] = useState(false);
+  const [dragSaveError, setDragSaveError] = useState("");
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -481,6 +488,101 @@ export function BerthPlannerView() {
     setOnlyConflicts((v) => !v);
   }, []);
 
+  const handleDragDropRequest = useCallback((drop: DragDropRequest) => {
+    setDragDropPending(drop);
+    setDragSaveError("");
+    setIsDragConfirmOpen(true);
+  }, []);
+
+  const handleDragDropConfirm = useCallback(async () => {
+    if (!dragDropPending) return;
+    setIsDragSaving(true);
+    setDragSaveError("");
+
+    try {
+      const scheduleRes = await fetch(`/api/schedules/${dragDropPending.scheduleId}`, { cache: "no-store" });
+      if (scheduleRes.status === 404) {
+        setDragSaveError("This schedule no longer exists and may have been deleted.");
+        setIsDragSaving(false);
+        return;
+      }
+      if (!scheduleRes.ok) {
+        const body = await scheduleRes.json() as { error?: string };
+        setDragSaveError(body.error ?? "Failed to load schedule");
+        setIsDragSaving(false);
+        return;
+      }
+
+      const payload = await scheduleRes.json() as { data?: EditableSchedule };
+      if (!payload.data) {
+        setDragSaveError("Failed to load schedule data");
+        setIsDragSaving(false);
+        return;
+      }
+
+      const full = payload.data;
+
+      // Shift all times by the same delta to preserve ETA→ETB→ETD relative ordering
+      const originalStart = full.etb ? new Date(full.etb) : new Date(full.eta);
+      const timeDeltaMs = dragDropPending.newStartTime.getTime() - originalStart.getTime();
+
+      const newEta = new Date(new Date(full.eta).getTime() + timeDeltaMs).toISOString();
+      const newEtb = full.etb ? new Date(new Date(full.etb).getTime() + timeDeltaMs).toISOString() : "";
+      const newEtd = new Date(new Date(full.etd).getTime() + timeDeltaMs).toISOString();
+
+      const patchRes = await fetch(`/api/schedules/${dragDropPending.scheduleId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vesselId: full.vesselId,
+          serviceId: full.serviceId ?? "",
+          voyageNumber: full.voyageNumber ?? "",
+          terminalId: full.terminalId,
+          berthId: dragDropPending.newBerthId,
+          eta: newEta,
+          etb: newEtb,
+          etd: newEtd,
+          ata: full.ata ?? "",
+          atb: full.atb ?? "",
+          atd: full.atd ?? "",
+          status: full.status,
+          remarks: full.remarks ?? "",
+          berthPositionMeters: dragDropPending.newPositionStart,
+          headingReverse: full.headingReverse,
+        }),
+      });
+
+      if (patchRes.status === 404) {
+        setDragSaveError("This schedule no longer exists.");
+        setIsDragSaving(false);
+        return;
+      }
+
+      if (patchRes.status === 409) {
+        const body = await patchRes.json() as { error?: string };
+        setDragSaveError(body.error ?? "Berth conflict detected. Another schedule occupies this slot.");
+        setIsDragSaving(false);
+        return;
+      }
+
+      if (!patchRes.ok) {
+        const body = await patchRes.json() as { error?: string };
+        setDragSaveError(body.error ?? "Failed to save schedule");
+        setIsDragSaving(false);
+        return;
+      }
+
+      setIsDragConfirmOpen(false);
+      setDragDropPending(null);
+      setCreateSuccess("Schedule moved successfully.");
+      await refreshPlanner();
+    } catch {
+      setDragSaveError("Network error. Please try again.");
+    } finally {
+      setIsDragSaving(false);
+    }
+  }, [dragDropPending, refreshPlanner]);
+
   const updateEditForm = useCallback(
     <Field extends keyof ScheduleFormValues>(field: Field, value: ScheduleFormValues[Field]) => {
       if (field === "terminalId") {
@@ -765,6 +867,7 @@ export function BerthPlannerView() {
               onInvalidRecords={setInvalidRecords}
               onGridCreateRequest={handleGridCreateRequest}
               onEditRequest={handleEditRequest}
+              onDragDropRequest={handleDragDropRequest}
             />
           </>
         )}
@@ -868,6 +971,30 @@ export function BerthPlannerView() {
           </form>
         )}
       </Drawer>
+
+      {dragDropPending && (
+        <DragConfirmDialog
+          isOpen={isDragConfirmOpen}
+          vesselName={dragDropPending.vesselName}
+          oldBerthName={dragDropPending.originalBerthName}
+          oldPositionStart={dragDropPending.originalPositionStart}
+          oldStartTime={dragDropPending.originalStartTime}
+          oldEndTime={dragDropPending.originalEndTime}
+          newBerthName={dragDropPending.newBerthName}
+          newPositionStart={dragDropPending.newPositionStart}
+          newStartTime={dragDropPending.newStartTime}
+          newEndTime={dragDropPending.newEndTime}
+          portTimezone={portTimezone}
+          isSaving={isDragSaving}
+          saveError={dragSaveError}
+          onConfirm={handleDragDropConfirm}
+          onCancel={() => {
+            setIsDragConfirmOpen(false);
+            setDragDropPending(null);
+            setDragSaveError("");
+          }}
+        />
+      )}
     </div>
   );
 }

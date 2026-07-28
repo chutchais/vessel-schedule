@@ -25,6 +25,13 @@ import {
   positionToDatetimeLaneY,
   type DatetimeBerthLane,
 } from "@/lib/berth-planner/datetime-domain";
+import {
+  computeDragGrab,
+  computeDragProposal,
+  isDragThresholdExceeded,
+  type DragGrab,
+  type DragProposal,
+} from "@/lib/berth-planner/drag-drop";
 import { ScheduleTooltip } from "./schedule-tooltip";
 import { ScheduleDetailsDrawer } from "./schedule-details-drawer";
 import type {
@@ -44,7 +51,32 @@ type HitTarget = {
   polygon: [number, number][];
   schedule: ValidatedSchedule;
   berthName: string;
+  berthId: string;
   isConflict: boolean;
+  bounds: { left: number; right: number; top: number; bottom: number };
+};
+
+type ActiveDrag = {
+  grab: DragGrab;
+  pointerX: number;
+  pointerY: number;
+  proposal: DragProposal | null;
+};
+
+export type DragDropRequest = {
+  scheduleId: string;
+  vesselName: string;
+  originalBerthId: string;
+  originalBerthName: string;
+  originalStartTime: Date;
+  originalEndTime: Date;
+  originalPositionStart: number;
+  newBerthId: string;
+  newBerthName: string;
+  newPositionStart: number;
+  newStartTime: Date;
+  newEndTime: Date;
+  vesselLoa: number;
 };
 
 type TooltipState = {
@@ -77,6 +109,7 @@ export type BerthPlannerCanvasProps = {
     plannedStartTime: Date;
   }) => void;
   onEditRequest?: (scheduleId: string) => void;
+  onDragDropRequest?: (request: DragDropRequest) => void;
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -166,6 +199,7 @@ export function BerthPlannerCanvas({
   onInvalidRecords,
   onGridCreateRequest,
   onEditRequest,
+  onDragDropRequest,
 }: BerthPlannerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -177,6 +211,17 @@ export function BerthPlannerCanvas({
   const [selectedSchedule, setSelectedSchedule] = useState<ValidatedSchedule | null>(null);
   const [selectedBerthName, setSelectedBerthName] = useState("");
   const [selectedConflictPartners, setSelectedConflictPartners] = useState<string[]>([]);
+
+  // Drag state
+  const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+  const activeDragRef = useRef<ActiveDrag | null>(null);
+  const pendingDragRef = useRef<{ hit: HitTarget; startX: number; startY: number } | null>(null);
+  const dragJustCompletedRef = useRef(false);
+
+  // Keep activeDragRef in sync with activeDrag state so pointer handlers see the latest value
+  useEffect(() => {
+    activeDragRef.current = activeDrag;
+  }, [activeDrag]);
 
   const classifiedBerths = useMemo(
     () => berths.map((berth) => {
@@ -445,6 +490,8 @@ export function BerthPlannerCanvas({
             : (schedule.headingReverse ? rightPx : leftPx);
 
           const polygon = getVesselPolygon(xHead, xTail, topPy, bottomPy);
+          const isDraggedVessel = activeDrag?.grab.scheduleId === schedule.id;
+          if (isDraggedVessel) ctx.globalAlpha = 0.25;
           drawVesselShape({
             ctx,
             polygon,
@@ -453,16 +500,87 @@ export function BerthPlannerCanvas({
             isSelected,
             bounds: { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy },
           });
+          if (isDraggedVessel) ctx.globalAlpha = 1.0;
 
           newHitTargets.push({
             scheduleId: schedule.id,
             polygon,
             schedule,
             berthName: berth.name,
+            berthId: berth.id,
             isConflict,
+            bounds: { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy },
           });
         }
       });
+
+      // Draw drag preview for position domain
+      if (activeDrag?.proposal) {
+        const { proposal, grab } = activeDrag;
+        const targetBerthIndex = berths.findIndex((b) => b.id === proposal.berthId);
+        const targetBerth = berths[targetBerthIndex];
+        if (targetBerth && targetBerthIndex >= 0) {
+          const targetOffset = berthOffsets[targetBerthIndex]!;
+          const leftGlobal =
+            targetBerth.zeroOriginSide === "LEFT"
+              ? targetOffset + proposal.newPositionStart
+              : targetOffset + targetBerth.berthLength - proposal.newPositionEnd;
+          const rightGlobal =
+            targetBerth.zeroOriginSide === "LEFT"
+              ? targetOffset + proposal.newPositionEnd
+              : targetOffset + targetBerth.berthLength - proposal.newPositionStart;
+          const leftPx = toX(leftGlobal);
+          const rightPx = toX(rightGlobal);
+          const topPy = toY(proposal.newStartTime);
+          const bottomPy = toY(proposal.newEndTime);
+
+          if (rightPx - leftPx >= 1 && bottomPy - topPy >= 1) {
+            const draggedSchedule = classifiedBerths
+              .flatMap((cb) => cb.valid)
+              .find((s) => s.id === grab.scheduleId);
+            const headingReverse = draggedSchedule?.headingReverse ?? false;
+            const xHead =
+              targetBerth.zeroOriginSide === "LEFT"
+                ? headingReverse ? rightPx : leftPx
+                : headingReverse ? leftPx : rightPx;
+            const xTail =
+              targetBerth.zeroOriginSide === "LEFT"
+                ? headingReverse ? leftPx : rightPx
+                : headingReverse ? rightPx : leftPx;
+
+            const polygon = getVesselPolygon(xHead, xTail, topPy, bottomPy);
+            const [pr, pg, pb] = proposal.hasConflict
+              ? [239, 68, 68]
+              : proposal.isValid
+                ? [59, 130, 246]
+                : [148, 163, 184];
+
+            ctx.globalAlpha = 0.55;
+            drawPath(ctx, polygon);
+            ctx.fillStyle = `rgba(${pr},${pg},${pb},0.35)`;
+            ctx.strokeStyle = proposal.hasConflict ? "#EF4444" : proposal.isValid ? "#3B82F6" : "#94A3B8";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.fill();
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1.0;
+
+            ctx.fillStyle = proposal.hasConflict ? "#EF4444" : proposal.isValid ? "#1D4ED8" : "#64748B";
+            ctx.font = "bold 9px system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            const cx = (leftPx + rightPx) / 2;
+            const labelY = Math.max(topPy, TOP_HEADER_H + 2);
+            ctx.fillText(`${proposal.berthName} · ${proposal.newPositionStart}m`, cx, labelY);
+            ctx.fillText(
+              `${formatTime(proposal.newStartTime, portTimezone)}–${formatTime(proposal.newEndTime, portTimezone)}`,
+              cx,
+              labelY + 11,
+            );
+          }
+        }
+      }
     } else {
       const toX = (t: Date) => LEFT_AXIS_W + timeToPixel(t, weekStart, weekEnd, drawW);
       const lanes = buildDatetimeBerthLanes(
@@ -646,7 +764,8 @@ export function BerthPlannerCanvas({
           const yHead = bowAtTop ? topPy : bottomPy;
           const yTail = bowAtTop ? bottomPy : topPy;
           const polygon = getVesselPolygonVertical(yHead, yTail, leftPx, rightPx);
-
+          const isDraggedVessel = activeDrag?.grab.scheduleId === schedule.id;
+          if (isDraggedVessel) ctx.globalAlpha = 0.25;
           drawVesselShape({
             ctx,
             polygon,
@@ -655,17 +774,92 @@ export function BerthPlannerCanvas({
             isSelected,
             bounds: { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy },
           });
+          if (isDraggedVessel) ctx.globalAlpha = 1.0;
 
           newHitTargets.push({
             scheduleId: schedule.id,
             polygon,
             schedule,
             berthName: berth.name,
+            berthId: berth.id,
             isConflict,
+            bounds: { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy },
           });
         }
       });
-    }
+
+      // Draw drag preview for datetime domain
+      if (activeDrag?.proposal) {
+        const { proposal, grab } = activeDrag;
+        const lane = laneMap.get(proposal.berthId);
+        const targetBerth = berths.find((b) => b.id === proposal.berthId);
+        if (lane && targetBerth) {
+          const laneTop = TOP_HEADER_H + lane.laneTop;
+          const laneHeight = lane.laneHeight;
+
+          const leftPx = toX(proposal.newStartTime);
+          const rightPx = toX(proposal.newEndTime);
+          const yA = positionToDatetimeLaneY(
+            proposal.newPositionStart,
+            targetBerth.berthLength,
+            targetBerth.zeroOriginSide,
+            laneTop,
+            laneHeight,
+          );
+          const yB = positionToDatetimeLaneY(
+            proposal.newPositionEnd,
+            targetBerth.berthLength,
+            targetBerth.zeroOriginSide,
+            laneTop,
+            laneHeight,
+          );
+          const topPy = Math.min(yA, yB);
+          const bottomPy = Math.max(yA, yB);
+
+          if (rightPx - leftPx >= 1 && bottomPy - topPy >= 1) {
+            const draggedSchedule = classifiedBerths
+              .flatMap((cb) => cb.valid)
+              .find((s) => s.id === grab.scheduleId);
+            const headingReverse = draggedSchedule?.headingReverse ?? false;
+            const originAtTop = targetBerth.zeroOriginSide === "LEFT";
+            const bowAtTop = headingReverse ? !originAtTop : originAtTop;
+            const yHead = bowAtTop ? topPy : bottomPy;
+            const yTail = bowAtTop ? bottomPy : topPy;
+            const polygon = getVesselPolygonVertical(yHead, yTail, leftPx, rightPx);
+
+            const [pr, pg, pb] = proposal.hasConflict
+              ? [239, 68, 68]
+              : proposal.isValid
+                ? [59, 130, 246]
+                : [148, 163, 184];
+
+            ctx.globalAlpha = 0.55;
+            drawPath(ctx, polygon);
+            ctx.fillStyle = `rgba(${pr},${pg},${pb},0.35)`;
+            ctx.strokeStyle = proposal.hasConflict ? "#EF4444" : proposal.isValid ? "#3B82F6" : "#94A3B8";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.fill();
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1.0;
+
+            ctx.fillStyle = proposal.hasConflict ? "#EF4444" : proposal.isValid ? "#1D4ED8" : "#64748B";
+            ctx.font = "bold 9px system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            const cx = (leftPx + rightPx) / 2;
+            const cy = (topPy + bottomPy) / 2;
+            ctx.fillText(`${proposal.berthName} · ${proposal.newPositionStart}m`, cx, cy - 5);
+            ctx.fillText(
+              `${formatTime(proposal.newStartTime, portTimezone)}–${formatTime(proposal.newEndTime, portTimezone)}`,
+              cx,
+              cy + 6,
+            );
+          }
+        }
+      }
+    } // end else (datetime domain)
 
     hitTargetsRef.current = newHitTargets;
   }, [
@@ -680,6 +874,7 @@ export function BerthPlannerCanvas({
     highlightedIds,
     conflictedIds,
     classifiedBerths,
+    activeDrag,
   ]);
 
   const datetimeLanes = useMemo<DatetimeBerthLane[]>(() => {
@@ -707,23 +902,139 @@ export function BerthPlannerCanvas({
     return null;
   }
 
-  function handleMouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
+  function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const hit = findHit(e.clientX, e.clientY);
+    if (!hit) return;
+    if (hit.schedule.status === "CANCELLED") return;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    pendingDragRef.current = {
+      hit,
+      startX: e.clientX - rect.left,
+      startY: e.clientY - rect.top,
+    };
+    canvasRef.current!.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const current = activeDragRef.current;
+    if (current) {
+      const drawW = canvasWidth - LEFT_AXIS_W;
+      const drawH = canvasHeight - TOP_HEADER_H - BOTTOM_PAD;
+      const allValid = classifiedBerths.flatMap((cb) => cb.valid);
+      const otherSchedules = allValid.filter((s) => s.id !== current.grab.scheduleId);
+      const proposal = computeDragProposal({
+        grab: current.grab,
+        pointerX: x,
+        pointerY: y,
+        domain,
+        frame: { leftAxisWidth: LEFT_AXIS_W, topHeaderHeight: TOP_HEADER_H, drawWidth: drawW, drawHeight: drawH },
+        berths: berths.map((b) => ({ id: b.id, berthLength: b.berthLength, zeroOriginSide: b.zeroOriginSide, name: b.name })),
+        datetimeLanes,
+        weekStart,
+        weekEnd,
+        otherSchedules,
+      });
+      const next: ActiveDrag = { ...current, pointerX: x, pointerY: y, proposal };
+      activeDragRef.current = next;
+      setActiveDrag(next);
+      setTooltip(null);
+      return;
+    }
+
+    const pending = pendingDragRef.current;
+    if (pending) {
+      if (isDragThresholdExceeded(pending.startX, pending.startY, x, y)) {
+        const drawW = canvasWidth - LEFT_AXIS_W;
+        const drawH = canvasHeight - TOP_HEADER_H - BOTTOM_PAD;
+        const grab = computeDragGrab({
+          schedule: pending.hit.schedule,
+          berthId: pending.hit.berthId,
+          berthName: pending.hit.berthName,
+          pointerX: x,
+          pointerY: y,
+          domain,
+          frame: { leftAxisWidth: LEFT_AXIS_W, topHeaderHeight: TOP_HEADER_H, drawWidth: drawW, drawHeight: drawH },
+          berths: berths.map((b) => ({ id: b.id, berthLength: b.berthLength, zeroOriginSide: b.zeroOriginSide, name: b.name })),
+          datetimeLanes,
+          weekStart,
+          weekEnd,
+        });
+        pendingDragRef.current = null;
+        const next: ActiveDrag = { grab, pointerX: x, pointerY: y, proposal: null };
+        activeDragRef.current = next;
+        setActiveDrag(next);
+        setTooltip(null);
+      }
+      return;
+    }
+
+    // Normal hover
     const t = findHit(e.clientX, e.clientY);
     if (t) {
-      const rect = canvasRef.current!.getBoundingClientRect();
-      setTooltip({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-        schedule: t.schedule,
-        berthName: t.berthName,
-        isConflict: t.isConflict,
-      });
+      setTooltip({ x, y, schedule: t.schedule, berthName: t.berthName, isConflict: t.isConflict });
     } else {
       setTooltip(null);
     }
   }
 
+  function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
+    const current = activeDragRef.current;
+    const wasDragging = current !== null;
+
+    pendingDragRef.current = null;
+    activeDragRef.current = null;
+    setActiveDrag(null);
+
+    if (wasDragging) {
+      dragJustCompletedRef.current = true;
+      // Clear flag after click event fires
+      setTimeout(() => { dragJustCompletedRef.current = false; }, 0);
+    }
+
+    if (
+      current &&
+      current.proposal &&
+      current.proposal.isValid &&
+      !current.proposal.hasConflict
+    ) {
+      onDragDropRequest?.({
+        scheduleId: current.grab.scheduleId,
+        vesselName: current.grab.vesselName,
+        originalBerthId: current.grab.berthId,
+        originalBerthName: current.grab.berthName,
+        originalStartTime: current.grab.originalStartTime,
+        originalEndTime: current.grab.originalEndTime,
+        originalPositionStart: current.grab.originalPositionStart,
+        newBerthId: current.proposal.berthId,
+        newBerthName: current.proposal.berthName,
+        newPositionStart: current.proposal.newPositionStart,
+        newStartTime: current.proposal.newStartTime,
+        newEndTime: current.proposal.newEndTime,
+        vesselLoa: current.grab.vesselLoa,
+      });
+    }
+
+    if (canvasRef.current) {
+      try { canvasRef.current.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+    }
+  }
+
+  function handlePointerCancel() {
+    pendingDragRef.current = null;
+    activeDragRef.current = null;
+    setActiveDrag(null);
+  }
+
   function handleClick(e: React.MouseEvent<HTMLCanvasElement>) {
+    if (dragJustCompletedRef.current) return;
+
     const t = findHit(e.clientX, e.clientY);
     if (t) {
       setSelectedSchedule(t.schedule);
@@ -784,6 +1095,12 @@ export function BerthPlannerCanvas({
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLCanvasElement>) {
     if (e.key === "Escape") {
+      if (activeDragRef.current || pendingDragRef.current) {
+        pendingDragRef.current = null;
+        activeDragRef.current = null;
+        setActiveDrag(null);
+        return;
+      }
       setSelectedSchedule(null);
       setSelectedBerthName("");
       setSelectedConflictPartners([]);
@@ -804,13 +1121,17 @@ export function BerthPlannerCanvas({
       <div ref={containerRef} className="relative w-full overflow-hidden rounded-lg border border-slate-200 bg-white">
         <canvas
           ref={canvasRef}
-          onMouseMove={handleMouseMove}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
           onMouseLeave={() => setTooltip(null)}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
           tabIndex={0}
-          aria-label="Berth planner canvas. Hover over vessels to see details."
+          aria-label="Berth planner canvas. Hover over vessels to see details. Click a vessel to view, drag to reschedule."
           className="block cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          style={{ cursor: activeDrag ? "grabbing" : "default" }}
         />
 
         {tooltip && (
