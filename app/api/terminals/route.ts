@@ -19,6 +19,7 @@ export async function GET() {
             id: true,
             code: true,
             name: true,
+            timezone: true,
           },
         },
       },

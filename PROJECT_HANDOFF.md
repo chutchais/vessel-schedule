@@ -61,6 +61,81 @@ npx prisma generate
 * Vercel deployment
 * Health API
 
+### Company — ✅ complete
+### Port — ✅ complete
+### Terminal — ✅ complete
+### Vessel — ✅ complete
+### Services — ✅ complete
+### Berths — ✅ complete
+### Vessel Schedules — ✅ complete
+
+### Berth Planner Phase 1 — ✅ complete
+### Berth Planner Phase 2 — ✅ complete
+
+**Weekly viewport — all berths side-by-side (read-only)**
+
+Phase 2 redesign:
+- X-axis = all berths concatenated left-to-right (each occupies `berthLength` metres)
+- Y-axis = time (top = Monday 00:00, bottom = Sunday 24:00 in port timezone)
+- 7-day week fits in viewport height — no vertical scrolling
+- Week navigation: Prev / This Week / Next (buttons) + week label + timezone badge
+- Grid: 4-hour lines (light) + midnight lines (bold), horizontal; 50 m position marks (bold), vertical
+- Vessel shapes: pentagon silhouettes with conflict highlighting
+- Canvas height is dynamic (ResizeObserver: `window.innerHeight - containerTop - 24px`)
+
+Architecture (unchanged structure, updated implementations):
+
+```
+lib/berth-planner/
+  types.ts        — PlannerDomain, ValidatedSchedule, InvalidScheduleRecord, viewport types
+  scales.ts       — timeToPixel, pixelToTime, positionToPixel, pixelToPosition, getMeterTickInterval
+  geometry.ts     — getVesselPolygon (pentagon silhouette), isPointInsidePolygon, getPolygonBounds
+  layout.ts       — validateScheduleGeometry, classifySchedules (returns valid + invalid lists)
+  conflicts.ts    — hasTimeOverlap, hasPositionOverlap, detectConflicts (pure, unit-testable)
+  timezone.ts     — getWeekStart, getWeekEnd, addWeeks, formatWeekLabel, getMidnightsBetween,
+                    get4HourMarks (all timezone-aware via DST-safe noon-UTC anchor)
+
+components/berth-planner/
+  berth-planner-view.tsx          — page orchestrator; weekStart state, week navigation handlers
+  berth-planner-controls.tsx      — terminal selector + Prev/This Week/Next + week label + tz badge
+  berth-planner-canvas.tsx        — HTML Canvas renderer; all berths on X, time on Y, dynamic height
+  schedule-tooltip.tsx            — hover tooltip (pure component)
+  schedule-details-drawer.tsx     — click-open schedule detail panel
+
+app/api/berth-planner/route.ts    — org-scoped GET endpoint (unchanged)
+```
+
+**Coordinate system (Phase 2):**
+- `globalMetres = berthOffset + localPosition`; `positionToPixel = LEFT_AXIS_W + (globalMetres / totalLength) * drawWidth`
+- For `RIGHT` origin berths: `rightGlobal = berthOffset + berthLength - positionStart`; `leftGlobal = rightGlobal - vesselLoa`
+- `timeToPixel` unchanged: `TOP_HEADER_H + ((t - weekStart) / weekDuration) * drawHeight`
+
+**Invalid schedules:**
+- Missing LOA, missing berthPositionMeters, invalid dates, out-of-berth positions are classified by `classifySchedules()`
+- Invalid records are displayed in a warning list BELOW the canvas, never silently dropped
+- Only `ValidatedSchedule` objects are drawn on canvas
+
+**Organization isolation:**
+- API reads `organizationId` from the authenticated session (server-side via `requireCurrentUser()`)
+- Terminal ownership is verified before loading berths/schedules
+- No org ID is accepted from the browser
+
+**Future datetime-domain renderer:**
+- `PlannerDomain = "position" | "datetime"` type is defined in `types.ts`
+- All coordinate math is in `scales.ts` — X/Y calculations are not scattered in the canvas
+- The canvas only depends on `ValidatedSchedule[]` + date range + timezone — a datetime renderer can reuse all the same data, validation, conflict detection, and schedule details drawer
+
+**Schema notes:**
+- `headingReverse: Boolean` already exists on `VesselSchedule` — vessel heading IS supported
+- No schema migration is required for Phase 1
+- `vessel.lengthOverall` (Decimal?) is used as LOA; `null` means the field is unset
+
+**Conflicts:**
+- Detected via `detectConflicts()` using strict interval-overlap on both time and position
+- Conflicting vessels are drawn with a red outline and ⚠ badge
+- Conflict partners shown in tooltip and details drawer
+- Cancelled schedules are excluded from conflict detection
+
 Health endpoint:
 
 ```text
@@ -159,32 +234,22 @@ git branch --show-current
 
 ## Next Steps
 
-Run final checks:
+Run final checks and commit Berth Planner Phase 1:
 
 ```bash
 npm run lint
 npm run build
-git status
-```
-
-Commit Terminal work:
-
-```bash
 git add .
-git commit -m "feat(terminal): add terminal management module"
+git commit -m "feat(berth-planner): add Phase 1 position-domain read-only planner"
 git push
 ```
 
-Merge into main:
+Then consider:
 
-```bash
-git checkout main
-git pull origin main
-git merge feature/terminal
-git push origin main
-```
-
-Then create the next feature branch after deciding the next module.
+1. **Berth Planner Phase 3**: drag-and-drop schedule editing, resize, create from canvas
+2. **Datetime-domain view**: swap X/Y coordinate renderers (architecture supports this)
+3. **Realtime updates**: subscribe to schedule changes via Supabase Realtime
+4. **Image export**: export canvas as PNG
 
 ## Current Progress
 
