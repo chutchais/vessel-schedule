@@ -77,6 +77,13 @@ npx prisma generate
 ### Berth Planner Drag-and-Drop Rescheduling — ✅ complete
 ### Berth Planner Duration Resizing — ✅ complete
 ### Berth Planner Operational Filters — ✅ complete
+### Berth Planner Undo Recent Change — ✅ complete
+
+**Undo behavior:**
+- A completed planner drag move or duration resize returns a server-issued opaque undo token and shows a single Undo action for 15 seconds in both Position and Datetime views.
+- The browser never supplies pre-operation schedule values. `planner_undos` stores the snapshot, original audit-log ID, expected post-operation `updatedAt`, expiry and one-time `usedAt` state.
+- `PATCH /api/schedules/[id]` with `plannerAction: "undo"` enforces the normal schedule-management permission and active-organization scope, rejects expired/used/stale tokens, rechecks berth conflicts, restores in a transaction and writes a separate `Berth Planner undo` audit event.
+- Move operations now pass `expectedUpdatedAt`, matching resize optimistic concurrency. Successful undo refreshes the loaded terminal/week/view/filter/selection context without a full reload; network failure leaves the planner unchanged and retains the action until expiry.
 
 **Operational filter behavior:**
 - Search covers vessel name, voyage number and the schedule UUID/reference with a 300 ms debounce

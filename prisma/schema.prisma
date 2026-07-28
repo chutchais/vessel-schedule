@@ -98,6 +98,7 @@ model Organization {
   services        Service[]
   vesselSchedules VesselSchedule[]
   auditLogs       AuditLog[]
+  plannerUndos    PlannerUndo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -484,6 +485,8 @@ model VesselSchedule {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  plannerUndos PlannerUndo[]
+
   @@index([vesselId])
   @@index([terminalId])
   @@index([berthId])
@@ -493,6 +496,29 @@ model VesselSchedule {
   @@index([etd])
   @@index([status])
   @@map("vessel_schedules")
+}
+
+model PlannerUndo {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  scheduleId String         @db.Uuid
+  schedule   VesselSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  originalAuditLogId String    @db.Uuid
+  beforeData         Json
+  expectedUpdatedAt  DateTime
+  expiresAt          DateTime
+  usedAt             DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, id])
+  @@index([scheduleId])
+  @@index([expiresAt])
+  @@map("planner_undos")
 }
 
 model AuditLog {

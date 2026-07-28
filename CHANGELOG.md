@@ -1,4 +1,11 @@
 2026-07-28
+- Berth Planner undo recent change
+  - Successful drag moves and duration resizes now return a server-issued, single-use undo token and show a 15-second Undo action in both planner domains
+  - Undo is processed by the existing schedule PATCH endpoint, restores the server-stored pre-operation snapshot, rechecks organization scope, permissions, version, and berth conflicts, then refreshes the current planner context in place
+  - Added persisted `planner_undos` records with expiry, one-time claiming, expected schedule version, and original audit-log reference; undo writes its own `Berth Planner undo` audit event
+  - Move updates now use the same optimistic-concurrency protection already used by duration resize
+
+2026-07-28
 - Berth Planner operational filters and search
   - Added debounced search across vessel name, voyage number and schedule reference, plus service, status, berth, conflicts-only and incomplete/invalid placement filters
   - Position and Datetime views now share one domain-data filter result; conflict and placement validation reuse the existing domain engines and remain calculated from the complete terminal/week dataset

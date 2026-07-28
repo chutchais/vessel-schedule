@@ -117,6 +117,12 @@ type ScheduleRow = {
   vessel: { lengthOverall: number | string | null } | null;
 };
 
+type PlannerUndoAction = {
+  scheduleId: string;
+  token: string;
+  expiresAt: string;
+};
+
 function parsePlannerBerths(raw: PlannerDataRaw): PlannerBerth[] {
   return raw.berths.map((b) => ({
     ...b,
@@ -190,8 +196,24 @@ export function BerthPlannerView() {
   const [resizePending, setResizePending] = useState<DurationResizeRequest | null>(null);
   const [isResizeSaving, setIsResizeSaving] = useState(false);
   const [resizeSaveError, setResizeSaveError] = useState("");
+  const [undoAction, setUndoAction] = useState<PlannerUndoAction | null>(null);
+  const [undoSaving, setUndoSaving] = useState(false);
+  const [undoError, setUndoError] = useState("");
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const undoExpiryTimerRef = useRef<number | null>(null);
+
+  const showUndoAction = useCallback((scheduleId: string, payload: { undoToken?: string; undoExpiresAt?: string }) => {
+    if (!payload.undoToken || !payload.undoExpiresAt) return;
+    if (undoExpiryTimerRef.current !== null) window.clearTimeout(undoExpiryTimerRef.current);
+    setUndoError("");
+    setUndoAction({ scheduleId, token: payload.undoToken, expiresAt: payload.undoExpiresAt });
+    undoExpiryTimerRef.current = window.setTimeout(() => setUndoAction(null), Math.max(0, new Date(payload.undoExpiresAt).getTime() - Date.now()));
+  }, []);
+
+  useEffect(() => () => {
+    if (undoExpiryTimerRef.current !== null) window.clearTimeout(undoExpiryTimerRef.current);
+  }, []);
 
   const loadPlannerData = useCallback(async (terminalId: string, start: Date, end: Date) => {
     const params = new URLSearchParams({
@@ -626,6 +648,8 @@ export function BerthPlannerView() {
           remarks: full.remarks ?? "",
           berthPositionMeters: dragDropPending.newPositionStart,
           headingReverse: full.headingReverse,
+          plannerAction: "move",
+          expectedUpdatedAt: full.updatedAt,
         }),
       });
 
@@ -649,16 +673,18 @@ export function BerthPlannerView() {
         return;
       }
 
+      const patchPayload = await patchRes.json() as { undoToken?: string; undoExpiresAt?: string };
       setIsDragConfirmOpen(false);
       setDragDropPending(null);
       setCreateSuccess("Schedule moved successfully.");
+      showUndoAction(dragDropPending.scheduleId, patchPayload);
       await refreshPlanner();
     } catch {
       setDragSaveError("Network error. Please try again.");
     } finally {
       setIsDragSaving(false);
     }
-  }, [dragDropPending, refreshPlanner]);
+  }, [dragDropPending, refreshPlanner, showUndoAction]);
 
   const handleDurationResizeRequest = useCallback((request: DurationResizeRequest) => {
     setResizePending(request);
@@ -714,20 +740,51 @@ export function BerthPlannerView() {
           expectedUpdatedAt: resizePending.expectedUpdatedAt,
         }),
       });
-      const body = await patchRes.json().catch(() => ({})) as { error?: string };
+      const body = await patchRes.json().catch(() => ({})) as { error?: string; undoToken?: string; undoExpiresAt?: string };
       if (!patchRes.ok) {
         setResizeSaveError(body.error ?? "Failed to resize schedule.");
         return;
       }
       setResizePending(null);
       setCreateSuccess("Schedule duration resized successfully.");
+      showUndoAction(resizePending.scheduleId, body);
       await refreshPlanner();
     } catch {
       setResizeSaveError("Network error. Please try again.");
     } finally {
       setIsResizeSaving(false);
     }
-  }, [resizePending, refreshPlanner]);
+  }, [resizePending, refreshPlanner, showUndoAction]);
+
+  const handleUndo = useCallback(async () => {
+    if (!undoAction || undoSaving || new Date(undoAction.expiresAt).getTime() <= Date.now()) {
+      setUndoAction(null);
+      return;
+    }
+    setUndoSaving(true);
+    setUndoError("");
+    try {
+      const response = await fetch(`/api/schedules/${undoAction.scheduleId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plannerAction: "undo", undoToken: undoAction.token }),
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) {
+        setUndoError(body.error ?? "Undo could not be completed.");
+        setUndoAction(null);
+        await refreshPlanner();
+        return;
+      }
+      setUndoAction(null);
+      setCreateSuccess("Planner change undone.");
+      await refreshPlanner();
+    } catch {
+      setUndoError("Network error. The planner was not changed; please try Undo again before it expires.");
+    } finally {
+      setUndoSaving(false);
+    }
+  }, [refreshPlanner, undoAction, undoSaving]);
 
   const updateEditForm = useCallback(
     <Field extends keyof ScheduleFormValues>(field: Field, value: ScheduleFormValues[Field]) => {
@@ -1196,6 +1253,15 @@ export function BerthPlannerView() {
           }}
         />
       )}
+      {undoAction && (
+        <div className="fixed bottom-4 right-4 z-50 flex max-w-md items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-lg" role="status">
+          <p className="text-sm text-slate-700">Planner change saved.</p>
+          <Button variant="secondary" onClick={handleUndo} disabled={undoSaving}>
+            {undoSaving ? "Undoing..." : "Undo"}
+          </Button>
+        </div>
+      )}
+      {undoError ? <AlertMessage type="error" message={undoError} className="fixed bottom-4 right-4 z-50 max-w-md shadow-lg" /> : null}
     </div>
   );
 }

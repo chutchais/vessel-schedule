@@ -7,6 +7,7 @@ import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 import { formatVesselScheduleAuditEntityName } from "@/lib/audit/entity-name";
 import { prisma } from "@/lib/db/prisma";
 import { isResizeVersionCurrent } from "@/lib/berth-planner/duration-resize";
+import { getPlannerUndoUnavailableReason } from "@/lib/berth-planner/planner-undo";
 
 const SCHEDULE_STATUSES = [
   "PLANNED",
@@ -24,6 +25,46 @@ type RouteContext = {
     id: string;
   }>;
 };
+
+const PLANNER_UNDO_LIFETIME_MS = 15_000;
+
+type PlannerUndoSnapshot = {
+  vesselId: string;
+  terminalId: string;
+  berthId: string | null;
+  serviceId: string | null;
+  voyageNumber: string | null;
+  eta: string;
+  etb: string | null;
+  etd: string;
+  ata: string | null;
+  atb: string | null;
+  atd: string | null;
+  status: ScheduleStatus;
+  remarks: string | null;
+  berthPositionMeters: number | null;
+  headingReverse: boolean;
+};
+
+function toPlannerUndoSnapshot(schedule: PlannerUndoSnapshot | Record<string, unknown>): PlannerUndoSnapshot {
+  return {
+    vesselId: String(schedule.vesselId),
+    terminalId: String(schedule.terminalId),
+    berthId: typeof schedule.berthId === "string" ? schedule.berthId : null,
+    serviceId: typeof schedule.serviceId === "string" ? schedule.serviceId : null,
+    voyageNumber: typeof schedule.voyageNumber === "string" ? schedule.voyageNumber : null,
+    eta: new Date(schedule.eta as string).toISOString(),
+    etb: schedule.etb ? new Date(schedule.etb as string).toISOString() : null,
+    etd: new Date(schedule.etd as string).toISOString(),
+    ata: schedule.ata ? new Date(schedule.ata as string).toISOString() : null,
+    atb: schedule.atb ? new Date(schedule.atb as string).toISOString() : null,
+    atd: schedule.atd ? new Date(schedule.atd as string).toISOString() : null,
+    status: schedule.status as ScheduleStatus,
+    remarks: typeof schedule.remarks === "string" ? schedule.remarks : null,
+    berthPositionMeters: typeof schedule.berthPositionMeters === "number" ? schedule.berthPositionMeters : null,
+    headingReverse: schedule.headingReverse === true,
+  };
+}
 
 function parseOptionalDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === "") {
@@ -223,7 +264,90 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
     }
 
+    if (body.plannerAction === "undo") {
+      if (typeof body.undoToken !== "string" || !body.undoToken) {
+        return NextResponse.json({ error: "Invalid undo action" }, { status: 400 });
+      }
+
+      const undo = await prisma.plannerUndo.findFirst({
+        where: { id: body.undoToken, scheduleId: id, organizationId },
+      });
+      if (!undo) {
+        return NextResponse.json({ error: "This undo action has expired or was already used." }, { status: 409 });
+      }
+      const unavailableReason = getPlannerUndoUnavailableReason({
+        now: new Date(), expiresAt: undo.expiresAt, usedAt: undo.usedAt,
+        expectedUpdatedAt: undo.expectedUpdatedAt, currentUpdatedAt: existingSchedule.updatedAt,
+      });
+      if (unavailableReason === "used" || unavailableReason === "expired") {
+        return NextResponse.json({ error: "This undo action has expired or was already used." }, { status: 409 });
+      }
+      if (unavailableReason === "stale") {
+        return NextResponse.json(
+          { error: "This schedule changed after the planner operation. Undo cannot overwrite a newer change." },
+          { status: 409 },
+        );
+      }
+
+      const restore = toPlannerUndoSnapshot(undo.beforeData as Record<string, unknown>);
+      const restoreEta = new Date(restore.eta);
+      const restoreEtb = restore.etb ? new Date(restore.etb) : null;
+      const restoreEtd = new Date(restore.etd);
+      const restoreVessel = await prisma.vessel.findFirst({
+        where: { id: restore.vesselId, organizationId },
+        select: { lengthOverall: true },
+      });
+      if (!restoreVessel) return NextResponse.json({ error: "The original vessel is no longer available" }, { status: 409 });
+      if (restore.berthId) {
+        const overlap = await hasBerthOverlap({
+          organizationId, berthId: restore.berthId, eta: restoreEta, etb: restoreEtb, etd: restoreEtd,
+          berthPositionMeters: restore.berthPositionMeters,
+          vesselLoa: restoreVessel.lengthOverall === null ? null : Number(restoreVessel.lengthOverall),
+          excludeScheduleId: id,
+        });
+        if (overlap) {
+          return NextResponse.json(
+            { error: "Undo would create a berth conflict, so the schedule was not changed." },
+            { status: 409 },
+          );
+        }
+      }
+
+      const schedule = await prisma.$transaction(async (tx) => {
+        const claimed = await tx.plannerUndo.updateMany({
+          where: { id: undo.id, organizationId, usedAt: null, expiresAt: { gt: new Date() } },
+          data: { usedAt: new Date() },
+        });
+        if (claimed.count !== 1) throw new Error("UNDO_UNAVAILABLE");
+        const current = await tx.vesselSchedule.findFirst({ where: { id, organizationId } });
+        if (!current || current.updatedAt.getTime() !== undo.expectedUpdatedAt.getTime()) throw new Error("STALE_UNDO");
+        const updated = await tx.vesselSchedule.update({
+          where: { id },
+          data: {
+            ...restore,
+            eta: restoreEta, etb: restoreEtb, etd: restoreEtd,
+            ata: restore.ata ? new Date(restore.ata) : null,
+            atb: restore.atb ? new Date(restore.atb) : null,
+            atd: restore.atd ? new Date(restore.atd) : null,
+          },
+          include: { vessel: { select: { id: true, imo: true, name: true, callSign: true } }, service: { select: { code: true } } },
+        });
+        await createAuditLog(tx, {
+          scope: "ORGANIZATION", organizationId,
+          actor: { id: currentUser.id, email: currentUser.email, displayName: currentUser.displayName },
+          action: "UPDATE", entityType: AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE, entityId: updated.id,
+          entityName: getScheduleEntityName({ vesselName: updated.vessel.name, serviceCode: updated.service?.code ?? null, voyageNumber: updated.voyageNumber }),
+          beforeData: current, afterData: updated,
+          metadata: { context: "Berth Planner undo", originalOperationAuditLogId: undo.originalAuditLogId },
+        });
+        return updated;
+      });
+      return NextResponse.json({ data: mapSchedule(schedule) });
+    }
+
     const isPlannerResize = body.plannerAction === "resize";
+    const isPlannerMove = body.plannerAction === "move";
+    const isPlannerOperation = isPlannerResize || isPlannerMove;
     if (isPlannerResize) {
       if (existingSchedule.status === "CANCELLED") {
         return NextResponse.json({ error: "Cancelled schedules cannot be resized" }, { status: 409 });
@@ -248,6 +372,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           { status: 400 },
         );
       }
+    }
+    if (isPlannerMove && !isResizeVersionCurrent(existingSchedule.updatedAt, body.expectedUpdatedAt)) {
+      return NextResponse.json(
+        { error: "This schedule changed after moving began. Refresh and try again." },
+        { status: 409 },
+      );
     }
 
     if (!body.vesselId || typeof body.vesselId !== "string") {
@@ -453,10 +583,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       if (!beforeSchedule) {
         throw new Error("Schedule not found during update");
       }
-      if (
-        isPlannerResize &&
-        beforeSchedule.updatedAt.toISOString() !== body.expectedUpdatedAt
-      ) {
+      if (isPlannerOperation && beforeSchedule.updatedAt.toISOString() !== body.expectedUpdatedAt) {
         throw new Error("STALE_SCHEDULE");
       }
 
@@ -503,7 +630,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         },
       });
 
-      await createAuditLog(tx, {
+      const auditLog = await createAuditLog(tx, {
         scope: "ORGANIZATION",
         organizationId,
         actor: {
@@ -521,21 +648,30 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         }),
         beforeData: beforeSchedule,
         afterData: updated,
-        metadata: isPlannerResize ? {
-          context: "Berth Planner resize",
-          resizeEdge: body.resizeEdge,
-          changedFields: (["eta", "etb", "etd"] as const).filter((field) => {
-            const before = beforeSchedule[field]?.toISOString() ?? null;
-            const after = updated[field]?.toISOString() ?? null;
+        metadata: isPlannerOperation ? {
+          context: isPlannerResize ? "Berth Planner resize" : "Berth Planner move",
+          ...(isPlannerResize ? { resizeEdge: body.resizeEdge } : {}),
+          changedFields: (["eta", "etb", "etd", "berthId", "berthPositionMeters"] as const).filter((field) => {
+            const before = beforeSchedule[field] instanceof Date ? beforeSchedule[field]?.toISOString() : beforeSchedule[field] ?? null;
+            const after = updated[field] instanceof Date ? updated[field]?.toISOString() : updated[field] ?? null;
             return before !== after;
           }),
         } : undefined,
       });
 
-      return updated;
+      const undo = isPlannerOperation ? await tx.plannerUndo.create({
+        data: {
+          organizationId, scheduleId: updated.id, originalAuditLogId: auditLog.id,
+          beforeData: toPlannerUndoSnapshot(beforeSchedule),
+          expectedUpdatedAt: updated.updatedAt,
+          expiresAt: new Date(Date.now() + PLANNER_UNDO_LIFETIME_MS),
+        },
+      }) : null;
+
+      return { updated, undoToken: undo?.id ?? null, undoExpiresAt: undo?.expiresAt.toISOString() ?? null };
     });
 
-    return NextResponse.json({ data: mapSchedule(schedule) });
+    return NextResponse.json({ data: mapSchedule(schedule.updated), undoToken: schedule.undoToken, undoExpiresAt: schedule.undoExpiresAt });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
@@ -546,6 +682,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         { error: "This schedule changed before it could be saved. Refresh and try again." },
         { status: 409 },
       );
+    }
+    if (error instanceof Error && (error.message === "STALE_UNDO" || error.message === "UNDO_UNAVAILABLE")) {
+      return NextResponse.json({ error: "This undo action has expired, was used, or the schedule changed." }, { status: 409 });
     }
     console.error("Failed to update schedule:", error);
     return NextResponse.json({ error: "Failed to update schedule" }, { status: 500 });
