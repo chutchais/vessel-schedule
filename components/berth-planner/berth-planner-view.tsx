@@ -21,7 +21,12 @@ import {
   toIsoUtc,
 } from "@/lib/schedules/form-validation";
 import { buildEditFormValues, type EditableSchedule } from "@/lib/berth-planner/click-edit";
-import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord } from "@/lib/berth-planner/types";
+import {
+  readPreferredPlannerDomain,
+  switchPlannerDomainPreservingState,
+  writePreferredPlannerDomain,
+} from "@/lib/berth-planner/view-preference";
+import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord, PlannerDomain } from "@/lib/berth-planner/types";
 
 const DEFAULT_TIMEZONE = "UTC";
 
@@ -114,6 +119,9 @@ export function BerthPlannerView() {
   const weekEnd = getWeekEnd(weekStart, portTimezone);
 
   const [plannerData, setPlannerData] = useState<PlannerDataRaw | null>(null);
+  const [domain, setDomain] = useState<PlannerDomain>(() =>
+    readPreferredPlannerDomain(typeof window !== "undefined" ? window.localStorage : null),
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [invalidRecords, setInvalidRecords] = useState<InvalidScheduleRecord[]>([]);
@@ -216,6 +224,10 @@ export function BerthPlannerView() {
   }, [selectedTerminalId, weekStart, weekEnd, loadPlannerData]);
 
   useEffect(() => {
+    writePreferredPlannerDomain(typeof window !== "undefined" ? window.localStorage : null, domain);
+  }, [domain]);
+
+  useEffect(() => {
     let active = true;
 
     async function load() {
@@ -257,6 +269,21 @@ export function BerthPlannerView() {
       active = false;
     };
   }, [loadPlannerData]);
+
+  const handleDomainChange = useCallback((nextDomain: PlannerDomain) => {
+    setDomain((current) => {
+      const switched = switchPlannerDomainPreservingState(
+        {
+          domain: current,
+          selectedTerminalId,
+          weekStartIso: weekStart.toISOString(),
+          activeScheduleId: null,
+        },
+        nextDomain,
+      );
+      return switched.domain;
+    });
+  }, [selectedTerminalId, weekStart]);
 
   function handleTerminalChange(id: string) {
     const term = terminals.find((t) => t.id === id);
@@ -635,6 +662,8 @@ export function BerthPlannerView() {
         onPrevWeek={handlePrevWeek}
         onCurrentWeek={handleCurrentWeek}
         onNextWeek={handleNextWeek}
+        domain={domain}
+        onDomainChange={handleDomainChange}
       />
 
       {loadError && (
@@ -675,6 +704,7 @@ export function BerthPlannerView() {
               weekStart={weekStart}
               weekEnd={weekEnd}
               portTimezone={portTimezone}
+              domain={domain}
               onInvalidRecords={setInvalidRecords}
               onGridCreateRequest={handleGridCreateRequest}
               onEditRequest={handleEditRequest}

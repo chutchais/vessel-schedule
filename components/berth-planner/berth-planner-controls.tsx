@@ -1,6 +1,7 @@
 "use client";
 
 import { formatWeekLabel, formatTimezoneOffset } from "@/lib/berth-planner/timezone";
+import type { PlannerDomain } from "@/lib/berth-planner/types";
 
 type Terminal = {
   id: string;
@@ -18,6 +19,8 @@ type BerthPlannerControlsProps = {
   onPrevWeek: () => void;
   onCurrentWeek: () => void;
   onNextWeek: () => void;
+  domain: PlannerDomain;
+  onDomainChange: (domain: PlannerDomain) => void;
 };
 
 export function BerthPlannerControls({
@@ -30,6 +33,8 @@ export function BerthPlannerControls({
   onPrevWeek,
   onCurrentWeek,
   onNextWeek,
+  domain,
+  onDomainChange,
 }: BerthPlannerControlsProps) {
   const weekLabel = portTimezone
     ? formatWeekLabel(weekStart, weekEnd, portTimezone)
@@ -96,6 +101,27 @@ export function BerthPlannerControls({
       >
         This Week
       </button>
+
+      <div className="ml-auto inline-flex rounded-md border border-slate-300 bg-white p-0.5">
+        <button
+          type="button"
+          onClick={() => onDomainChange("position")}
+          className={`rounded px-2.5 py-1 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+            domain === "position" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-slate-100"
+          }`}
+        >
+          Position
+        </button>
+        <button
+          type="button"
+          onClick={() => onDomainChange("datetime")}
+          className={`rounded px-2.5 py-1 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+            domain === "datetime" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-slate-100"
+          }`}
+        >
+          Datetime
+        </button>
+      </div>
     </div>
   );
 }

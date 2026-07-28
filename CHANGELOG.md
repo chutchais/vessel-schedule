@@ -45,5 +45,22 @@
   - lib/schedules/form-validation.ts — shared helpers for datetime conversion, vessel-fit validation, and client-side berth conflict warnings
   - lib/berth-planner/click-create.test.ts — tests for click conversion, snapping, zero-origin behavior, and ignored clicks
 
+2026-07-28
+- Berth Planner datetime-domain view (Position / Datetime switch)
+  - berth-planner-controls.tsx — added view switch toggle and preserved existing terminal/week controls
+  - berth-planner-view.tsx — added view domain state, local preference persistence, and non-destructive domain switching
+  - berth-planner-canvas.tsx — added domain-specific render + hit-test paths:
+    - Position view: existing all-berths-on-X layout retained
+    - Datetime view: X=time, Y=berth lanes with metre scale; vessel width=duration, height=LOA
+    - Datetime grid: six time positions per day (00:00, 04:00, 08:00, 12:00, 16:00, 20:00), bold day boundaries, bold 50m lines
+    - zeroOriginSide + headingReverse respected in both views
+  - lib/berth-planner/datetime-domain.ts — berth-lane layout and metre↔Y conversion helpers for datetime domain
+  - lib/berth-planner/click-create.ts — added domain-aware inverse click mapping for both position and datetime views
+  - lib/berth-planner/view-preference.ts — local storage helpers for preferred view and domain-switch state preservation
+  - Tests added:
+    - lib/berth-planner/datetime-domain.test.ts
+    - lib/berth-planner/view-preference.test.ts
+    - lib/berth-planner/click-create.test.ts (datetime inverse mapping case)
+
 Next:
 - Berth Planner Phase 3: drag-and-drop, edit from canvas, realtime updates

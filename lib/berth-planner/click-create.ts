@@ -1,4 +1,5 @@
 import { pixelToTime } from "./scales";
+import { datetimeLaneYToPosition, type DatetimeBerthLane } from "./datetime-domain";
 import type { ZeroOriginSide } from "./types";
 
 export const TIME_SNAP_MINUTES = 30;
@@ -22,6 +23,8 @@ export type ClickCreateSelection = {
   berthPositionMeters: number;
   plannedStartTime: Date;
 };
+
+export type PlannerCanvasDomain = "position" | "datetime";
 
 export function shouldHandleCreateClick(
   hasScheduleHit: boolean,
@@ -139,6 +142,70 @@ export function convertCanvasClickToCreateSelection(input: {
 
   return {
     berthId: mapped.berth.id,
+    berthPositionMeters,
+    plannedStartTime,
+  };
+}
+
+function findDatetimeLaneAtY(
+  y: number,
+  lanes: DatetimeBerthLane[],
+): DatetimeBerthLane | null {
+  for (let i = 0; i < lanes.length; i++) {
+    const lane = lanes[i]!;
+    const laneBottom = lane.laneTop + lane.laneHeight;
+    const isLast = i === lanes.length - 1;
+    const inRange = y >= lane.laneTop && (y < laneBottom || (isLast && y <= laneBottom));
+    if (inRange) return lane;
+  }
+  return null;
+}
+
+export function convertCanvasClickToCreateSelectionByDomain(input: {
+  domain: PlannerCanvasDomain;
+  x: number;
+  y: number;
+  frame: PlannerCanvasFrame;
+  berths: ClickCreateBerth[];
+  datetimeLanes?: DatetimeBerthLane[];
+  weekStart: Date;
+  weekEnd: Date;
+}): ClickCreateSelection | null {
+  if (input.domain === "position") {
+    return convertCanvasClickToCreateSelection(input);
+  }
+
+  const { x, y, frame, weekStart, weekEnd } = input;
+  if (!isGridAreaClick(x, y, frame)) return null;
+  if (!input.datetimeLanes || input.datetimeLanes.length === 0) return null;
+
+  const lane = findDatetimeLaneAtY(y - frame.topHeaderHeight, input.datetimeLanes);
+  if (!lane) return null;
+
+  const timeInRange = pixelToTime(
+    x - frame.leftAxisWidth,
+    weekStart,
+    weekEnd,
+    frame.drawWidth,
+  );
+  const plannedStartTime = snapTimeToMinutes(timeInRange, TIME_SNAP_MINUTES);
+
+  const localMeters = datetimeLaneYToPosition(
+    y - frame.topHeaderHeight,
+    lane.berthLength,
+    lane.zeroOriginSide,
+    lane.laneTop,
+    lane.laneHeight,
+  );
+
+  const snappedPosition = snapMeters(localMeters, POSITION_SNAP_METERS);
+  const berthPositionMeters = Math.min(
+    lane.berthLength,
+    Math.max(0, snappedPosition),
+  );
+
+  return {
+    berthId: lane.id,
     berthPositionMeters,
     plannedStartTime,
   };

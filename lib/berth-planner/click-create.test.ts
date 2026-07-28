@@ -2,12 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   convertCanvasClickToCreateSelection,
+  convertCanvasClickToCreateSelectionByDomain,
   snapMeters,
   snapTimeToMinutes,
   shouldHandleCreateClick,
   type ClickCreateBerth,
   type PlannerCanvasFrame,
 } from "./click-create";
+import type { DatetimeBerthLane } from "./datetime-domain";
 
 const frame: PlannerCanvasFrame = {
   leftAxisWidth: 60,
@@ -114,4 +116,27 @@ test("ignores vessel-hit and non-grid clicks", () => {
     berthPositionMeters: 10,
     plannedStartTime: new Date(),
   }), false);
+});
+
+test("datetime view converts click X to time and Y to berth lane position", () => {
+  const lanes: DatetimeBerthLane[] = [
+    { id: "b1", berthLength: 100, zeroOriginSide: "LEFT", laneTop: 0, laneHeight: 300 },
+    { id: "b2", berthLength: 120, zeroOriginSide: "RIGHT", laneTop: 308, laneHeight: 300 },
+  ];
+
+  const selection = convertCanvasClickToCreateSelectionByDomain({
+    domain: "datetime",
+    x: frame.leftAxisWidth + frame.drawWidth / 2,
+    y: frame.topHeaderHeight + 458,
+    frame,
+    berths: [],
+    datetimeLanes: lanes,
+    weekStart,
+    weekEnd,
+  });
+
+  assert.ok(selection);
+  assert.equal(selection.berthId, "b2");
+  assert.equal(selection.berthPositionMeters, 60);
+  assert.equal(selection.plannedStartTime.toISOString(), "2026-07-30T12:00:00.000Z");
 });

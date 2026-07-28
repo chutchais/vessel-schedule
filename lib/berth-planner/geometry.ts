@@ -37,6 +37,36 @@ export function getVesselPolygon(
 }
 
 /**
+ * Vertical variant of vessel polygon.
+ * The bow (pointed end) projects UP or DOWN at horizontal midpoint.
+ *
+ * @param yHead Y pixel of the bow tip (pointed end — top or bottom).
+ * @param yTail Y pixel of the stern (flat/square end).
+ * @param xLeft Left X pixel of the vessel bounding box.
+ * @param xRight Right X pixel of the vessel bounding box.
+ */
+export function getVesselPolygonVertical(
+  yHead: number,
+  yTail: number,
+  xLeft: number,
+  xRight: number,
+): [number, number][] {
+  const width = Math.max(14, xRight - xLeft);
+  const shoulderDepth = Math.max(8, Math.min(18, width * 0.12));
+  const direction = yHead >= yTail ? 1 : -1;
+  const shoulderY = yHead - shoulderDepth * direction;
+  const midX = (xLeft + xRight) / 2;
+
+  return [
+    [xLeft, yTail],
+    [xLeft, shoulderY],
+    [midX, yHead],
+    [xRight, shoulderY],
+    [xRight, yTail],
+  ];
+}
+
+/**
  * Test whether a point (px, py) lies inside a polygon defined by vertices.
  * Uses the ray-casting algorithm.
  */

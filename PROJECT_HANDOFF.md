@@ -72,15 +72,17 @@ npx prisma generate
 ### Berth Planner Phase 1 — ✅ complete
 ### Berth Planner Phase 2 — ✅ complete
 ### Berth Planner Phase 3 (part) — ✅ click-to-create and click-to-edit complete
+### Berth Planner Datetime Domain — ✅ complete
 
-**Weekly viewport — all berths side-by-side (read-only)**
+**Weekly viewport with switchable planner domain**
 
 Phase 2 redesign:
-- X-axis = all berths concatenated left-to-right (each occupies `berthLength` metres)
-- Y-axis = time (top = Monday 00:00, bottom = Sunday 24:00 in port timezone)
+- Position view: X-axis = all berths concatenated left-to-right (each occupies `berthLength` metres), Y-axis = time
+- Datetime view: X-axis = time (selected week), Y-axis = berth lanes with position in metres
 - 7-day week fits in viewport height — no vertical scrolling
 - Week navigation: Prev / This Week / Next (buttons) + week label + timezone badge
-- Grid: 4-hour lines (light) + midnight lines (bold), horizontal; 50 m position marks (bold), vertical
+- View switch: Position / Datetime, preferred view persisted in local storage
+- Datetime grid: six time points per day (00:00/04:00/08:00/12:00/16:00/20:00), bold day boundaries, bold 50 m position lines
 - Vessel shapes: pentagon silhouettes with conflict highlighting
 - Canvas height is dynamic (ResizeObserver: `window.innerHeight - containerTop - 24px`)
 
@@ -95,14 +97,16 @@ lib/berth-planner/
   conflicts.ts    — hasTimeOverlap, hasPositionOverlap, detectConflicts (pure, unit-testable)
   timezone.ts     — getWeekStart, getWeekEnd, addWeeks, formatWeekLabel, getMidnightsBetween,
                     get4HourMarks (all timezone-aware via DST-safe noon-UTC anchor)
-  click-create.ts — pure click conversion helpers (grid click -> berth/time draft), 5m/30min snapping
+  click-create.ts — pure click conversion helpers (position+datetime inverse mapping), 5m/30min snapping
   click-edit.ts   — pure helper buildEditFormValues; converts fetched schedule to ScheduleFormValues
+  datetime-domain.ts — datetime berth-lane layout + metres↔lane-Y conversion helpers
+  view-preference.ts — local preference persistence for planner domain
 
 components/berth-planner/
   berth-planner-view.tsx          — page orchestrator; weekStart state, week navigation handlers,
-                                    click-to-create drawer flow, planner refresh after creation
-  berth-planner-controls.tsx      — terminal selector + Prev/This Week/Next + week label + tz badge
-  berth-planner-canvas.tsx        — HTML Canvas renderer; all berths on X, time on Y, dynamic height,
+                                    click-to-create drawer flow, planner refresh after creation, domain switch state
+  berth-planner-controls.tsx      — terminal selector + Prev/This Week/Next + week label + tz badge + Position/Datetime toggle
+  berth-planner-canvas.tsx        — HTML Canvas renderer for both domains with shared conflicts/selection/tooltip,
                                     empty-grid click emits creation draft
   schedule-tooltip.tsx            — hover tooltip (pure component)
   schedule-details-drawer.tsx     — click-open schedule detail panel; Edit Schedule button + History audit link
@@ -141,10 +145,10 @@ app/api/berth-planner/route.ts    — org-scoped GET endpoint (unchanged)
 - Terminal ownership is verified before loading berths/schedules
 - No org ID is accepted from the browser
 
-**Future datetime-domain renderer:**
-- `PlannerDomain = "position" | "datetime"` type is defined in `types.ts`
-- All coordinate math is in `scales.ts` — X/Y calculations are not scattered in the canvas
-- The canvas only depends on `ValidatedSchedule[]` + date range + timezone — a datetime renderer can reuse all the same data, validation, conflict detection, and schedule details drawer
+**Datetime-domain implementation notes:**
+- Domain-specific coordinate mapping and hit-testing are isolated to their view paths in the canvas + click-create helpers
+- Shared business logic remains reused: API data, schedule validation, conflict detection, selection, tooltip, details drawer, create/edit form and timezone helpers
+- Switching domain keeps selected terminal, week and existing planner context; no server-state reload is required
 
 **Schema notes:**
 - `headingReverse: Boolean` already exists on `VesselSchedule` — vessel heading IS supported
@@ -162,7 +166,7 @@ app/api/berth-planner/route.ts    — org-scoped GET endpoint (unchanged)
 - Clicking empty planner grid opens the existing schedule form drawer (not direct create)
 - Click point converts to berth + berthPositionMeters + planned start time using pure helper functions
 - Time snaps to 30 minutes and berth position snaps to 5 metres
-- `zeroOriginSide` LEFT/RIGHT is respected in position conversion
+- `zeroOriginSide` LEFT/RIGHT is respected in both position and datetime conversions
 - Clicks on vessel polygons, berth labels, axis area, and non-grid areas do not trigger creation
 - On successful submit, drawer closes and planner data refreshes without full-page reload
 
