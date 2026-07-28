@@ -27,5 +27,14 @@
   - berth-planner-controls.tsx — replaced date pickers with Prev / This Week / Next week navigation + week label + timezone badge
   - berth-planner-view.tsx — week state management (weekStart/weekEnd), timezone recalculation on terminal change, isLoading set in event handlers (React Compiler compatible)
 
+2026-07-28
+- Berth Planner click-to-create schedule from canvas
+  - lib/berth-planner/click-create.ts — pure conversion helpers for click->berth position/time mapping, 5m berth snapping, 30-minute time snapping, and non-grid filtering
+  - berth-planner-canvas.tsx — empty-grid click now emits create draft; ignores vessel hits and non-grid click targets
+  - berth-planner-view.tsx — opens schedule create drawer from canvas click, pre-fills terminal/berth/time/position, loads existing schedule form data, shows vessel-fit validation and overlap warnings, posts to /api/schedules, and refreshes planner view without page reload
+  - components/schedules/schedule-form-fields.tsx — shared schedule form fields reused by both schedule management and berth planner creation flow
+  - lib/schedules/form-validation.ts — shared helpers for datetime conversion, vessel-fit validation, and client-side berth conflict warnings
+  - lib/berth-planner/click-create.test.ts — tests for click conversion, snapping, zero-origin behavior, and ignored clicks
+
 Next:
 - Berth Planner Phase 3: drag-and-drop, edit from canvas, realtime updates

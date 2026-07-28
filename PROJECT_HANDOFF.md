@@ -71,6 +71,7 @@ npx prisma generate
 
 ### Berth Planner Phase 1 — ✅ complete
 ### Berth Planner Phase 2 — ✅ complete
+### Berth Planner Phase 3 (part) — ✅ click-to-create from canvas complete
 
 **Weekly viewport — all berths side-by-side (read-only)**
 
@@ -94,13 +95,22 @@ lib/berth-planner/
   conflicts.ts    — hasTimeOverlap, hasPositionOverlap, detectConflicts (pure, unit-testable)
   timezone.ts     — getWeekStart, getWeekEnd, addWeeks, formatWeekLabel, getMidnightsBetween,
                     get4HourMarks (all timezone-aware via DST-safe noon-UTC anchor)
+  click-create.ts — pure click conversion helpers (grid click -> berth/time draft), 5m/30min snapping
 
 components/berth-planner/
-  berth-planner-view.tsx          — page orchestrator; weekStart state, week navigation handlers
+  berth-planner-view.tsx          — page orchestrator; weekStart state, week navigation handlers,
+                                    click-to-create drawer flow, planner refresh after creation
   berth-planner-controls.tsx      — terminal selector + Prev/This Week/Next + week label + tz badge
-  berth-planner-canvas.tsx        — HTML Canvas renderer; all berths on X, time on Y, dynamic height
+  berth-planner-canvas.tsx        — HTML Canvas renderer; all berths on X, time on Y, dynamic height,
+                                    empty-grid click emits creation draft
   schedule-tooltip.tsx            — hover tooltip (pure component)
   schedule-details-drawer.tsx     — click-open schedule detail panel
+
+components/schedules/
+  schedule-form-fields.tsx        — shared schedule form reused by Schedules page and Planner click-create
+
+lib/schedules/
+  form-validation.ts              — shared date conversion, berth-fit validation, and conflict warning helpers
 
 app/api/berth-planner/route.ts    — org-scoped GET endpoint (unchanged)
 ```
@@ -135,6 +145,15 @@ app/api/berth-planner/route.ts    — org-scoped GET endpoint (unchanged)
 - Conflicting vessels are drawn with a red outline and ⚠ badge
 - Conflict partners shown in tooltip and details drawer
 - Cancelled schedules are excluded from conflict detection
+- Create drawer shows overlap warning before save; final enforcement remains server-side (`/api/schedules` returns 409 on overlap)
+
+**Click-to-create behavior (Phase 3 partial):**
+- Clicking empty planner grid opens the existing schedule form drawer (not direct create)
+- Click point converts to berth + berthPositionMeters + planned start time using pure helper functions
+- Time snaps to 30 minutes and berth position snaps to 5 metres
+- `zeroOriginSide` LEFT/RIGHT is respected in position conversion
+- Clicks on vessel polygons, berth labels, axis area, and non-grid areas do not trigger creation
+- On successful submit, drawer closes and planner data refreshes without full-page reload
 
 Health endpoint:
 
@@ -234,19 +253,16 @@ git branch --show-current
 
 ## Next Steps
 
-Run final checks and commit Berth Planner Phase 1:
+Run final checks:
 
 ```bash
 npm run lint
 npm run build
-git add .
-git commit -m "feat(berth-planner): add Phase 1 position-domain read-only planner"
-git push
 ```
 
 Then consider:
 
-1. **Berth Planner Phase 3**: drag-and-drop schedule editing, resize, create from canvas
+1. **Berth Planner Phase 3 remaining**: drag-and-drop schedule editing and resize
 2. **Datetime-domain view**: swap X/Y coordinate renderers (architecture supports this)
 3. **Realtime updates**: subscribe to schedule changes via Supabase Realtime
 4. **Image export**: export canvas as PNG

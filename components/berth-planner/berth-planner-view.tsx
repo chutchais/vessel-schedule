@@ -1,24 +1,94 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
+import { AlertMessage } from "@/components/ui/alert-message";
+import { Drawer } from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
 import { BerthPlannerControls } from "./berth-planner-controls";
 import { BerthPlannerCanvas } from "./berth-planner-canvas";
+import { ScheduleFormFields, type ScheduleFormValues } from "@/components/schedules/schedule-form-fields";
 import {
   getWeekStart,
   getWeekEnd,
   addWeeks,
   formatTimezoneOffset,
 } from "@/lib/berth-planner/timezone";
+import {
+  getBerthConflictWarning,
+  getVesselFitError,
+  toDateTimeLocalValueInTimezone,
+  toIsoUtc,
+} from "@/lib/schedules/form-validation";
 import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord } from "@/lib/berth-planner/types";
 
-// Fallback timezone until a terminal is selected
 const DEFAULT_TIMEZONE = "UTC";
+
+const INITIAL_CREATE_FORM: ScheduleFormValues = {
+  vesselId: "",
+  serviceId: "",
+  voyageNumber: "",
+  terminalId: "",
+  berthId: "",
+  eta: "",
+  etb: "",
+  etd: "",
+  ata: "",
+  atb: "",
+  atd: "",
+  status: "PLANNED",
+  remarks: "",
+  berthPositionMeters: "",
+  headingReverse: false,
+};
 
 type TerminalOption = {
   id: string;
   name: string;
   port: { name: string; timezone: string };
+};
+
+type Vessel = {
+  id: string;
+  name: string;
+  imo: string | null;
+  lengthOverall: number | string | null;
+  isActive: boolean;
+};
+
+type Terminal = {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+  port: {
+    code: string;
+  };
+};
+
+type Berth = {
+  id: string;
+  terminalId: string;
+  code: string;
+  name: string;
+  berthLength: number;
+  isActive: boolean;
+};
+
+type Service = {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+};
+
+type ScheduleRow = {
+  id: string;
+  berthId: string | null;
+  status: string;
+  eta: string;
+  etb: string | null;
+  etd: string;
 };
 
 function parsePlannerBerths(raw: PlannerDataRaw): PlannerBerth[] {
@@ -36,11 +106,7 @@ function parsePlannerBerths(raw: PlannerDataRaw): PlannerBerth[] {
 export function BerthPlannerView() {
   const [terminals, setTerminals] = useState<TerminalOption[]>([]);
   const [selectedTerminalId, setSelectedTerminalId] = useState("");
-
-  // portTimezone is set once a terminal is loaded
   const [portTimezone, setPortTimezone] = useState<string>(DEFAULT_TIMEZONE);
-
-  // Week state: weekStart is Monday 00:00 in port timezone
   const [weekStart, setWeekStart] = useState<Date>(() =>
     getWeekStart(new Date(), DEFAULT_TIMEZONE),
   );
@@ -50,13 +116,97 @@ export function BerthPlannerView() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [invalidRecords, setInvalidRecords] = useState<InvalidScheduleRecord[]>([]);
+  const [createSuccess, setCreateSuccess] = useState("");
 
-  // Ref to calculate available canvas height
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createDataLoading, setCreateDataLoading] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [createForm, setCreateForm] = useState<ScheduleFormValues>(INITIAL_CREATE_FORM);
+  const [createVessels, setCreateVessels] = useState<Vessel[]>([]);
+  const [createTerminals, setCreateTerminals] = useState<Terminal[]>([]);
+  const [createBerths, setCreateBerths] = useState<Berth[]>([]);
+  const [createServices, setCreateServices] = useState<Service[]>([]);
+  const [existingSchedules, setExistingSchedules] = useState<ScheduleRow[]>([]);
+
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
-  // ── Load terminals on mount ───────────────────────────────────────────────
+  const loadPlannerData = useCallback(async (terminalId: string, start: Date, end: Date) => {
+    const params = new URLSearchParams({
+      terminalId,
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+    });
+
+    let res: Response;
+    try {
+      res = await fetch(`/api/berth-planner?${params.toString()}`);
+    } catch {
+      setLoadError("Network error");
+      setPlannerData(null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setLoadError((body as { error?: string }).error ?? "Failed to load planner data");
+      setPlannerData(null);
+      setIsLoading(false);
+      return;
+    }
+
+    const payload = await res.json();
+    setLoadError(null);
+    setPlannerData(payload.data as PlannerDataRaw);
+    setIsLoading(false);
+  }, []);
+
+  const loadCreateData = useCallback(async () => {
+    setCreateDataLoading(true);
+    try {
+      const [schedulesRes, vesselsRes, terminalsRes, berthsRes, servicesRes] = await Promise.all([
+        fetch("/api/schedules", { method: "GET", cache: "no-store" }),
+        fetch("/api/vessels", { method: "GET", cache: "no-store" }),
+        fetch("/api/terminals", { method: "GET", cache: "no-store" }),
+        fetch("/api/berths", { method: "GET", cache: "no-store" }),
+        fetch("/api/services", { method: "GET", cache: "no-store" }),
+      ]);
+
+      const schedulesPayload = (await schedulesRes.json()) as { data?: ScheduleRow[]; error?: string };
+      const vesselsPayload = (await vesselsRes.json()) as { data?: Vessel[]; error?: string };
+      const terminalsPayload = (await terminalsRes.json()) as { data?: Terminal[]; error?: string };
+      const berthsPayload = (await berthsRes.json()) as { data?: Berth[]; error?: string };
+      const servicesPayload = (await servicesRes.json()) as { data?: Service[]; error?: string };
+
+      if (!schedulesRes.ok) throw new Error(schedulesPayload.error || "Failed to load schedules");
+      if (!vesselsRes.ok) throw new Error(vesselsPayload.error || "Failed to load vessels");
+      if (!terminalsRes.ok) throw new Error(terminalsPayload.error || "Failed to load terminals");
+      if (!berthsRes.ok) throw new Error(berthsPayload.error || "Failed to load berths");
+      if (!servicesRes.ok) throw new Error(servicesPayload.error || "Failed to load services");
+
+      setExistingSchedules(Array.isArray(schedulesPayload.data) ? schedulesPayload.data : []);
+      setCreateVessels(Array.isArray(vesselsPayload.data) ? vesselsPayload.data : []);
+      setCreateTerminals(Array.isArray(terminalsPayload.data) ? terminalsPayload.data : []);
+      setCreateBerths(Array.isArray(berthsPayload.data) ? berthsPayload.data : []);
+      setCreateServices(Array.isArray(servicesPayload.data) ? servicesPayload.data : []);
+      setCreateError("");
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : "Failed to load schedule form data");
+    } finally {
+      setCreateDataLoading(false);
+    }
+  }, []);
+
+  const refreshPlanner = useCallback(async () => {
+    if (!selectedTerminalId) return;
+    setIsLoading(true);
+    await loadPlannerData(selectedTerminalId, weekStart, weekEnd);
+  }, [selectedTerminalId, weekStart, weekEnd, loadPlannerData]);
+
   useEffect(() => {
     let active = true;
+
     async function load() {
       try {
         const res = await fetch("/api/terminals?isActive=true");
@@ -87,85 +237,64 @@ export function BerthPlannerView() {
           setIsLoading(true);
         }
       } catch {
-        // silently ignore
+        // ignore
       }
-    }
-    void load();
-    return () => { active = false; };
-  }, []);
-
-  // ── Fetch planner data when terminal or week changes ─────────────────────
-  useEffect(() => {
-    if (!selectedTerminalId) return;
-
-    let active = true;
-
-    async function load() {
-      const params = new URLSearchParams({
-        terminalId: selectedTerminalId,
-        startDate: weekStart.toISOString(),
-        endDate: weekEnd.toISOString(),
-      });
-
-      let res: Response;
-      try {
-        res = await fetch(`/api/berth-planner?${params.toString()}`);
-      } catch {
-        if (active) { setLoadError("Network error"); setPlannerData(null); setIsLoading(false); }
-        return;
-      }
-
-      if (!active) return;
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        if (!active) return;
-        setLoadError((body as { error?: string }).error ?? "Failed to load planner data");
-        setPlannerData(null);
-        setIsLoading(false);
-        return;
-      }
-
-      const payload = await res.json();
-      if (!active) return;
-
-      setLoadError(null);
-      setPlannerData(payload.data as PlannerDataRaw);
-      setIsLoading(false);
     }
 
     void load();
-    return () => { active = false; };
-  }, [selectedTerminalId, weekStart, weekEnd]);
+    return () => {
+      active = false;
+    };
+  }, [loadPlannerData]);
 
-  // ── Event handlers (set isLoading synchronously — safe in event handlers) ─
   function handleTerminalChange(id: string) {
     const term = terminals.find((t) => t.id === id);
     const tz = term?.port.timezone ?? DEFAULT_TIMEZONE;
+    const nextWeekStart = getWeekStart(new Date(), tz);
+    const nextWeekEnd = getWeekEnd(nextWeekStart, tz);
     setSelectedTerminalId(id);
     setPortTimezone(tz);
-    setWeekStart(getWeekStart(new Date(), tz));
+    setWeekStart(nextWeekStart);
     setIsLoading(true);
     setLoadError(null);
     setPlannerData(null);
+    if (id) {
+      void loadPlannerData(id, nextWeekStart, nextWeekEnd);
+    }
   }
 
   function handlePrevWeek() {
-    setWeekStart((ws) => addWeeks(ws, -1, portTimezone));
+    setWeekStart((ws) => {
+      const nextWeekStart = addWeeks(ws, -1, portTimezone);
+      if (selectedTerminalId) {
+        void loadPlannerData(selectedTerminalId, nextWeekStart, getWeekEnd(nextWeekStart, portTimezone));
+      }
+      return nextWeekStart;
+    });
     setIsLoading(true);
     setLoadError(null);
   }
 
   function handleNextWeek() {
-    setWeekStart((ws) => addWeeks(ws, 1, portTimezone));
+    setWeekStart((ws) => {
+      const nextWeekStart = addWeeks(ws, 1, portTimezone);
+      if (selectedTerminalId) {
+        void loadPlannerData(selectedTerminalId, nextWeekStart, getWeekEnd(nextWeekStart, portTimezone));
+      }
+      return nextWeekStart;
+    });
     setIsLoading(true);
     setLoadError(null);
   }
 
   function handleCurrentWeek() {
-    setWeekStart(getWeekStart(new Date(), portTimezone));
+    const nextWeekStart = getWeekStart(new Date(), portTimezone);
+    setWeekStart(nextWeekStart);
     setIsLoading(true);
     setLoadError(null);
+    if (selectedTerminalId) {
+      void loadPlannerData(selectedTerminalId, nextWeekStart, getWeekEnd(nextWeekStart, portTimezone));
+    }
   }
 
   const berths = useMemo(
@@ -173,13 +302,165 @@ export function BerthPlannerView() {
     [plannerData],
   );
 
+  const availableVessels = useMemo(
+    () => createVessels.filter((vessel) => vessel.isActive),
+    [createVessels],
+  );
+  const availableTerminals = useMemo(
+    () => createTerminals.filter((terminal) => terminal.isActive),
+    [createTerminals],
+  );
+  const availableBerths = useMemo(
+    () => createBerths.filter((berth) => berth.isActive),
+    [createBerths],
+  );
+  const availableServices = useMemo(
+    () => createServices.filter((service) => service.isActive),
+    [createServices],
+  );
+  const formBerths = useMemo(
+    () => availableBerths.filter((berth) => berth.terminalId === createForm.terminalId),
+    [availableBerths, createForm.terminalId],
+  );
+
+  const fitError = useMemo(
+    () => getVesselFitError({ form: createForm, vessels: createVessels, berths: createBerths }),
+    [createForm, createVessels, createBerths],
+  );
+  const conflictWarning = useMemo(
+    () => getBerthConflictWarning({ form: createForm, schedules: existingSchedules }),
+    [createForm, existingSchedules],
+  );
+
   const headerDescription = plannerData
     ? `${plannerData.portName} — ${plannerData.terminalName} · ${formatTimezoneOffset(new Date(), portTimezone)}`
     : "Select a terminal to view the berth planner.";
 
+  const updateCreateForm = useCallback(
+    <Field extends keyof ScheduleFormValues>(field: Field, value: ScheduleFormValues[Field]) => {
+      if (field === "terminalId") {
+        setCreateForm((current) => {
+          const hasBerthForTerminal = createBerths.some(
+            (berth) => berth.id === current.berthId && berth.terminalId === value,
+          );
+          return {
+            ...current,
+            terminalId: value as string,
+            berthId: hasBerthForTerminal ? current.berthId : "",
+          };
+        });
+        return;
+      }
+
+      setCreateForm((current) => ({
+        ...current,
+        [field]: value,
+      }));
+    },
+    [createBerths],
+  );
+
+  const closeCreateDrawer = useCallback(() => {
+    setIsCreateDrawerOpen(false);
+    setCreateError("");
+    setCreateForm(INITIAL_CREATE_FORM);
+  }, []);
+
+  const handleGridCreateRequest = useCallback(async (draft: {
+    berthId: string;
+    berthPositionMeters: number;
+    plannedStartTime: Date;
+  }) => {
+    setCreateSuccess("");
+    await loadCreateData();
+
+    const startInput = toDateTimeLocalValueInTimezone(draft.plannedStartTime, portTimezone);
+    const defaultEtd = new Date(draft.plannedStartTime.getTime() + 4 * 60 * 60 * 1000);
+
+    setCreateForm({
+      ...INITIAL_CREATE_FORM,
+      terminalId: selectedTerminalId,
+      berthId: draft.berthId,
+      eta: startInput,
+      etb: startInput,
+      etd: toDateTimeLocalValueInTimezone(defaultEtd, portTimezone),
+      berthPositionMeters: String(draft.berthPositionMeters),
+    });
+    setCreateError("");
+    setIsCreateDrawerOpen(true);
+  }, [loadCreateData, portTimezone, selectedTerminalId]);
+
+  const handleCreateSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCreateError("");
+    setCreateSuccess("");
+
+    const etaIso = toIsoUtc(createForm.eta);
+    const etdIso = toIsoUtc(createForm.etd);
+    const etbIso = toIsoUtc(createForm.etb);
+    const ataIso = toIsoUtc(createForm.ata);
+    const atbIso = toIsoUtc(createForm.atb);
+    const atdIso = toIsoUtc(createForm.atd);
+
+    if (!etaIso) {
+      setCreateError("ETA is required and must be valid");
+      return;
+    }
+
+    if (!etdIso) {
+      setCreateError("ETD is required and must be valid");
+      return;
+    }
+
+    if (fitError) {
+      setCreateError(fitError);
+      return;
+    }
+
+    setCreateSaving(true);
+    try {
+      const response = await fetch("/api/schedules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vesselId: createForm.vesselId,
+          serviceId: createForm.serviceId,
+          voyageNumber: createForm.voyageNumber,
+          terminalId: createForm.terminalId,
+          berthId: createForm.berthId,
+          eta: etaIso,
+          etb: etbIso ?? "",
+          etd: etdIso,
+          ata: ataIso ?? "",
+          atb: atbIso ?? "",
+          atd: atdIso ?? "",
+          status: createForm.status,
+          remarks: createForm.remarks,
+          berthPositionMeters: createForm.berthPositionMeters,
+          headingReverse: createForm.headingReverse,
+        }),
+      });
+
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to create schedule");
+      }
+
+      closeCreateDrawer();
+      setCreateSuccess("Schedule created successfully.");
+      await refreshPlanner();
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : "Failed to save schedule");
+    } finally {
+      setCreateSaving(false);
+    }
+  }, [createForm, fitError, closeCreateDrawer, refreshPlanner]);
+
   return (
     <div className="-mb-6 flex flex-col gap-3">
       <PageHeader title="Berth Planner" description={headerDescription} />
+
+      {createSuccess ? <AlertMessage type="success" message={createSuccess} /> : null}
 
       <BerthPlannerControls
         terminals={terminals}
@@ -199,7 +480,6 @@ export function BerthPlannerView() {
         </div>
       )}
 
-      {/* Canvas wrapper – fills remaining viewport height */}
       <div ref={canvasWrapperRef} className="flex-1">
         {isLoading ? (
           <div className="flex items-center justify-center rounded-lg border border-slate-200 bg-white py-16">
@@ -211,7 +491,6 @@ export function BerthPlannerView() {
           </div>
         ) : (
           <>
-            {/* Accessible non-canvas summary */}
             <div className="sr-only">
               <h2>Schedule summary</h2>
               {berths.map((berth) => (
@@ -234,6 +513,7 @@ export function BerthPlannerView() {
               weekEnd={weekEnd}
               portTimezone={portTimezone}
               onInvalidRecords={setInvalidRecords}
+              onGridCreateRequest={handleGridCreateRequest}
             />
           </>
         )}
@@ -256,6 +536,39 @@ export function BerthPlannerView() {
           </ul>
         </section>
       )}
+
+      <Drawer
+        isOpen={isCreateDrawerOpen}
+        title="Create Schedule"
+        description="Add vessel schedule from berth planner."
+        onRequestClose={closeCreateDrawer}
+        footer={(
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="secondary" onClick={closeCreateDrawer} disabled={createSaving}>
+              Cancel
+            </Button>
+            <Button type="submit" form="planner-create-schedule-form" disabled={createSaving || createDataLoading}>
+              {createSaving ? "Creating..." : "Create Schedule"}
+            </Button>
+          </div>
+        )}
+      >
+        {createError ? <AlertMessage type="error" message={createError} className="mb-4" /> : null}
+
+        <form id="planner-create-schedule-form" onSubmit={handleCreateSubmit}>
+          <ScheduleFormFields
+            form={createForm}
+            saving={createSaving || createDataLoading}
+            availableVessels={availableVessels}
+            availableServices={availableServices}
+            availableTerminals={availableTerminals}
+            formBerths={formBerths}
+            fitError={fitError ?? undefined}
+            conflictWarning={conflictWarning ?? undefined}
+            onChange={updateCreateForm}
+          />
+        </form>
+      </Drawer>
     </div>
   );
 }

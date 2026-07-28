@@ -13,19 +13,19 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { TableContainer } from "@/components/ui/table-container";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  SCHEDULE_STATUSES,
+  ScheduleFormFields,
+  type ScheduleFormValues,
+  type ScheduleStatus,
+} from "@/components/schedules/schedule-form-fields";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
-
-const SCHEDULE_STATUSES = [
-  "PLANNED",
-  "CONFIRMED",
-  "ARRIVED",
-  "BERTHED",
-  "DEPARTED",
-  "CANCELLED",
-] as const;
-
-type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
+import {
+  getBerthConflictWarning,
+  getVesselFitError,
+  toDateTimeLocalValue,
+  toIsoUtc,
+} from "@/lib/schedules/form-validation";
 
 type Vessel = {
   id: string;
@@ -33,6 +33,7 @@ type Vessel = {
   name: string;
   imo: string | null;
   callSign: string | null;
+  lengthOverall: number | string | null;
   isActive: boolean;
 };
 
@@ -54,6 +55,7 @@ type Berth = {
   terminalId: string;
   code: string;
   name: string;
+  berthLength: number;
   color: string;
   zeroOriginSide: "LEFT" | "RIGHT";
   isActive: boolean;
@@ -118,24 +120,6 @@ type Schedule = {
   service: Service | null;
 };
 
-type ScheduleForm = {
-  vesselId: string;
-  serviceId: string;
-  voyageNumber: string;
-  terminalId: string;
-  berthId: string;
-  eta: string;
-  etb: string;
-  etd: string;
-  ata: string;
-  atb: string;
-  atd: string;
-  status: ScheduleStatus;
-  remarks: string;
-  berthPositionMeters: string;
-  headingReverse: boolean;
-};
-
 type SchedulesResponse = {
   data?: Schedule[];
   error?: string;
@@ -166,7 +150,7 @@ type ServicesResponse = {
   error?: string;
 };
 
-const INITIAL_FORM: ScheduleForm = {
+const INITIAL_FORM: ScheduleFormValues = {
   vesselId: "",
   serviceId: "",
   voyageNumber: "",
@@ -190,38 +174,6 @@ function formatStatus(status: ScheduleStatus) {
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
-}
-
-function toDateTimeLocalValue(iso: string | null) {
-  if (!iso) {
-    return "";
-  }
-
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hour = String(date.getHours()).padStart(2, "0");
-  const minute = String(date.getMinutes()).padStart(2, "0");
-
-  return `${year}-${month}-${day}T${hour}:${minute}`;
-}
-
-function toIsoUtc(value: string): string | null {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date.toISOString();
 }
 
 function formatDateInTimezone(iso: string | null, timezone?: string | null) {
@@ -282,8 +234,8 @@ export function ScheduleManager() {
   const [berths, setBerths] = useState<Berth[]>([]);
   const [services, setServices] = useState<Service[]>([]);
 
-  const [form, setForm] = useState<ScheduleForm>(INITIAL_FORM);
-  const [initialFormState, setInitialFormState] = useState<ScheduleForm>(INITIAL_FORM);
+  const [form, setForm] = useState<ScheduleFormValues>(INITIAL_FORM);
+  const [initialFormState, setInitialFormState] = useState<ScheduleFormValues>(INITIAL_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showDiscardChanges, setShowDiscardChanges] = useState(false);
@@ -406,6 +358,16 @@ export function ScheduleManager() {
     return availableBerths.filter((berth) => berth.terminalId === form.terminalId);
   }, [availableBerths, form.terminalId]);
 
+  const fitError = useMemo(
+    () => getVesselFitError({ form, vessels, berths }),
+    [form, vessels, berths],
+  );
+
+  const conflictWarning = useMemo(
+    () => getBerthConflictWarning({ form, schedules, excludeScheduleId: editingId }),
+    [form, schedules, editingId],
+  );
+
   const filteredSchedules = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
@@ -441,7 +403,7 @@ export function ScheduleManager() {
     search.trim() !== "" || statusFilter !== "all" || terminalFilter !== "all" || dateFrom !== "" || dateTo !== "";
   const isFormDirty = JSON.stringify(form) !== JSON.stringify(initialFormState);
 
-  function updateForm<Field extends keyof ScheduleForm>(field: Field, value: ScheduleForm[Field]) {
+  function updateForm<Field extends keyof ScheduleFormValues>(field: Field, value: ScheduleFormValues[Field]) {
     if (field === "terminalId") {
       setForm((current) => {
         const hasBerthForTerminal = berths.some(
@@ -497,7 +459,7 @@ export function ScheduleManager() {
   }
 
   function startEdit(schedule: Schedule) {
-    const editForm: ScheduleForm = {
+    const editForm: ScheduleFormValues = {
       vesselId: schedule.vesselId,
       serviceId: schedule.serviceId || "",
       voyageNumber: schedule.voyageNumber || "",
@@ -552,6 +514,11 @@ export function ScheduleManager() {
 
     if (!etdIso) {
       setDrawerError("ETD is required and must be valid");
+      return;
+    }
+
+    if (fitError) {
+      setDrawerError(fitError);
       return;
     }
 
@@ -788,200 +755,17 @@ export function ScheduleManager() {
         {drawerError ? <AlertMessage type="error" message={drawerError} className="mb-4" /> : null}
 
         <form id="schedule-form" onSubmit={handleSubmit}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField label="Vessel" htmlFor="schedule-vessel" required>
-              <Select
-                id="schedule-vessel"
-                value={form.vesselId}
-                onChange={(event) => updateForm("vesselId", event.target.value)}
-                required
-                disabled={saving}
-              >
-                <option value="">Select Vessel</option>
-                {availableVessels.map((vessel) => (
-                  <option key={vessel.id} value={vessel.id}>
-                    {vessel.name}
-                    {vessel.imo ? ` (${vessel.imo})` : ""}
-                    {!vessel.isActive ? " (Inactive)" : ""}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Service" htmlFor="schedule-service">
-              <Select
-                id="schedule-service"
-                value={form.serviceId}
-                onChange={(event) => updateForm("serviceId", event.target.value)}
-                disabled={saving}
-              >
-                <option value="">No Service</option>
-                {availableServices.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.code} - {service.name}
-                    {!service.isActive ? " (Inactive)" : ""}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Voyage Number" htmlFor="schedule-voyage">
-              <Input
-                id="schedule-voyage"
-                value={form.voyageNumber}
-                onChange={(event) => updateForm("voyageNumber", event.target.value)}
-                maxLength={50}
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label="Terminal" htmlFor="schedule-terminal" required>
-              <Select
-                id="schedule-terminal"
-                value={form.terminalId}
-                onChange={(event) => updateForm("terminalId", event.target.value)}
-                required
-                disabled={saving}
-              >
-                <option value="">Select Terminal</option>
-                {availableTerminals.map((terminal) => (
-                  <option key={terminal.id} value={terminal.id}>
-                    {terminal.port.code}/{terminal.code} - {terminal.name}
-                    {!terminal.isActive ? " (Inactive)" : ""}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Berth" htmlFor="schedule-berth">
-              <Select
-                id="schedule-berth"
-                value={form.berthId}
-                onChange={(event) => updateForm("berthId", event.target.value)}
-                disabled={saving || !form.terminalId}
-              >
-                <option value="">{form.terminalId ? "No Berth" : "Select Terminal First"}</option>
-                {formBerths.map((berth) => (
-                  <option key={berth.id} value={berth.id}>
-                    {berth.code} - {berth.name}
-                    {!berth.isActive ? " (Inactive)" : ""}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="ETA" htmlFor="schedule-eta" required>
-              <Input
-                id="schedule-eta"
-                type="datetime-local"
-                value={form.eta}
-                onChange={(event) => updateForm("eta", event.target.value)}
-                required
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label="ETB" htmlFor="schedule-etb">
-              <Input
-                id="schedule-etb"
-                type="datetime-local"
-                value={form.etb}
-                onChange={(event) => updateForm("etb", event.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label="ETD" htmlFor="schedule-etd" required>
-              <Input
-                id="schedule-etd"
-                type="datetime-local"
-                value={form.etd}
-                onChange={(event) => updateForm("etd", event.target.value)}
-                required
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label="ATA" htmlFor="schedule-ata">
-              <Input
-                id="schedule-ata"
-                type="datetime-local"
-                value={form.ata}
-                onChange={(event) => updateForm("ata", event.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label="ATB" htmlFor="schedule-atb">
-              <Input
-                id="schedule-atb"
-                type="datetime-local"
-                value={form.atb}
-                onChange={(event) => updateForm("atb", event.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label="ATD" htmlFor="schedule-atd">
-              <Input
-                id="schedule-atd"
-                type="datetime-local"
-                value={form.atd}
-                onChange={(event) => updateForm("atd", event.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label="Status" htmlFor="schedule-status">
-              <Select
-                id="schedule-status"
-                value={form.status}
-                onChange={(event) => updateForm("status", event.target.value as ScheduleStatus)}
-                disabled={saving}
-              >
-                {SCHEDULE_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {formatStatus(status)}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-
-            <FormField label="Berth Position (meters)" htmlFor="schedule-berth-position">
-              <Input
-                id="schedule-berth-position"
-                type="number"
-                min="0"
-                step="1"
-                value={form.berthPositionMeters}
-                onChange={(event) => updateForm("berthPositionMeters", event.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label="Remarks" htmlFor="schedule-remarks" className="md:col-span-2">
-              <Textarea
-                id="schedule-remarks"
-                value={form.remarks}
-                onChange={(event) => updateForm("remarks", event.target.value)}
-                rows={3}
-                disabled={saving}
-              />
-            </FormField>
-
-            <div className="flex items-end pb-1">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={form.headingReverse}
-                  onChange={(event) => updateForm("headingReverse", event.target.checked)}
-                  disabled={saving}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-                Heading Reverse
-              </label>
-            </div>
-          </div>
+          <ScheduleFormFields
+            form={form}
+            saving={saving}
+            availableVessels={availableVessels}
+            availableServices={availableServices}
+            availableTerminals={availableTerminals}
+            formBerths={formBerths}
+            fitError={fitError ?? undefined}
+            conflictWarning={conflictWarning ?? undefined}
+            onChange={updateForm}
+          />
         </form>
       </Drawer>
     </section>

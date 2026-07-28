@@ -11,6 +11,11 @@ import {
   getMidnightsBetween,
   get4HourMarks,
 } from "@/lib/berth-planner/timezone";
+import {
+  convertCanvasClickToCreateSelection,
+  isGridAreaClick,
+  shouldHandleCreateClick,
+} from "@/lib/berth-planner/click-create";
 import { ScheduleTooltip } from "./schedule-tooltip";
 import { ScheduleDetailsDrawer } from "./schedule-details-drawer";
 import type {
@@ -57,6 +62,11 @@ export type BerthPlannerCanvasProps = {
   weekEnd: Date;
   portTimezone: string;
   onInvalidRecords: (records: InvalidScheduleRecord[]) => void;
+  onGridCreateRequest?: (draft: {
+    berthId: string;
+    berthPositionMeters: number;
+    plannedStartTime: Date;
+  }) => void;
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -72,6 +82,7 @@ export function BerthPlannerCanvas({
   weekEnd,
   portTimezone,
   onInvalidRecords,
+  onGridCreateRequest,
 }: BerthPlannerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -530,7 +541,48 @@ export function BerthPlannerCanvas({
         .filter((p) => p.scheduleAId === t.scheduleId || p.scheduleBId === t.scheduleId)
         .map((p) => (p.scheduleAId === t.scheduleId ? p.bName : p.aName));
       setSelectedConflictPartners(partners);
-    } else {
+      return;
+    }
+
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const drawW = canvasWidth - LEFT_AXIS_W;
+    const drawH = canvasHeight - TOP_HEADER_H - BOTTOM_PAD;
+
+    const createDraft = convertCanvasClickToCreateSelection({
+      x,
+      y,
+      frame: {
+        leftAxisWidth: LEFT_AXIS_W,
+        topHeaderHeight: TOP_HEADER_H,
+        drawWidth: drawW,
+        drawHeight: drawH,
+      },
+      berths: berths.map((berth) => ({
+        id: berth.id,
+        berthLength: berth.berthLength,
+        zeroOriginSide: berth.zeroOriginSide,
+      })),
+      weekStart,
+      weekEnd,
+    });
+
+    if (onGridCreateRequest && createDraft && shouldHandleCreateClick(false, createDraft)) {
+      setSelectedSchedule(null);
+      setSelectedBerthName("");
+      setSelectedConflictPartners([]);
+      onGridCreateRequest(createDraft);
+      return;
+    }
+
+    if (isGridAreaClick(x, y, {
+      leftAxisWidth: LEFT_AXIS_W,
+      topHeaderHeight: TOP_HEADER_H,
+      drawWidth: drawW,
+      drawHeight: drawH,
+    })) {
       setSelectedSchedule(null);
     }
   }
