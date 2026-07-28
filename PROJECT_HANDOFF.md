@@ -78,6 +78,17 @@ npx prisma generate
 ### Berth Planner Duration Resizing — ✅ complete
 ### Berth Planner Operational Filters — ✅ complete
 ### Berth Planner Undo Recent Change — ✅ complete
+### Berth Planner Realtime Changes — ✅ complete
+### Berth Planner In-place Mutation Refresh — ✅ complete
+
+**Mutation refresh behavior:**
+- Planner create, edit, drag move, resize and undo continue to use their existing APIs and server-side authorization/validation/audit checks, then refresh only the current terminal/week without changing `isLoading`, so the canvas, terminal/week/domain/filter/selection context and panels remain mounted.
+- Planner fetches are versioned in the client; late responses cannot overwrite a newer terminal/week request. Failed saves keep their drawers/dialogs open and stale-version responses refresh current planner data with an explanatory error.
+
+**Realtime behavior:**
+- `GET /api/berth-planner/changes` uses the authenticated active organization, verifies the terminal, bounds the visible date range and returns only minimal schedule audit events after a server-issued cursor.
+- The planner polls every 25 seconds without overlapping requests, pauses while planner forms, confirmations, saves and undo are active, then retrieves missed events when interaction ends.
+- Recent Changes shows the latest 50 relevant events in port time, supports schedule history links and explains unavailable focus actions; canvas feedback uses green for creates, amber for updates and red for conflicts, with static reduced-motion feedback.
 
 **Undo behavior:**
 - A completed planner drag move or duration resize returns a server-issued opaque undo token and shows a single Undo action for 15 seconds in both Position and Datetime views.

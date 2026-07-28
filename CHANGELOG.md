@@ -1,4 +1,14 @@
 2026-07-28
+- Berth Planner in-place mutation refresh
+  - Successful create, edit, move, resize and undo operations now retain the mounted planner canvas and re-fetch only the active terminal/week in the background, preserving planner context instead of showing a full loading replacement
+  - Added current-user change highlights and stale-version background refresh/error handling for planner mutations
+
+2026-07-28
+- Berth Planner realtime changes
+  - Added authenticated, organization-scoped cursor polling for schedule audit events in the selected terminal and week, with bounded request validation and no audit metadata exposure
+  - Added pause-safe 25-second polling, missed-change recovery, temporary created/updated/conflict highlights, reduced-motion treatment and a responsive Recent Changes panel with audit-history links
+
+2026-07-28
 - Berth Planner undo recent change
   - Successful drag moves and duration resizes now return a server-issued, single-use undo token and show a 15-second Undo action in both planner domains
   - Undo is processed by the existing schedule PATCH endpoint, restores the server-stored pre-operation snapshot, rechecks organization scope, permissions, version, and berth conflicts, then refreshes the current planner context in place

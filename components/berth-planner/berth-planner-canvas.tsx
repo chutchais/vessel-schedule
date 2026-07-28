@@ -40,6 +40,7 @@ import {
 } from "@/lib/berth-planner/duration-resize";
 import { ScheduleTooltip } from "./schedule-tooltip";
 import { ScheduleDetailsDrawer } from "./schedule-details-drawer";
+import type { ChangeHighlight } from "@/lib/berth-planner/realtime";
 import { shouldClearHiddenSelection } from "@/lib/berth-planner/operational-filters";
 import type {
   PlannerBerth,
@@ -126,6 +127,8 @@ export type BerthPlannerCanvasProps = {
   domain: PlannerDomain;
   /** When set, these schedule IDs are highlighted with a selection border (used by the conflict panel). */
   highlightedIds?: Set<string>;
+  recentHighlights?: Map<string, ChangeHighlight>;
+  reducedMotion?: boolean;
   visibleScheduleIds?: Set<string>;
   onSelectionHidden?: () => void;
   onInvalidRecords: (records: InvalidScheduleRecord[]) => void;
@@ -159,9 +162,11 @@ function drawVesselShape(params: {
   schedule: ValidatedSchedule;
   isConflict: boolean;
   isSelected: boolean;
+  recentHighlight?: ChangeHighlight;
+  reducedMotion: boolean;
   bounds: { left: number; right: number; top: number; bottom: number };
 }) {
-  const { ctx, polygon, schedule, isConflict, isSelected, bounds } = params;
+  const { ctx, polygon, schedule, isConflict, isSelected, recentHighlight, reducedMotion, bounds } = params;
   const width = bounds.right - bounds.left;
   const height = bounds.bottom - bounds.top;
   const [r, g, b] = hexToRgb(schedule.serviceColor ?? schedule.vesselColor);
@@ -191,6 +196,16 @@ function drawVesselShape(params: {
     ctx.lineWidth = 2.5;
     drawPath(ctx, polygon);
     ctx.stroke();
+  }
+
+  if (recentHighlight) {
+    const color = recentHighlight.tone === "created" ? "#16A34A" : recentHighlight.tone === "conflict" ? "#DC2626" : "#D97706";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = recentHighlight.stronger ? 4 : 3;
+    ctx.globalAlpha = reducedMotion ? 1 : 0.85;
+    drawPath(ctx, polygon);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   if (isConflict && schedule.status !== "CANCELLED") {
@@ -293,6 +308,8 @@ export function BerthPlannerCanvas({
   portTimezone,
   domain,
   highlightedIds,
+  recentHighlights,
+  reducedMotion = false,
   visibleScheduleIds,
   onSelectionHidden,
   onInvalidRecords,
@@ -618,6 +635,8 @@ export function BerthPlannerCanvas({
             schedule,
             isConflict,
             isSelected,
+            recentHighlight: recentHighlights?.get(schedule.id),
+            reducedMotion,
             bounds: { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy },
           });
           drawResizeHandles(ctx, { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy }, domain);
@@ -908,6 +927,8 @@ export function BerthPlannerCanvas({
             schedule,
             isConflict,
             isSelected,
+            recentHighlight: recentHighlights?.get(schedule.id),
+            reducedMotion,
             bounds: { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy },
           });
           drawResizeHandles(ctx, { left: leftPx, right: rightPx, top: topPy, bottom: bottomPy }, domain);
@@ -1022,6 +1043,8 @@ export function BerthPlannerCanvas({
     domain,
     selectedSchedule,
     highlightedIds,
+    recentHighlights,
+    reducedMotion,
     conflictedIds,
     classifiedBerths,
     activeDrag,

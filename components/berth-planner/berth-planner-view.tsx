@@ -35,6 +35,7 @@ import {
   type ConflictItem,
 } from "@/lib/berth-planner/conflict-panel";
 import { ConflictPanel } from "./conflict-panel";
+import { RecentChangesPanel } from "./recent-changes-panel";
 import { OperationalFilterBar } from "./operational-filter-bar";
 import {
   EMPTY_OPERATIONAL_FILTERS,
@@ -45,6 +46,7 @@ import {
   type OperationalFilters,
 } from "@/lib/berth-planner/operational-filters";
 import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord, PlannerDomain } from "@/lib/berth-planner/types";
+import { highlightForChange, type ChangeHighlight, type PlannerChangeEvent, type PlannerChangesResponse } from "@/lib/berth-planner/realtime";
 
 const DEFAULT_TIMEZONE = "UTC";
 
@@ -160,6 +162,7 @@ export function BerthPlannerView() {
   const [urlStateReady, setUrlStateReady] = useState(false);
   const [filterNotice, setFilterNotice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [invalidRecords, setInvalidRecords] = useState<InvalidScheduleRecord[]>([]);
   const [createSuccess, setCreateSuccess] = useState("");
@@ -199,9 +202,19 @@ export function BerthPlannerView() {
   const [undoAction, setUndoAction] = useState<PlannerUndoAction | null>(null);
   const [undoSaving, setUndoSaving] = useState(false);
   const [undoError, setUndoError] = useState("");
+  const [recentChanges, setRecentChanges] = useState<PlannerChangeEvent[]>([]);
+  const [changesLoading, setChangesLoading] = useState(false);
+  const [changesError, setChangesError] = useState<string | null>(null);
+  const [recentHighlights, setRecentHighlights] = useState<Map<string, ChangeHighlight>>(new Map());
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const plannerRequestRef = useRef(0);
   const undoExpiryTimerRef = useRef<number | null>(null);
+  const changeCursorRef = useRef<string | null>(null);
+  const changeRequestRef = useRef(false);
+  const changesContextRef = useRef("");
+  const highlightTimersRef = useRef<Map<string, number>>(new Map());
 
   const showUndoAction = useCallback((scheduleId: string, payload: { undoToken?: string; undoExpiresAt?: string }) => {
     if (!payload.undoToken || !payload.undoExpiresAt) return;
@@ -211,11 +224,30 @@ export function BerthPlannerView() {
     undoExpiryTimerRef.current = window.setTimeout(() => setUndoAction(null), Math.max(0, new Date(payload.undoExpiresAt).getTime() - Date.now()));
   }, []);
 
+  const highlightCurrentUserChange = useCallback((scheduleId: string, tone: ChangeHighlight["tone"]) => {
+    setRecentHighlights((current) => new Map(current).set(scheduleId, { tone, stronger: false }));
+    const previous = highlightTimersRef.current.get(scheduleId);
+    if (previous) window.clearTimeout(previous);
+    highlightTimersRef.current.set(scheduleId, window.setTimeout(() => {
+      setRecentHighlights((current) => { const next = new Map(current); next.delete(scheduleId); return next; });
+    }, 5000));
+  }, []);
+
   useEffect(() => () => {
     if (undoExpiryTimerRef.current !== null) window.clearTimeout(undoExpiryTimerRef.current);
   }, []);
 
-  const loadPlannerData = useCallback(async (terminalId: string, start: Date, end: Date) => {
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(media.matches);
+    update(); media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const isInteractionActive = isCreateDrawerOpen || isEditDrawerOpen || isDragConfirmOpen || Boolean(resizePending) || undoSaving || createSaving || editSaving || isDragSaving || isResizeSaving;
+
+  const loadPlannerData = useCallback(async (terminalId: string, start: Date, end: Date, preserveCurrentData = false) => {
+    const requestId = ++plannerRequestRef.current;
     const params = new URLSearchParams({
       terminalId,
       startDate: start.toISOString(),
@@ -226,21 +258,24 @@ export function BerthPlannerView() {
     try {
       res = await fetch(`/api/berth-planner?${params.toString()}`);
     } catch {
+      if (requestId !== plannerRequestRef.current) return;
       setLoadError("Network error");
-      setPlannerData(null);
+      if (!preserveCurrentData) setPlannerData(null);
       setIsLoading(false);
       return;
     }
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
+      if (requestId !== plannerRequestRef.current) return;
       setLoadError((body as { error?: string }).error ?? "Failed to load planner data");
-      setPlannerData(null);
+      if (!preserveCurrentData) setPlannerData(null);
       setIsLoading(false);
       return;
     }
 
     const payload = await res.json();
+    if (requestId !== plannerRequestRef.current) return;
     const data = payload.data as PlannerDataRaw;
     const validServices = new Set(data.berths.flatMap((berth) => berth.schedules.map((schedule) => schedule.serviceName).filter(Boolean)));
     const validBerths = new Set(data.berths.map((berth) => berth.id));
@@ -294,9 +329,55 @@ export function BerthPlannerView() {
 
   const refreshPlanner = useCallback(async () => {
     if (!selectedTerminalId) return;
-    setIsLoading(true);
-    await loadPlannerData(selectedTerminalId, weekStart, weekEnd);
+    setIsRefreshing(true);
+    try {
+      await loadPlannerData(selectedTerminalId, weekStart, weekEnd, true);
+    } finally {
+      setIsRefreshing(false);
+    }
   }, [selectedTerminalId, weekStart, weekEnd, loadPlannerData]);
+
+  const loadChanges = useCallback(async (initial = false) => {
+    if (!selectedTerminalId || changeRequestRef.current || (!initial && isInteractionActive)) return;
+    changeRequestRef.current = true;
+    if (initial) setChangesLoading(true);
+    const params = new URLSearchParams({ terminalId: selectedTerminalId, startDate: weekStart.toISOString(), endDate: weekEnd.toISOString() });
+    if (!initial && changeCursorRef.current) params.set("cursor", changeCursorRef.current);
+    try {
+      const response = await fetch(`/api/berth-planner/changes?${params.toString()}`, { cache: "no-store" });
+      const payload = await response.json() as PlannerChangesResponse & { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Failed to load recent changes");
+      changeCursorRef.current = payload.cursor;
+      setChangesError(null);
+      if (initial) setRecentChanges(payload.data.slice(-50).reverse());
+      else if (payload.data.length) {
+        setRecentChanges((current) => [...payload.data.slice().reverse(), ...current].slice(0, 50));
+        const highlights = new Map<string, ChangeHighlight>();
+        for (const event of payload.data) highlights.set(event.scheduleId, highlightForChange(event, false));
+        setRecentHighlights((current) => new Map([...current, ...highlights]));
+        for (const id of highlights.keys()) {
+          const previous = highlightTimersRef.current.get(id); if (previous) window.clearTimeout(previous);
+          highlightTimersRef.current.set(id, window.setTimeout(() => setRecentHighlights((current) => { const next = new Map(current); next.delete(id); return next; }), 5000));
+        }
+        await refreshPlanner();
+      }
+    } catch (error) { setChangesError(error instanceof Error ? error.message : "Failed to load recent changes"); }
+    finally { changeRequestRef.current = false; if (initial) setChangesLoading(false); }
+  }, [isInteractionActive, refreshPlanner, selectedTerminalId, weekEnd, weekStart]);
+
+  useEffect(() => {
+    const context = `${selectedTerminalId}:${weekStart.toISOString()}:${weekEnd.toISOString()}`;
+    if (!selectedTerminalId || changesContextRef.current === context) return;
+    changesContextRef.current = context;
+    changeCursorRef.current = null; setRecentChanges([]); setRecentHighlights(new Map());
+    if (selectedTerminalId) void loadChanges(true);
+  }, [selectedTerminalId, weekStart, weekEnd, loadChanges]);
+
+  useEffect(() => {
+    if (!selectedTerminalId || isInteractionActive) return;
+    const timer = window.setTimeout(() => void loadChanges(false), 25_000);
+    return () => window.clearTimeout(timer);
+  }, [isInteractionActive, loadChanges, recentChanges, selectedTerminalId]);
 
   useEffect(() => {
     writePreferredPlannerDomain(typeof window !== "undefined" ? window.localStorage : null, domain);
@@ -662,6 +743,7 @@ export function BerthPlannerView() {
       if (patchRes.status === 409) {
         const body = await patchRes.json() as { error?: string };
         setDragSaveError(body.error ?? "Berth conflict detected. Another schedule occupies this slot.");
+        if ((body.error ?? "").toLowerCase().includes("changed")) await refreshPlanner();
         setIsDragSaving(false);
         return;
       }
@@ -678,13 +760,14 @@ export function BerthPlannerView() {
       setDragDropPending(null);
       setCreateSuccess("Schedule moved successfully.");
       showUndoAction(dragDropPending.scheduleId, patchPayload);
+      highlightCurrentUserChange(dragDropPending.scheduleId, "updated");
       await refreshPlanner();
     } catch {
       setDragSaveError("Network error. Please try again.");
     } finally {
       setIsDragSaving(false);
     }
-  }, [dragDropPending, refreshPlanner, showUndoAction]);
+  }, [dragDropPending, highlightCurrentUserChange, refreshPlanner, showUndoAction]);
 
   const handleDurationResizeRequest = useCallback((request: DurationResizeRequest) => {
     setResizePending(request);
@@ -743,18 +826,20 @@ export function BerthPlannerView() {
       const body = await patchRes.json().catch(() => ({})) as { error?: string; undoToken?: string; undoExpiresAt?: string };
       if (!patchRes.ok) {
         setResizeSaveError(body.error ?? "Failed to resize schedule.");
+        if (patchRes.status === 409 && (body.error ?? "").toLowerCase().includes("changed")) await refreshPlanner();
         return;
       }
       setResizePending(null);
       setCreateSuccess("Schedule duration resized successfully.");
       showUndoAction(resizePending.scheduleId, body);
+      highlightCurrentUserChange(resizePending.scheduleId, "updated");
       await refreshPlanner();
     } catch {
       setResizeSaveError("Network error. Please try again.");
     } finally {
       setIsResizeSaving(false);
     }
-  }, [resizePending, refreshPlanner, showUndoAction]);
+  }, [highlightCurrentUserChange, resizePending, refreshPlanner, showUndoAction]);
 
   const handleUndo = useCallback(async () => {
     if (!undoAction || undoSaving || new Date(undoAction.expiresAt).getTime() <= Date.now()) {
@@ -772,19 +857,19 @@ export function BerthPlannerView() {
       const body = await response.json().catch(() => ({})) as { error?: string };
       if (!response.ok) {
         setUndoError(body.error ?? "Undo could not be completed.");
-        setUndoAction(null);
         await refreshPlanner();
         return;
       }
       setUndoAction(null);
       setCreateSuccess("Planner change undone.");
+      highlightCurrentUserChange(undoAction.scheduleId, "updated");
       await refreshPlanner();
     } catch {
       setUndoError("Network error. The planner was not changed; please try Undo again before it expires.");
     } finally {
       setUndoSaving(false);
     }
-  }, [refreshPlanner, undoAction, undoSaving]);
+  }, [highlightCurrentUserChange, refreshPlanner, undoAction, undoSaving]);
 
   const updateEditForm = useCallback(
     <Field extends keyof ScheduleFormValues>(field: Field, value: ScheduleFormValues[Field]) => {
@@ -904,18 +989,21 @@ export function BerthPlannerView() {
 
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) {
-        throw new Error(payload.error ?? "Failed to update schedule");
+        setEditError(payload.error ?? "Failed to update schedule");
+        if (response.status === 409 && (payload.error ?? "").toLowerCase().includes("changed")) await refreshPlanner();
+        return;
       }
 
       closeEditDrawer();
       setCreateSuccess("Schedule updated successfully.");
+      highlightCurrentUserChange(editingScheduleId, "updated");
       await refreshPlanner();
     } catch (error) {
       setEditError(error instanceof Error ? error.message : "Failed to save schedule");
     } finally {
       setEditSaving(false);
     }
-  }, [editingScheduleId, editForm, editFitError, closeEditDrawer, refreshPlanner]);
+  }, [editingScheduleId, editForm, editFitError, closeEditDrawer, highlightCurrentUserChange, refreshPlanner]);
 
   const handleGridCreateRequest = useCallback(async (draft: {
     berthId: string;
@@ -992,20 +1080,21 @@ export function BerthPlannerView() {
         }),
       });
 
-      const payload = (await response.json()) as { error?: string };
+      const payload = (await response.json()) as { error?: string; data?: { id?: string } };
       if (!response.ok) {
         throw new Error(payload.error || "Failed to create schedule");
       }
 
       closeCreateDrawer();
       setCreateSuccess("Schedule created successfully.");
+      if (payload.data?.id) highlightCurrentUserChange(payload.data.id, "created");
       await refreshPlanner();
     } catch (error) {
       setCreateError(error instanceof Error ? error.message : "Failed to save schedule");
     } finally {
       setCreateSaving(false);
     }
-  }, [createForm, fitError, closeCreateDrawer, refreshPlanner]);
+  }, [createForm, fitError, closeCreateDrawer, highlightCurrentUserChange, refreshPlanner]);
 
   return (
     <div className="-mb-6 flex flex-col gap-3">
@@ -1047,6 +1136,7 @@ export function BerthPlannerView() {
       />
 
       {filterNotice && <div role="status" className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">{filterNotice}</div>}
+      {isRefreshing ? <div role="status" className="text-xs text-slate-500">Updating planner…</div> : null}
 
       {loadError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -1098,6 +1188,8 @@ export function BerthPlannerView() {
               portTimezone={portTimezone}
               domain={domain}
               highlightedIds={highlightedScheduleIds.size > 0 ? highlightedScheduleIds : undefined}
+              recentHighlights={recentHighlights}
+              reducedMotion={reducedMotion}
               visibleScheduleIds={visibleScheduleIds}
               onSelectionHidden={() => {
                 setFilterNotice("The selected schedule was cleared because it is hidden by the active filters.");
@@ -1115,14 +1207,10 @@ export function BerthPlannerView() {
 
       {/* Conflict panel — shown whenever a terminal is selected and data is loaded */}
       {selectedTerminalId && !isLoading && (
-        <ConflictPanel
-          groups={conflictGroups}
-          selectedConflictId={selectedConflictId}
-          onSelectConflict={handleSelectConflict}
-          onlyConflicts={onlyConflicts}
-          onToggleOnlyConflicts={handleToggleOnlyConflicts}
-          portTimezone={portTimezone}
-        />
+        <div className="grid gap-3 xl:grid-cols-2">
+          <ConflictPanel groups={conflictGroups} selectedConflictId={selectedConflictId} onSelectConflict={handleSelectConflict} onlyConflicts={onlyConflicts} onToggleOnlyConflicts={handleToggleOnlyConflicts} portTimezone={portTimezone} />
+          <RecentChangesPanel changes={recentChanges} loading={changesLoading} error={changesError} portTimezone={portTimezone} visibleScheduleIds={visibleScheduleIds} onFocus={(id) => setHighlightedScheduleIds(new Set([id]))} onNotice={setFilterNotice} />
+        </div>
       )}
 
       {invalidRecords.length > 0 && (
