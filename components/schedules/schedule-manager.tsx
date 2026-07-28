@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HistoryLink } from "@/components/audit-logs/history-link";
+import { useCanViewAuditLogs } from "@/components/audit-logs/use-can-view-audit-logs";
 import { AlertMessage } from "@/components/ui/alert-message";
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
@@ -12,6 +14,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { TableContainer } from "@/components/ui/table-container";
 import { Textarea } from "@/components/ui/textarea";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 
 const SCHEDULE_STATUSES = [
   "PLANNED",
@@ -263,8 +266,15 @@ function statusBadgeClass(status: ScheduleStatus) {
   return "bg-slate-100 text-slate-700";
 }
 
+function formatScheduleHistoryLabel(schedule: Schedule): string {
+  const serviceCode = schedule.service?.code ?? "—";
+  const voyageNumber = schedule.voyageNumber || "—";
+  return `${schedule.vessel.name} · ${serviceCode} · ${voyageNumber}`;
+}
+
 export function ScheduleManager() {
   const isMountedRef = useRef(true);
+  const canViewAuditLogs = useCanViewAuditLogs();
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [vessels, setVessels] = useState<Vessel[]>([]);
@@ -724,9 +734,18 @@ export function ScheduleManager() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <Button variant="secondary" className="h-8 px-3 text-xs" onClick={() => startEdit(schedule)}>
-                        Edit
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="secondary" className="h-8 px-3 text-xs" onClick={() => startEdit(schedule)}>
+                          Edit
+                        </Button>
+                        {canViewAuditLogs ? (
+                          <HistoryLink
+                            entityType={AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE}
+                            entityId={schedule.id}
+                            entityLabel={formatScheduleHistoryLabel(schedule)}
+                          />
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}

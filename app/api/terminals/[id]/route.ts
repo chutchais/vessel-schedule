@@ -6,40 +6,13 @@ import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 import { prisma } from "@/lib/db/prisma";
 
-export async function GET() {
-  try {
-    const currentUser = await requireCurrentUser();
-    const organizationId = currentUser.activeOrganization.id;
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
-    const terminals = await prisma.terminal.findMany({
-      where: { organizationId },
-      include: {
-        port: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: [
-        { port: { name: "asc" } },
-        { code: "asc" },
-      ],
-    });
-
-    return NextResponse.json({ data: terminals });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-
-    console.error("Failed to load terminals:", error);
-    return NextResponse.json({ error: "Failed to load terminals" }, { status: 500 });
-  }
-}
-
-export async function POST(request: NextRequest) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const currentUser = await requireCurrentUser();
     const organizationId = currentUser.activeOrganization.id;
@@ -48,7 +21,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
+    const { id } = await context.params;
     const body = await request.json();
+
+    const existingTerminal = await prisma.terminal.findFirst({
+      where: { id, organizationId },
+      select: { id: true, portId: true, isActive: true },
+    });
+
+    if (!existingTerminal) {
+      return NextResponse.json({ error: "Terminal not found" }, { status: 404 });
+    }
 
     if (!body.portId || typeof body.portId !== "string") {
       return NextResponse.json({ error: "Port is required" }, { status: 400 });
@@ -87,23 +70,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Port not found" }, { status: 404 });
     }
 
-    const existingTerminal = await prisma.terminal.findFirst({
-      where: { organizationId, portId, code },
+    if (!port.isActive && port.id !== existingTerminal.portId) {
+      return NextResponse.json({ error: "Cannot move terminal to an inactive port" }, { status: 400 });
+    }
+
+    const duplicateTerminal = await prisma.terminal.findFirst({
+      where: {
+        organizationId,
+        portId,
+        code,
+        id: { not: id },
+      },
       select: { id: true },
     });
 
-    if (existingTerminal) {
+    if (duplicateTerminal) {
       return NextResponse.json({ error: "Terminal code already exists for this port" }, { status: 409 });
     }
 
     const terminal = await prisma.$transaction(async (tx) => {
-      const created = await tx.terminal.create({
+      const beforeTerminal = await tx.terminal.findFirst({
+        where: { id, organizationId },
+        include: {
+          port: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!beforeTerminal) {
+        throw new Error("Terminal not found during update");
+      }
+
+      const updated = await tx.terminal.update({
+        where: { id },
         data: {
-          organizationId,
           portId,
           code,
           name,
-          isActive: typeof body.isActive === "boolean" ? body.isActive : true,
+          isActive: typeof body.isActive === "boolean" ? body.isActive : existingTerminal.isActive,
         },
         include: {
           port: {
@@ -116,6 +125,13 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      const action =
+        beforeTerminal.isActive !== updated.isActive
+          ? updated.isActive
+            ? "ACTIVATE"
+            : "DEACTIVATE"
+          : "UPDATE";
+
       await createAuditLog(tx, {
         scope: "ORGANIZATION",
         organizationId,
@@ -124,24 +140,24 @@ export async function POST(request: NextRequest) {
           email: currentUser.email,
           displayName: currentUser.displayName,
         },
-        action: "CREATE",
+        action,
         entityType: AUDIT_ENTITY_TYPES.TERMINAL,
-        entityId: created.id,
-        entityName: created.name,
-        beforeData: null,
-        afterData: created,
+        entityId: updated.id,
+        entityName: updated.name,
+        beforeData: beforeTerminal,
+        afterData: updated,
       });
 
-      return created;
+      return updated;
     });
 
-    return NextResponse.json({ data: terminal }, { status: 201 });
+    return NextResponse.json({ data: terminal });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to create terminal:", error);
-    return NextResponse.json({ error: "Failed to create terminal" }, { status: 500 });
+    console.error("Failed to update terminal:", error);
+    return NextResponse.json({ error: "Failed to update terminal" }, { status: 500 });
   }
 }

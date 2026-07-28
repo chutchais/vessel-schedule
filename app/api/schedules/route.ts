@@ -3,6 +3,8 @@ import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageSchedules } from "@/lib/auth/permissions";
 import { createAuditLog } from "@/lib/audit/create-audit-log";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
+import { formatVesselScheduleAuditEntityName } from "@/lib/audit/entity-name";
 import { prisma } from "@/lib/db/prisma";
 
 const SCHEDULE_STATUSES = [
@@ -85,6 +87,18 @@ function serializeSchedule<T extends {
         ? normalized.berthPositionMeters
         : normalized.berthPositionMeters,
   };
+}
+
+function getScheduleEntityName(input: {
+  vesselName: string;
+  serviceCode: string | null;
+  voyageNumber: string | null;
+}) {
+  return formatVesselScheduleAuditEntityName({
+    vesselName: input.vesselName,
+    serviceCode: input.serviceCode,
+    voyageNumber: input.voyageNumber,
+  });
 }
 
 async function hasBerthOverlap(input: {
@@ -416,9 +430,13 @@ export async function POST(request: NextRequest) {
           displayName: currentUser.displayName,
         },
         action: "CREATE",
-        entityType: "VesselSchedule",
+        entityType: AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE,
         entityId: created.id,
-        entityName: created.voyageNumber,
+        entityName: getScheduleEntityName({
+          vesselName: created.vessel.name,
+          serviceCode: created.service?.code ?? null,
+          voyageNumber: created.voyageNumber,
+        }),
         beforeData: null,
         afterData: created,
       });

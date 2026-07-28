@@ -3,6 +3,8 @@ import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageSchedules } from "@/lib/auth/permissions";
 import { createAuditLog } from "@/lib/audit/create-audit-log";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
+import { formatVesselScheduleAuditEntityName } from "@/lib/audit/entity-name";
 import { prisma } from "@/lib/db/prisma";
 
 const SCHEDULE_STATUSES = [
@@ -78,6 +80,18 @@ function mapSchedule<T extends {
       callSign: schedule.vessel.callSign,
     },
   };
+}
+
+function getScheduleEntityName(input: {
+  vesselName: string;
+  serviceCode: string | null;
+  voyageNumber: string | null;
+}) {
+  return formatVesselScheduleAuditEntityName({
+    vesselName: input.vesselName,
+    serviceCode: input.serviceCode,
+    voyageNumber: input.voyageNumber,
+  });
 }
 
 async function hasBerthOverlap(input: {
@@ -356,9 +370,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           displayName: currentUser.displayName,
         },
         action: "UPDATE",
-        entityType: "VesselSchedule",
+        entityType: AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE,
         entityId: updated.id,
-        entityName: updated.voyageNumber,
+        entityName: getScheduleEntityName({
+          vesselName: updated.vessel.name,
+          serviceCode: updated.service?.code ?? null,
+          voyageNumber: updated.voyageNumber,
+        }),
         beforeData: beforeSchedule,
         afterData: updated,
       });

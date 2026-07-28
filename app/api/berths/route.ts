@@ -3,6 +3,7 @@ import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
 import { createAuditLog } from "@/lib/audit/create-audit-log";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 import { prisma } from "@/lib/db/prisma";
 
 const COLOR_HEX_PATTERN = /^#[0-9A-F]{6}$/i;
@@ -189,7 +190,7 @@ export async function POST(request: NextRequest) {
           displayName: currentUser.displayName,
         },
         action: "CREATE",
-        entityType: "Berth",
+        entityType: AUDIT_ENTITY_TYPES.BERTH,
         entityId: created.id,
         entityName: created.name,
         beforeData: null,

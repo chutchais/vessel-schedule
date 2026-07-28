@@ -53,6 +53,9 @@ export function AuditLogDetails({ log, isOpen, onClose }: Props) {
   const changedFields = Array.from(new Set([...Object.keys(before), ...Object.keys(after)])).filter(
     (key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]),
   );
+  const beforeActive = typeof before.isActive === "boolean" ? before.isActive : null;
+  const afterActive = typeof after.isActive === "boolean" ? after.isActive : null;
+  const hasStatusChange = beforeActive !== null && afterActive !== null && beforeActive !== afterActive;
 
   return (
     <Drawer isOpen={isOpen} title="Audit Log Details" onRequestClose={onClose}>
@@ -72,10 +75,12 @@ export function AuditLogDetails({ log, isOpen, onClose }: Props) {
 
           <section>
             <h3 className="mb-2 text-base font-semibold text-slate-900">Changes</h3>
-            {changedFields.length === 0 && log.action === "CREATE" ? (
-              <div className="rounded-md border border-slate-200 p-3">
-                <pre className="whitespace-pre-wrap break-words text-xs">{formatValue(log.afterData)}</pre>
-              </div>
+            {log.action === "CREATE" ? (
+              <p className="text-slate-700">Created record</p>
+            ) : (log.action === "ACTIVATE" || log.action === "DEACTIVATE") && hasStatusChange ? (
+              <p className="text-slate-700">
+                Status changed from {beforeActive ? "Active" : "Inactive"} to {afterActive ? "Active" : "Inactive"}
+              </p>
             ) : changedFields.length === 0 ? (
               <p className="text-slate-500">No changed fields recorded.</p>
             ) : (

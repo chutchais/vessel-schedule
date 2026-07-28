@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
+import { canViewAuditLogs } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 
 type RouteContext = {
@@ -12,7 +13,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
     const currentUser = await requireCurrentUser();
     const organizationId = currentUser.activeOrganization.id;
 
-    if (currentUser.membership.role !== "OWNER" && currentUser.membership.role !== "ADMIN") {
+    if (!canViewAuditLogs(currentUser.membership.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

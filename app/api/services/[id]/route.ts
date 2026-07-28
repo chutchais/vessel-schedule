@@ -3,6 +3,8 @@ import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
 import { createAuditLog } from "@/lib/audit/create-audit-log";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
+import { formatServiceAuditEntityName } from "@/lib/audit/entity-name";
 import { prisma } from "@/lib/db/prisma";
 
 const COLOR_HEX_PATTERN = /^#[0-9A-F]{6}$/;
@@ -154,9 +156,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           displayName: currentUser.displayName,
         },
         action,
-        entityType: "Service",
+        entityType: AUDIT_ENTITY_TYPES.SERVICE,
         entityId: updated.id,
-        entityName: updated.name,
+        entityName: formatServiceAuditEntityName(updated.code, updated.name),
         beforeData: beforeService,
         afterData: updated,
       });

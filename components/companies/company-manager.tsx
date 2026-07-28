@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { HistoryLink } from "@/components/audit-logs/history-link";
+import { useCanViewAuditLogs } from "@/components/audit-logs/use-can-view-audit-logs";
 import { AlertMessage } from "@/components/ui/alert-message";
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
@@ -13,6 +15,7 @@ import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TableContainer } from "@/components/ui/table-container";
 import { Textarea } from "@/components/ui/textarea";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 
 const COMPANY_TYPES = [
   "SHIPPING_LINE",
@@ -75,6 +78,7 @@ function formatCompanyType(type: CompanyType): string {
 
 export function CompanyManager() {
   const isMountedRef = useRef(true);
+  const canViewAuditLogs = useCanViewAuditLogs();
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [search, setSearch] = useState("");
@@ -441,6 +445,13 @@ export function CompanyManager() {
                         <Button variant="secondary" className="h-8 px-3 text-xs" onClick={() => startEdit(company)}>
                           Edit
                         </Button>
+                        {canViewAuditLogs ? (
+                          <HistoryLink
+                            entityType={AUDIT_ENTITY_TYPES.COMPANY}
+                            entityId={company.id}
+                            entityLabel={company.name}
+                          />
+                        ) : null}
                         <Button
                           variant={company.isActive ? "danger" : "primary"}
                           className="h-8 px-3 text-xs"

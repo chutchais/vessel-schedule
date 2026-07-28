@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
+import { canViewAuditLogs } from "@/lib/auth/permissions";
 import { AuditLogManager } from "@/components/audit-logs/audit-log-manager";
 
 async function getPageAccess() {
@@ -9,7 +11,7 @@ async function getPageAccess() {
 }
 
 export default async function AuditLogsPage() {
-  let role: string;
+  let role: "OWNER" | "ADMIN" | "PLANNER" | "VIEWER";
   try {
     role = await getPageAccess();
   } catch (error) {
@@ -19,9 +21,13 @@ export default async function AuditLogsPage() {
     throw error;
   }
 
-  if (role !== "OWNER" && role !== "ADMIN") {
+  if (!canViewAuditLogs(role)) {
     redirect("/");
   }
 
-  return <AuditLogManager />;
+  return (
+    <Suspense fallback={null}>
+      <AuditLogManager />
+    </Suspense>
+  );
 }

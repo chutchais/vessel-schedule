@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuditLogDetails } from "@/components/audit-logs/audit-log-details";
 import { AlertMessage } from "@/components/ui/alert-message";
@@ -11,6 +13,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { TableContainer } from "@/components/ui/table-container";
 import { createAuditSummary } from "@/lib/audit/audit-summary";
+import { AUDIT_ENTITY_TYPES, ORGANIZATION_AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 
 type AuditLogListItem = {
   id: string;
@@ -23,6 +26,12 @@ type AuditLogListItem = {
   entityName: string | null;
   metadata: unknown;
   createdAt: string;
+};
+
+type AuditLogContext = {
+  entityType: string;
+  entityId: string;
+  entityName: string | null;
 };
 
 type AuditLogDetailResponse = {
@@ -78,28 +87,67 @@ const ACTION_COLORS: Record<string, string> = {
   TRANSFER_OWNERSHIP: "bg-purple-100 text-purple-700",
 };
 
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  [AUDIT_ENTITY_TYPES.COMPANY]: "Company",
+  [AUDIT_ENTITY_TYPES.PORT]: "Port",
+  [AUDIT_ENTITY_TYPES.TERMINAL]: "Terminal",
+  [AUDIT_ENTITY_TYPES.BERTH]: "Berth",
+  [AUDIT_ENTITY_TYPES.VESSEL]: "Vessel",
+  [AUDIT_ENTITY_TYPES.SERVICE]: "Service",
+  [AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE]: "Vessel Schedule",
+};
+
+function getShortIdentifier(value: string): string {
+  return value.length > 8 ? value.slice(0, 8) : value;
+}
+
+function parsePositiveInt(input: string | null, fallback: number): number {
+  const parsed = Number.parseInt(input ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export function AuditLogManager() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [logs, setLogs] = useState<AuditLogListItem[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 25, total: 0, totalPages: 1 });
+  const [context, setContext] = useState<AuditLogContext | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [action, setAction] = useState("");
-  const [entityType, setEntityType] = useState("");
-  const [actorUserId, setActorUserId] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
 
   const [selectedLog, setSelectedLog] = useState<AuditLogDetailResponse["data"] | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setSearch(searchInput.trim()), 300);
-    return () => window.clearTimeout(timeout);
-  }, [searchInput]);
+  const page = parsePositiveInt(searchParams.get("page"), 1);
+  const search = searchParams.get("search")?.trim() ?? "";
+  const action = searchParams.get("action")?.trim() ?? "";
+  const entityType = searchParams.get("entityType")?.trim() ?? "";
+  const entityId = searchParams.get("entityId")?.trim() ?? "";
+  const actorUserId = searchParams.get("actorUserId")?.trim() ?? "";
+  const dateFrom = searchParams.get("dateFrom")?.trim() ?? "";
+  const dateTo = searchParams.get("dateTo")?.trim() ?? "";
+
+  const replaceQuery = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    const next = params.toString();
+    const current = searchParams.toString();
+    if (next === current) {
+      return;
+    }
+
+    router.push(next ? `${pathname}?${next}` : pathname);
+  }, [pathname, router, searchParams]);
 
   const actorOptions = useMemo(() => {
     const unique = new Map<string, string>();
@@ -111,6 +159,16 @@ export function AuditLogManager() {
     return Array.from(unique.entries());
   }, [logs]);
 
+  const isObjectHistoryMode = Boolean(entityType && entityId);
+
+  const objectHistoryTitle = !isObjectHistoryMode
+    ? "Audit Logs"
+    : `${ENTITY_TYPE_LABELS[entityType] ?? entityType} History`;
+
+  const objectHistoryName = !isObjectHistoryMode
+    ? null
+    : (context?.entityName ?? `Record ${getShortIdentifier(entityId)}`);
+
   const loadLogs = useCallback(async () => {
     setIsLoading(true);
     setError("");
@@ -121,7 +179,8 @@ export function AuditLogManager() {
       });
       if (search) params.set("search", search);
       if (action) params.set("action", action);
-      if (entityType.trim()) params.set("entityType", entityType.trim());
+      if (entityType) params.set("entityType", entityType);
+      if (entityId) params.set("entityId", entityId);
       if (actorUserId) params.set("actorUserId", actorUserId);
       if (dateFrom) params.set("dateFrom", dateFrom);
       if (dateTo) params.set("dateTo", dateTo);
@@ -130,6 +189,7 @@ export function AuditLogManager() {
       const payload = (await response.json()) as {
         data?: AuditLogListItem[];
         pagination?: Pagination;
+        context?: AuditLogContext;
         error?: string;
       };
 
@@ -139,23 +199,20 @@ export function AuditLogManager() {
 
       setLogs(payload.data);
       setPagination(payload.pagination);
+      setContext(payload.context ?? null);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to load audit logs");
       setLogs([]);
+      setContext(null);
     } finally {
       setIsLoading(false);
     }
-  }, [action, actorUserId, dateFrom, dateTo, entityType, page, search]);
+  }, [action, actorUserId, dateFrom, dateTo, entityId, entityType, page, search]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadLogs();
   }, [loadLogs]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPage(1);
-  }, [search, action, entityType, actorUserId, dateFrom, dateTo]);
 
   async function openDetails(id: string) {
     const response = await fetch(`/api/audit-logs/${id}`, { cache: "no-store" });
@@ -167,39 +224,128 @@ export function AuditLogManager() {
     setIsDetailsOpen(true);
   }
 
+  function clearFilters() {
+    replaceQuery({
+      search: null,
+      action: null,
+      actorUserId: null,
+      dateFrom: null,
+      dateTo: null,
+      page: "1",
+      ...(isObjectHistoryMode ? {} : { entityType: null, entityId: null }),
+    });
+  }
+
   return (
     <div className="space-y-4">
-      <PageHeader title="Audit Logs" description="Review activity within your organization" />
+      <PageHeader
+        title={objectHistoryTitle}
+        description={isObjectHistoryMode ? "Review change history for a single record" : "Review activity within your organization"}
+      />
+
+      {isObjectHistoryMode ? (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm font-semibold text-blue-900">{objectHistoryName}</p>
+          <p className="mt-1 text-xs text-blue-700">
+            Results are limited to this {ENTITY_TYPE_LABELS[entityType]?.toLowerCase() ?? "record"}.
+          </p>
+          <Link
+            href="/audit-logs"
+            className="mt-3 inline-flex rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            View All Audit Logs
+          </Link>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
-        <Input placeholder="Search logs..." value={searchInput} onChange={(event) => setSearchInput(event.target.value)} />
-        <Select value={action} onChange={(event) => setAction(event.target.value)}>
+        <Input
+          placeholder="Search logs..."
+          value={search}
+          onChange={(event) => {
+            replaceQuery({
+              search: event.target.value.trim() || null,
+              page: "1",
+            });
+          }}
+        />
+        <Select
+          value={action}
+          onChange={(event) => {
+            const nextAction = event.target.value;
+            replaceQuery({
+              action: nextAction || null,
+              page: "1",
+            });
+          }}
+        >
           <option value="">All actions</option>
           {ACTIONS.map((item) => (
             <option key={item} value={item}>{item}</option>
           ))}
         </Select>
-        <Input placeholder="Entity type" value={entityType} onChange={(event) => setEntityType(event.target.value)} />
-        <Select value={actorUserId} onChange={(event) => setActorUserId(event.target.value)}>
+        {!isObjectHistoryMode ? (
+          <Select
+            value={entityType}
+            onChange={(event) => {
+              const nextEntityType = event.target.value;
+              replaceQuery({
+                entityType: nextEntityType || null,
+                entityId: null,
+                page: "1",
+              });
+            }}
+          >
+            <option value="">All entity types</option>
+            {ORGANIZATION_AUDIT_ENTITY_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {ENTITY_TYPE_LABELS[type]}
+              </option>
+            ))}
+          </Select>
+        ) : null}
+        <Select
+          value={actorUserId}
+          onChange={(event) => {
+            const nextActorUserId = event.target.value;
+            replaceQuery({
+              actorUserId: nextActorUserId || null,
+              page: "1",
+            });
+          }}
+        >
           <option value="">All actors</option>
           {actorOptions.map(([id, label]) => (
             <option key={id} value={id}>{label}</option>
           ))}
         </Select>
-        <Input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
-        <Input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
-        <div className="md:col-span-3 flex justify-between">
+        <Input
+          type="date"
+          value={dateFrom}
+          onChange={(event) => {
+            const nextDateFrom = event.target.value;
+            replaceQuery({
+              dateFrom: nextDateFrom || null,
+              page: "1",
+            });
+          }}
+        />
+        <Input
+          type="date"
+          value={dateTo}
+          onChange={(event) => {
+            const nextDateTo = event.target.value;
+            replaceQuery({
+              dateTo: nextDateTo || null,
+              page: "1",
+            });
+          }}
+        />
+        <div className={`${isObjectHistoryMode ? "md:col-span-3" : "md:col-span-3"} flex justify-between`}>
           <p className="text-sm text-slate-500">{pagination.total} results</p>
           <Button
             variant="secondary"
-            onClick={() => {
-              setSearchInput("");
-              setAction("");
-              setEntityType("");
-              setActorUserId("");
-              setDateFrom("");
-              setDateTo("");
-            }}
+            onClick={clearFilters}
           >
             Clear filters
           </Button>
@@ -213,8 +359,26 @@ export function AuditLogManager() {
           <div className="flex items-center justify-between">
             <span>Page {pagination.page} of {Math.max(1, pagination.totalPages)}</span>
             <div className="flex gap-2">
-              <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Previous</Button>
-              <Button variant="secondary" disabled={page >= pagination.totalPages} onClick={() => setPage((current) => current + 1)}>Next</Button>
+              <Button
+                variant="secondary"
+                disabled={page <= 1}
+                onClick={() => {
+                  const nextPage = page - 1;
+                  replaceQuery({ page: String(nextPage) });
+                }}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={page >= pagination.totalPages}
+                onClick={() => {
+                  const nextPage = page + 1;
+                  replaceQuery({ page: String(nextPage) });
+                }}
+              >
+                Next
+              </Button>
             </div>
           </div>
         )}
@@ -222,7 +386,11 @@ export function AuditLogManager() {
         {isLoading ? (
           <LoadingState message="Loading audit logs..." />
         ) : logs.length === 0 ? (
-          <EmptyState title="No audit logs found" description="Try adjusting filters." className="m-4" />
+          <EmptyState
+            title={isObjectHistoryMode ? "No history is available for this record yet." : "No audit logs found"}
+            description={isObjectHistoryMode ? "Some records may predate audit tracking." : "Try adjusting filters."}
+            className="m-4"
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -246,7 +414,7 @@ export function AuditLogManager() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{log.entityType}</td>
+                    <td className="px-4 py-3">{ENTITY_TYPE_LABELS[log.entityType] ?? log.entityType}</td>
                     <td className="px-4 py-3">{log.entityName ?? "—"}</td>
                     <td className="px-4 py-3 text-slate-600">
                       {createAuditSummary({

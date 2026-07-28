@@ -1,0 +1,22 @@
+export const AUDIT_ENTITY_TYPES = {
+  COMPANY: "Company",
+  PORT: "Port",
+  TERMINAL: "Terminal",
+  BERTH: "Berth",
+  VESSEL: "Vessel",
+  SERVICE: "Service",
+  VESSEL_SCHEDULE: "VesselSchedule",
+} as const;
+
+export type AuditEntityType =
+  (typeof AUDIT_ENTITY_TYPES)[keyof typeof AUDIT_ENTITY_TYPES];
+
+export const ORGANIZATION_AUDIT_ENTITY_TYPES: AuditEntityType[] = [
+  AUDIT_ENTITY_TYPES.COMPANY,
+  AUDIT_ENTITY_TYPES.PORT,
+  AUDIT_ENTITY_TYPES.TERMINAL,
+  AUDIT_ENTITY_TYPES.BERTH,
+  AUDIT_ENTITY_TYPES.VESSEL,
+  AUDIT_ENTITY_TYPES.SERVICE,
+  AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE,
+];

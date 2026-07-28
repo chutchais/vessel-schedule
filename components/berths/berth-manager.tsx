@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { HistoryLink } from "@/components/audit-logs/history-link";
+import { useCanViewAuditLogs } from "@/components/audit-logs/use-can-view-audit-logs";
 import { AlertMessage } from "@/components/ui/alert-message";
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
@@ -12,6 +14,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TableContainer } from "@/components/ui/table-container";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 
 type Terminal = {
   id: string;
@@ -94,6 +97,7 @@ function formatLength(length: number) {
 
 export function BerthManager() {
   const isMountedRef = useRef(true);
+  const canViewAuditLogs = useCanViewAuditLogs();
 
   const [berths, setBerths] = useState<Berth[]>([]);
   const [terminals, setTerminals] = useState<Terminal[]>([]);
@@ -494,6 +498,9 @@ export function BerthManager() {
                         <Button variant="secondary" className="h-8 px-3 text-xs" onClick={() => startEdit(berth)}>
                           Edit
                         </Button>
+                        {canViewAuditLogs ? (
+                          <HistoryLink entityType={AUDIT_ENTITY_TYPES.BERTH} entityId={berth.id} entityLabel={berth.name} />
+                        ) : null}
                         <Button
                           variant={berth.isActive ? "danger" : "primary"}
                           className="h-8 px-3 text-xs"

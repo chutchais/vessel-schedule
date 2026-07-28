@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
 import { createAuditLog } from "@/lib/audit/create-audit-log";
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
           displayName: currentUser.displayName,
         },
         action: "CREATE",
-        entityType: "Company",
+        entityType: AUDIT_ENTITY_TYPES.COMPANY,
         entityId: created.id,
         entityName: created.name,
         beforeData: null,

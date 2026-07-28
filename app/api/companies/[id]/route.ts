@@ -3,6 +3,7 @@ import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageMasterData } from "@/lib/auth/permissions";
 import { createAuditLog } from "@/lib/audit/create-audit-log";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 import { prisma } from "@/lib/db/prisma";
 
 type RouteContext = {
@@ -103,7 +104,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           displayName: currentUser.displayName,
         },
         action,
-        entityType: "Company",
+        entityType: AUDIT_ENTITY_TYPES.COMPANY,
         entityId: updated.id,
         entityName: updated.name,
         beforeData: beforeCompany,

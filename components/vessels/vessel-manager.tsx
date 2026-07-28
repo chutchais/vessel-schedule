@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { HistoryLink } from "@/components/audit-logs/history-link";
+import { useCanViewAuditLogs } from "@/components/audit-logs/use-can-view-audit-logs";
 import { AlertMessage } from "@/components/ui/alert-message";
 import { Button } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/drawer";
@@ -12,6 +14,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TableContainer } from "@/components/ui/table-container";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 
 const VESSEL_TYPES = [
   "CONTAINER_SHIP",
@@ -86,6 +89,7 @@ function toInputValue(value: number | string | null): string {
 
 export function VesselManager() {
   const isMountedRef = useRef(true);
+  const canViewAuditLogs = useCanViewAuditLogs();
   const [vessels, setVessels] = useState<Vessel[]>([]);
 
   const [search, setSearch] = useState("");
@@ -458,6 +462,9 @@ export function VesselManager() {
                         <Button variant="secondary" className="h-8 px-3 text-xs" onClick={() => startEdit(vessel)}>
                           Edit
                         </Button>
+                        {canViewAuditLogs ? (
+                          <HistoryLink entityType={AUDIT_ENTITY_TYPES.VESSEL} entityId={vessel.id} entityLabel={vessel.name} />
+                        ) : null}
                         <Button
                           variant={vessel.isActive ? "danger" : "primary"}
                           className="h-8 px-3 text-xs"

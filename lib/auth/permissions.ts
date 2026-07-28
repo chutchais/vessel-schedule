@@ -26,6 +26,10 @@ export function canManageOrgMembers(role: Role): boolean {
   return role === "OWNER" || role === "ADMIN";
 }
 
+export function canViewAuditLogs(role: Role): boolean {
+  return role === "OWNER" || role === "ADMIN";
+}
+
 export function canChangeAdminRoles(role: Role): boolean {
   return role === "OWNER";
 }
