@@ -40,6 +40,7 @@ import {
 } from "@/lib/berth-planner/duration-resize";
 import { ScheduleTooltip } from "./schedule-tooltip";
 import { ScheduleDetailsDrawer } from "./schedule-details-drawer";
+import { shouldClearHiddenSelection } from "@/lib/berth-planner/operational-filters";
 import type {
   PlannerBerth,
   ValidatedSchedule,
@@ -125,6 +126,8 @@ export type BerthPlannerCanvasProps = {
   domain: PlannerDomain;
   /** When set, these schedule IDs are highlighted with a selection border (used by the conflict panel). */
   highlightedIds?: Set<string>;
+  visibleScheduleIds?: Set<string>;
+  onSelectionHidden?: () => void;
   onInvalidRecords: (records: InvalidScheduleRecord[]) => void;
   onGridCreateRequest?: (draft: {
     berthId: string;
@@ -290,6 +293,8 @@ export function BerthPlannerCanvas({
   portTimezone,
   domain,
   highlightedIds,
+  visibleScheduleIds,
+  onSelectionHidden,
   onInvalidRecords,
   onGridCreateRequest,
   onEditRequest,
@@ -323,6 +328,18 @@ export function BerthPlannerCanvas({
   useEffect(() => {
     activeResizeRef.current = activeResize;
   }, [activeResize]);
+
+  useEffect(() => {
+    if (visibleScheduleIds && shouldClearHiddenSelection(selectedSchedule?.id ?? null, visibleScheduleIds)) {
+      const timeout = window.setTimeout(() => {
+        setSelectedSchedule(null);
+        setSelectedBerthName("");
+        setSelectedConflictPartners([]);
+        onSelectionHidden?.();
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [selectedSchedule, visibleScheduleIds, onSelectionHidden]);
 
   const classifiedBerths = useMemo(
     () => berths.map((berth) => {

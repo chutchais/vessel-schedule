@@ -76,6 +76,25 @@ npx prisma generate
 ### Berth Planner Conflict Panel — ✅ complete
 ### Berth Planner Drag-and-Drop Rescheduling — ✅ complete
 ### Berth Planner Duration Resizing — ✅ complete
+### Berth Planner Operational Filters — ✅ complete
+
+**Operational filter behavior:**
+- Search covers vessel name, voyage number and the schedule UUID/reference with a 300 ms debounce
+- Service, status, berth, conflicts-only and incomplete/invalid placement filters share one state/result across Position and Datetime views
+- Filters operate client-side because the complete organization-scoped terminal/week dataset is already safely loaded and expected weekly volume is suitable; conflict calculation still runs on the complete dataset before filtering
+- Placement filtering reuses `classifySchedules`; conflict filtering reuses `buildConflictGroups`/`detectConflicts`
+- URL parameters preserve terminal, week, view and active filters across refreshes and planner create/edit/drag/resize refreshes
+- Service and berth option values are derived only from the selected terminal's loaded planner payload; unknown URL option values are discarded after the payload loads
+- The responsive filter bar includes active chips, clear-all, visible/total counts and clear loading/error/filtered-empty states
+- Filtering keeps every berth lane in the seven-day canvas and clears a selected schedule with a brief explanation if it becomes hidden
+- `GET /api/berth-planner` continues to derive organization scope from the authenticated session, verifies terminal ownership, validates ISO dates/order and now rejects ranges longer than eight days
+
+New files:
+- `lib/berth-planner/operational-filters.ts`
+- `lib/berth-planner/operational-filters.test.ts`
+- `lib/berth-planner/planner-query.ts`
+- `lib/berth-planner/planner-query.test.ts`
+- `components/berth-planner/operational-filter-bar.tsx`
 
 **Duration resize behavior:**
 - Position domain: top edge resizes start and bottom edge resizes end

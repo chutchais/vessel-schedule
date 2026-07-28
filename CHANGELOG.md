@@ -1,4 +1,13 @@
 2026-07-28
+- Berth Planner operational filters and search
+  - Added debounced search across vessel name, voyage number and schedule reference, plus service, status, berth, conflicts-only and incomplete/invalid placement filters
+  - Position and Datetime views now share one domain-data filter result; conflict and placement validation reuse the existing domain engines and remain calculated from the complete terminal/week dataset
+  - Terminal, week, view and filters synchronize to validated URL query parameters for bookmarks and refresh persistence
+  - Added responsive filter controls, removable active-filter chips, clear-all, visible/total counts, filtered empty state and a notice when filtering clears a hidden selection
+  - Planner API date ranges are bounded and schedule queries retain active-organization and selected-terminal scoping
+  - Added focused tests for search, combined filters, conflicts-only, invalid-only, URL state, clearing, view/week preservation, hidden selection and organization isolation
+
+2026-07-28
 - Berth Planner duration resizing
   - Position view supports top/start and bottom/end time-edge resizing; Datetime view supports left/start and right/end resizing with an 8 px zoom-independent hit area
   - Vessel interiors retain drag-to-move behavior; resize uses pointer capture, touch support, Escape/pointer cancellation, 30-minute snapping, translucent validity/conflict previews, proposed times and duration

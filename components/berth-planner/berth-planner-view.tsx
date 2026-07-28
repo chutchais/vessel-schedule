@@ -35,6 +35,15 @@ import {
   type ConflictItem,
 } from "@/lib/berth-planner/conflict-panel";
 import { ConflictPanel } from "./conflict-panel";
+import { OperationalFilterBar } from "./operational-filter-bar";
+import {
+  EMPTY_OPERATIONAL_FILTERS,
+  countSchedules,
+  filterPlannerBerths,
+  parsePlannerUrlState,
+  serializePlannerUrlState,
+  type OperationalFilters,
+} from "@/lib/berth-planner/operational-filters";
 import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord, PlannerDomain } from "@/lib/berth-planner/types";
 
 const DEFAULT_TIMEZONE = "UTC";
@@ -121,6 +130,11 @@ function parsePlannerBerths(raw: PlannerDataRaw): PlannerBerth[] {
 }
 
 export function BerthPlannerView() {
+  const [initialUrlState] = useState(() =>
+    parsePlannerUrlState(
+      typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams(),
+    ),
+  );
   const [terminals, setTerminals] = useState<TerminalOption[]>([]);
   const [selectedTerminalId, setSelectedTerminalId] = useState("");
   const [portTimezone, setPortTimezone] = useState<string>(DEFAULT_TIMEZONE);
@@ -130,9 +144,15 @@ export function BerthPlannerView() {
   const weekEnd = getWeekEnd(weekStart, portTimezone);
 
   const [plannerData, setPlannerData] = useState<PlannerDataRaw | null>(null);
-  const [domain, setDomain] = useState<PlannerDomain>(() =>
-    readPreferredPlannerDomain(typeof window !== "undefined" ? window.localStorage : null),
-  );
+  const [domain, setDomain] = useState<PlannerDomain>(() => {
+    return new URLSearchParams(typeof window !== "undefined" ? window.location.search : "").has("view")
+      ? initialUrlState.domain
+      : readPreferredPlannerDomain(typeof window !== "undefined" ? window.localStorage : null);
+  });
+  const [filters, setFilters] = useState<OperationalFilters>(initialUrlState.filters);
+  const [searchInput, setSearchInput] = useState(initialUrlState.filters.search);
+  const [urlStateReady, setUrlStateReady] = useState(false);
+  const [filterNotice, setFilterNotice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [invalidRecords, setInvalidRecords] = useState<InvalidScheduleRecord[]>([]);
@@ -159,7 +179,7 @@ export function BerthPlannerView() {
 
   // Conflict panel state (preserved across Position/Datetime domain switches)
   const [selectedConflictId, setSelectedConflictId] = useState<string | null>(null);
-  const [onlyConflicts, setOnlyConflicts] = useState(false);
+  const [onlyConflicts, setOnlyConflicts] = useState(initialUrlState.filters.conflictsOnly);
   const [highlightedScheduleIds, setHighlightedScheduleIds] = useState<Set<string>>(new Set());
 
   // Drag-and-drop confirmation state
@@ -199,8 +219,16 @@ export function BerthPlannerView() {
     }
 
     const payload = await res.json();
+    const data = payload.data as PlannerDataRaw;
+    const validServices = new Set(data.berths.flatMap((berth) => berth.schedules.map((schedule) => schedule.serviceName).filter(Boolean)));
+    const validBerths = new Set(data.berths.map((berth) => berth.id));
+    setFilters((current) => ({
+      ...current,
+      service: current.service && !validServices.has(current.service) ? "" : current.service,
+      berthId: current.berthId && !validBerths.has(current.berthId) ? "" : current.berthId,
+    }));
     setLoadError(null);
-    setPlannerData(payload.data as PlannerDataRaw);
+    setPlannerData(data);
     setIsLoading(false);
   }, []);
 
@@ -253,6 +281,15 @@ export function BerthPlannerView() {
   }, [domain]);
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setFilters((current) => current.search === searchInput.trim()
+        ? current
+        : { ...current, search: searchInput.trim() });
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
+
+  useEffect(() => {
     let active = true;
 
     async function load() {
@@ -277,15 +314,22 @@ export function BerthPlannerView() {
         setTerminals(options);
 
         if (options.length > 0) {
-          const first = options[0]!;
-          const tz = first.port.timezone;
-          setSelectedTerminalId(first.id);
+          const requestedTerminal = initialUrlState.terminalId;
+          const selected = options.find((option) => option.id === requestedTerminal) ?? options[0]!;
+          const tz = selected.port.timezone;
+          const requestedWeek = initialUrlState.week;
+          const initialWeek = requestedWeek
+            ? getWeekStart(new Date(`${requestedWeek}T12:00:00.000Z`), tz)
+            : getWeekStart(new Date(), tz);
+          setSelectedTerminalId(selected.id);
           setPortTimezone(tz);
-          setWeekStart(getWeekStart(new Date(), tz));
+          setWeekStart(initialWeek);
           setIsLoading(true);
+          void loadPlannerData(selected.id, initialWeek, getWeekEnd(initialWeek, tz));
         }
+        setUrlStateReady(true);
       } catch {
-        // ignore
+        setLoadError("Failed to load terminals.");
       }
     }
 
@@ -293,7 +337,24 @@ export function BerthPlannerView() {
     return () => {
       active = false;
     };
-  }, [loadPlannerData]);
+  }, [loadPlannerData, initialUrlState]);
+
+  useEffect(() => {
+    if (!urlStateReady) return;
+    const week = new Intl.DateTimeFormat("en-CA", {
+      timeZone: portTimezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(weekStart);
+    const query = serializePlannerUrlState({
+      terminalId: selectedTerminalId,
+      week,
+      domain,
+      filters,
+    });
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  }, [urlStateReady, selectedTerminalId, weekStart, portTimezone, domain, filters]);
 
   const handleDomainChange = useCallback((nextDomain: PlannerDomain) => {
     setDomain((current) => {
@@ -369,16 +430,23 @@ export function BerthPlannerView() {
   const conflictGroups = useMemo(() => buildConflictGroups(berths), [berths]);
   const conflictedScheduleIds = useMemo(() => getConflictedScheduleIds(conflictGroups), [conflictGroups]);
 
-  // When "Only conflicts" is active, filter berths to show only conflicting schedules
   const canvasBerths = useMemo(() => {
-    if (!onlyConflicts || conflictedScheduleIds.size === 0) return berths;
-    return berths
-      .map((berth) => ({
-        ...berth,
-        schedules: berth.schedules.filter((s) => conflictedScheduleIds.has(s.id)),
-      }))
-      .filter((berth) => berth.schedules.length > 0);
-  }, [berths, onlyConflicts, conflictedScheduleIds]);
+    const effectiveFilters = { ...filters, conflictsOnly: filters.conflictsOnly || onlyConflicts };
+    return filterPlannerBerths({ berths, filters: effectiveFilters, conflictedScheduleIds });
+  }, [berths, filters, onlyConflicts, conflictedScheduleIds]);
+  const totalScheduleCount = useMemo(() => countSchedules(berths), [berths]);
+  const visibleScheduleCount = useMemo(() => countSchedules(canvasBerths), [canvasBerths]);
+  const visibleScheduleIds = useMemo(
+    () => new Set(canvasBerths.flatMap((berth) => berth.schedules.map((schedule) => schedule.id))),
+    [canvasBerths],
+  );
+  const serviceOptions = useMemo(() => Array.from(new Set(
+    berths.flatMap((berth) => berth.schedules.map((schedule) => schedule.serviceName).filter((name): name is string => Boolean(name))),
+  )).sort().map((name) => ({ value: name, label: name })), [berths]);
+  const berthOptions = useMemo(
+    () => berths.map((berth) => ({ value: berth.id, label: berth.name })),
+    [berths],
+  );
 
   const availableVessels = useMemo(
     () => createVessels.filter((vessel) => vessel.isActive),
@@ -490,7 +558,11 @@ export function BerthPlannerView() {
   }, []);
 
   const handleToggleOnlyConflicts = useCallback(() => {
-    setOnlyConflicts((v) => !v);
+    setOnlyConflicts((value) => {
+      const next = !value;
+      setFilters((current) => ({ ...current, conflictsOnly: next }));
+      return next;
+    });
   }, []);
 
   const handleDragDropRequest = useCallback((drop: DragDropRequest) => {
@@ -898,6 +970,27 @@ export function BerthPlannerView() {
         onDomainChange={handleDomainChange}
       />
 
+      <OperationalFilterBar
+        filters={{ ...filters, conflictsOnly: filters.conflictsOnly || onlyConflicts }}
+        searchInput={searchInput}
+        serviceOptions={serviceOptions}
+        berthOptions={berthOptions}
+        visibleCount={visibleScheduleCount}
+        totalCount={totalScheduleCount}
+        onSearchInputChange={setSearchInput}
+        onChange={(next) => {
+          setFilters(next);
+          setOnlyConflicts(next.conflictsOnly);
+        }}
+        onClear={() => {
+          setSearchInput("");
+          setFilters(EMPTY_OPERATIONAL_FILTERS);
+          setOnlyConflicts(false);
+        }}
+      />
+
+      {filterNotice && <div role="status" className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">{filterNotice}</div>}
+
       {loadError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {loadError}
@@ -915,6 +1008,16 @@ export function BerthPlannerView() {
           </div>
         ) : (
           <>
+            {totalScheduleCount === 0 && (
+              <div className="mb-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm text-slate-600">
+                No schedules are planned for this terminal and week.
+              </div>
+            )}
+            {visibleScheduleCount === 0 && totalScheduleCount > 0 && (
+              <div className="mb-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm text-slate-600">
+                No schedules match the active filters. The seven-day grid remains available for planning.
+              </div>
+            )}
             <div className="sr-only">
               <h2>Schedule summary</h2>
               {berths.map((berth) => (
@@ -938,6 +1041,11 @@ export function BerthPlannerView() {
               portTimezone={portTimezone}
               domain={domain}
               highlightedIds={highlightedScheduleIds.size > 0 ? highlightedScheduleIds : undefined}
+              visibleScheduleIds={visibleScheduleIds}
+              onSelectionHidden={() => {
+                setFilterNotice("The selected schedule was cleared because it is hidden by the active filters.");
+                window.setTimeout(() => setFilterNotice(""), 4000);
+              }}
               onInvalidRecords={setInvalidRecords}
               onGridCreateRequest={handleGridCreateRequest}
               onEditRequest={handleEditRequest}

@@ -3,6 +3,7 @@ import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import type { PlannerDataRaw } from "@/lib/berth-planner/types";
+import { buildPlannerScheduleScope } from "@/lib/berth-planner/planner-query";
 
 function serializeDecimal(value: { toNumber(): number } | null): number | null {
   return value !== null ? value.toNumber() : null;
@@ -35,6 +36,11 @@ export async function GET(request: NextRequest) {
 
     if (rangeEnd <= rangeStart) {
       return NextResponse.json({ error: "endDate must be after startDate" }, { status: 400 });
+    }
+
+    const maximumRangeMs = 8 * 24 * 60 * 60 * 1000;
+    if (rangeEnd.getTime() - rangeStart.getTime() > maximumRangeMs) {
+      return NextResponse.json({ error: "Planner date range cannot exceed eight days" }, { status: 400 });
     }
 
     // Verify the terminal belongs to the authenticated user's active organization.
@@ -77,11 +83,13 @@ export async function GET(request: NextRequest) {
     // (uses eta as the "start anchor" for interval overlap to catch all relevant records)
     const schedules = await prisma.vesselSchedule.findMany({
       where: {
-        organizationId,
-        terminalId,
-        berthId: { in: berthIds },
-        eta: { lt: rangeEnd },
-        etd: { gt: rangeStart },
+        ...buildPlannerScheduleScope({
+          organizationId,
+          terminalId,
+          berthIds,
+          rangeStart,
+          rangeEnd,
+        }),
       },
       select: {
         id: true,
