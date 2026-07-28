@@ -26,6 +26,12 @@ import {
   switchPlannerDomainPreservingState,
   writePreferredPlannerDomain,
 } from "@/lib/berth-planner/view-preference";
+import {
+  buildConflictGroups,
+  getConflictedScheduleIds,
+  type ConflictItem,
+} from "@/lib/berth-planner/conflict-panel";
+import { ConflictPanel } from "./conflict-panel";
 import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord, PlannerDomain } from "@/lib/berth-planner/types";
 
 const DEFAULT_TIMEZONE = "UTC";
@@ -95,6 +101,8 @@ type ScheduleRow = {
   eta: string;
   etb: string | null;
   etd: string;
+  berthPositionMeters: number | null;
+  vessel: { lengthOverall: number | string | null } | null;
 };
 
 function parsePlannerBerths(raw: PlannerDataRaw): PlannerBerth[] {
@@ -145,6 +153,11 @@ export function BerthPlannerView() {
   const [editError, setEditError] = useState("");
   const [editForm, setEditForm] = useState<ScheduleFormValues>(INITIAL_CREATE_FORM);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
+
+  // Conflict panel state (preserved across Position/Datetime domain switches)
+  const [selectedConflictId, setSelectedConflictId] = useState<string | null>(null);
+  const [onlyConflicts, setOnlyConflicts] = useState(false);
+  const [highlightedScheduleIds, setHighlightedScheduleIds] = useState<Set<string>>(new Set());
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -340,6 +353,21 @@ export function BerthPlannerView() {
     [plannerData],
   );
 
+  // Conflict groups — computed from domain values, reuses the same engine as the canvas
+  const conflictGroups = useMemo(() => buildConflictGroups(berths), [berths]);
+  const conflictedScheduleIds = useMemo(() => getConflictedScheduleIds(conflictGroups), [conflictGroups]);
+
+  // When "Only conflicts" is active, filter berths to show only conflicting schedules
+  const canvasBerths = useMemo(() => {
+    if (!onlyConflicts || conflictedScheduleIds.size === 0) return berths;
+    return berths
+      .map((berth) => ({
+        ...berth,
+        schedules: berth.schedules.filter((s) => conflictedScheduleIds.has(s.id)),
+      }))
+      .filter((berth) => berth.schedules.length > 0);
+  }, [berths, onlyConflicts, conflictedScheduleIds]);
+
   const availableVessels = useMemo(
     () => createVessels.filter((vessel) => vessel.isActive),
     [createVessels],
@@ -361,13 +389,28 @@ export function BerthPlannerView() {
     [availableBerths, createForm.terminalId],
   );
 
+  const conflictSchedules = useMemo(
+    () =>
+      existingSchedules.map((s) => ({
+        ...s,
+        vesselLoa:
+          s.vessel?.lengthOverall != null ? Number(s.vessel.lengthOverall) : null,
+      })),
+    [existingSchedules],
+  );
+
+  const createVesselLoa = useMemo(() => {
+    const vessel = createVessels.find((v) => v.id === createForm.vesselId);
+    return vessel?.lengthOverall != null ? Number(vessel.lengthOverall) : null;
+  }, [createVessels, createForm.vesselId]);
+
   const fitError = useMemo(
     () => getVesselFitError({ form: createForm, vessels: createVessels, berths: createBerths }),
     [createForm, createVessels, createBerths],
   );
   const conflictWarning = useMemo(
-    () => getBerthConflictWarning({ form: createForm, schedules: existingSchedules }),
-    [createForm, existingSchedules],
+    () => getBerthConflictWarning({ form: createForm, schedules: conflictSchedules, newVesselLoa: createVesselLoa }),
+    [createForm, conflictSchedules, createVesselLoa],
   );
 
   // Edit form derived values
@@ -379,9 +422,13 @@ export function BerthPlannerView() {
     () => getVesselFitError({ form: editForm, vessels: createVessels, berths: createBerths }),
     [editForm, createVessels, createBerths],
   );
+  const editVesselLoa = useMemo(() => {
+    const vessel = createVessels.find((v) => v.id === editForm.vesselId);
+    return vessel?.lengthOverall != null ? Number(vessel.lengthOverall) : null;
+  }, [createVessels, editForm.vesselId]);
   const editConflictWarning = useMemo(
-    () => getBerthConflictWarning({ form: editForm, schedules: existingSchedules, excludeScheduleId: editingScheduleId }),
-    [editForm, existingSchedules, editingScheduleId],
+    () => getBerthConflictWarning({ form: editForm, schedules: conflictSchedules, excludeScheduleId: editingScheduleId, newVesselLoa: editVesselLoa }),
+    [editForm, conflictSchedules, editingScheduleId, editVesselLoa],
   );
 
   const headerDescription = plannerData
@@ -423,6 +470,15 @@ export function BerthPlannerView() {
     setEditError("");
     setEditingScheduleId(null);
     setEditForm(INITIAL_CREATE_FORM);
+  }, []);
+
+  const handleSelectConflict = useCallback((conflict: ConflictItem) => {
+    setSelectedConflictId(conflict.id);
+    setHighlightedScheduleIds(new Set([conflict.scheduleAId, conflict.scheduleBId]));
+  }, []);
+
+  const handleToggleOnlyConflicts = useCallback(() => {
+    setOnlyConflicts((v) => !v);
   }, []);
 
   const updateEditForm = useCallback(
@@ -700,11 +756,12 @@ export function BerthPlannerView() {
             </div>
 
             <BerthPlannerCanvas
-              berths={berths}
+              berths={canvasBerths}
               weekStart={weekStart}
               weekEnd={weekEnd}
               portTimezone={portTimezone}
               domain={domain}
+              highlightedIds={highlightedScheduleIds.size > 0 ? highlightedScheduleIds : undefined}
               onInvalidRecords={setInvalidRecords}
               onGridCreateRequest={handleGridCreateRequest}
               onEditRequest={handleEditRequest}
@@ -712,6 +769,18 @@ export function BerthPlannerView() {
           </>
         )}
       </div>
+
+      {/* Conflict panel — shown whenever a terminal is selected and data is loaded */}
+      {selectedTerminalId && !isLoading && (
+        <ConflictPanel
+          groups={conflictGroups}
+          selectedConflictId={selectedConflictId}
+          onSelectConflict={handleSelectConflict}
+          onlyConflicts={onlyConflicts}
+          onToggleOnlyConflicts={handleToggleOnlyConflicts}
+          portTimezone={portTimezone}
+        />
+      )}
 
       {invalidRecords.length > 0 && (
         <section className="rounded-lg border border-amber-200 bg-amber-50 p-4">

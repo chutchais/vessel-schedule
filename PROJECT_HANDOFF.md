@@ -73,6 +73,7 @@ npx prisma generate
 ### Berth Planner Phase 2 — ✅ complete
 ### Berth Planner Phase 3 (part) — ✅ click-to-create and click-to-edit complete
 ### Berth Planner Datetime Domain — ✅ complete
+### Berth Planner Conflict Panel — ✅ complete
 
 **Weekly viewport with switchable planner domain**
 
@@ -101,13 +102,17 @@ lib/berth-planner/
   click-edit.ts   — pure helper buildEditFormValues; converts fetched schedule to ScheduleFormValues
   datetime-domain.ts — datetime berth-lane layout + metres↔lane-Y conversion helpers
   view-preference.ts — local preference persistence for planner domain
+  conflict-panel.ts  — buildConflictGroups, flattenConflicts, getConflictedScheduleIds (pure, unit-tested); overlap time+position ranges in domain values
 
 components/berth-planner/
   berth-planner-view.tsx          — page orchestrator; weekStart state, week navigation handlers,
-                                    click-to-create drawer flow, planner refresh after creation, domain switch state
+                                    click-to-create drawer flow, planner refresh after creation, domain switch state,
+                                    conflict panel state (selectedConflictId, highlightedScheduleIds, onlyConflicts)
   berth-planner-controls.tsx      — terminal selector + Prev/This Week/Next + week label + tz badge + Position/Datetime toggle
   berth-planner-canvas.tsx        — HTML Canvas renderer for both domains with shared conflicts/selection/tooltip,
-                                    empty-grid click emits creation draft
+                                    empty-grid click emits creation draft; accepts highlightedIds for conflict-panel selection
+  conflict-panel.tsx              — Conflict Panel: grouped by berth, sorted by overlap time, Prev/Next navigation,
+                                    "Only conflicts" filter, vessel names + service/voyage + time+metre overlap ranges
   schedule-tooltip.tsx            — hover tooltip (pure component)
   schedule-details-drawer.tsx     — click-open schedule detail panel; Edit Schedule button + History audit link
 
@@ -161,6 +166,17 @@ app/api/berth-planner/route.ts    — org-scoped GET endpoint (unchanged)
 - Conflict partners shown in tooltip and details drawer
 - Cancelled schedules are excluded from conflict detection
 - Create drawer shows overlap warning before save; final enforcement remains server-side (`/api/schedules` returns 409 on overlap)
+
+**Conflict Panel:**
+- `ConflictPanel` component shown below canvas when a terminal is loaded
+- Groups conflicts by berth, sorted by earliest overlap start within each group; groups sorted by earliest conflict time
+- Shows vessel names, service/voyage, overlapping time range and overlapping metre range for each pair
+- All values computed from domain units (metres, UTC dates) via `buildConflictGroups` — never canvas pixels
+- Clicking a conflict item highlights both schedules on the canvas via `highlightedIds` prop
+- Prev/Next buttons navigate through all conflicts with a counter (`N / total`); wrap-around at ends
+- "Only conflicts" checkbox filters the canvas to show only conflicting schedules (state preserved on domain switch)
+- selectedConflictId, highlightedScheduleIds and onlyConflicts state live in the view and survive Position/Datetime switches
+- Organization and terminal isolation enforced server-side; `buildConflictGroups` only groups within same berth
 
 **Click-to-create behavior (Phase 3 partial):**
 - Clicking empty planner grid opens the existing schedule form drawer (not direct create)

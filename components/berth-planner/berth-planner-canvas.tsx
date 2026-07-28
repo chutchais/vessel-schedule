@@ -68,6 +68,8 @@ export type BerthPlannerCanvasProps = {
   weekEnd: Date;
   portTimezone: string;
   domain: PlannerDomain;
+  /** When set, these schedule IDs are highlighted with a selection border (used by the conflict panel). */
+  highlightedIds?: Set<string>;
   onInvalidRecords: (records: InvalidScheduleRecord[]) => void;
   onGridCreateRequest?: (draft: {
     berthId: string;
@@ -160,6 +162,7 @@ export function BerthPlannerCanvas({
   weekEnd,
   portTimezone,
   domain,
+  highlightedIds,
   onInvalidRecords,
   onGridCreateRequest,
   onEditRequest,
@@ -418,7 +421,8 @@ export function BerthPlannerCanvas({
         const offset = berthOffsets[bi]!;
         for (const schedule of valid) {
           const isConflict = conflictedIds.has(schedule.id);
-          const isSelected = selectedSchedule?.id === schedule.id;
+          const isSelected =
+            selectedSchedule?.id === schedule.id || (highlightedIds?.has(schedule.id) ?? false);
 
           const leftGlobal = berth.zeroOriginSide === "LEFT"
             ? offset + schedule.positionStart
@@ -613,7 +617,8 @@ export function BerthPlannerCanvas({
 
         for (const schedule of valid) {
           const isConflict = conflictedIds.has(schedule.id);
-          const isSelected = selectedSchedule?.id === schedule.id;
+          const isSelected =
+            selectedSchedule?.id === schedule.id || (highlightedIds?.has(schedule.id) ?? false);
 
           const leftPx = toX(schedule.startTime);
           const rightPx = toX(schedule.endTime);
@@ -672,6 +677,7 @@ export function BerthPlannerCanvas({
     portTimezone,
     domain,
     selectedSchedule,
+    highlightedIds,
     conflictedIds,
     classifiedBerths,
   ]);

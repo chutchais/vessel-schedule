@@ -62,5 +62,21 @@
     - lib/berth-planner/view-preference.test.ts
     - lib/berth-planner/click-create.test.ts (datetime inverse mapping case)
 
+2026-07-28
+- Fix: berth conflict check now requires both time AND position overlap
+  - Previously, the warning "Selected berth has overlapping schedules in this time window." appeared even when two vessels were at non-overlapping berth positions during the same time window
+  - lib/schedules/form-validation.ts — getBerthConflictWarning now accepts berthPositionMeters + vesselLoa for existing schedules and newVesselLoa for the new schedule; skips the warning when positions don't overlap; falls back to time-only check when position data is absent (conservative)
+  - app/api/schedules/route.ts — hasBerthOverlap queries existing berthPositionMeters + vessel.lengthOverall and returns 409 only when both time AND position overlap
+  - app/api/schedules/[id]/route.ts — same position-aware fix applied to the PATCH overlap check
+  - components/berth-planner/berth-planner-view.tsx — passes newVesselLoa and mapped vesselLoa per existing schedule to getBerthConflictWarning
+  - components/schedules/schedule-manager.tsx — same mapping applied to the schedules-page conflict warning
+
+
+  - lib/berth-planner/conflict-panel.ts — buildConflictGroups, flattenConflicts, getConflictedScheduleIds (pure helpers reusing classifySchedules + detectConflicts; calculates overlap time + position ranges in domain values, never pixels)
+  - lib/berth-planner/conflict-panel.test.ts — 16 unit tests covering conflict grouping, sorting, overlap calculation, cancelled-schedule exclusion, missing-LOA exclusion, cross-berth isolation, navigation helpers, and unique IDs
+  - components/berth-planner/conflict-panel.tsx — Conflict Panel UI: conflicts grouped by berth, sorted by earliest overlap, vessel names + service/voyage + overlapping time and metre range; Prev/Next navigation with counter; "Only conflicts" filter checkbox; empty state; scrollable list (max-h-48)
+  - berth-planner-canvas.tsx — added highlightedIds?: Set<string> prop; schedules in this set receive the selection highlight in both position and datetime render paths
+  - berth-planner-view.tsx — integrated ConflictPanel; computes conflictGroups + conflictedScheduleIds via buildConflictGroups; selectedConflictId / highlightedScheduleIds / onlyConflicts state persisted across Position/Datetime view switches; canvasBerths filters to only conflicting schedules when onlyConflicts is active; conflict panel shown after canvas whenever a terminal is selected and data is loaded
+
 Next:
-- Berth Planner Phase 3: drag-and-drop, edit from canvas, realtime updates
+- Berth Planner Phase 3: drag-and-drop schedule editing and resize

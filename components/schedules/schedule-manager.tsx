@@ -363,9 +363,26 @@ export function ScheduleManager() {
     [form, vessels, berths],
   );
 
+  const conflictSchedules = useMemo(
+    () =>
+      schedules.map((s) => {
+        const vessel = vessels.find((v) => v.id === s.vesselId);
+        return {
+          ...s,
+          vesselLoa: vessel?.lengthOverall != null ? Number(vessel.lengthOverall) : null,
+        };
+      }),
+    [schedules, vessels],
+  );
+
+  const newVesselLoa = useMemo(() => {
+    const vessel = vessels.find((v) => v.id === form.vesselId);
+    return vessel?.lengthOverall != null ? Number(vessel.lengthOverall) : null;
+  }, [vessels, form.vesselId]);
+
   const conflictWarning = useMemo(
-    () => getBerthConflictWarning({ form, schedules, excludeScheduleId: editingId }),
-    [form, schedules, editingId],
+    () => getBerthConflictWarning({ form, schedules: conflictSchedules, excludeScheduleId: editingId, newVesselLoa }),
+    [form, conflictSchedules, editingId, newVesselLoa],
   );
 
   const filteredSchedules = useMemo(() => {

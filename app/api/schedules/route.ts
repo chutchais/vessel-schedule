@@ -107,6 +107,8 @@ async function hasBerthOverlap(input: {
   eta: Date;
   etb: Date | null;
   etd: Date;
+  berthPositionMeters: number | null;
+  vesselLoa: number | null;
   excludeScheduleId?: string;
 }) {
   const existingSchedules = await prisma.vesselSchedule.findMany({
@@ -120,16 +122,43 @@ async function hasBerthOverlap(input: {
       eta: true,
       etb: true,
       etd: true,
+      berthPositionMeters: true,
+      vessel: {
+        select: { lengthOverall: true },
+      },
     },
   });
 
   const newStart = input.etb ?? input.eta;
   const newEnd = input.etd;
+  const newPos = input.berthPositionMeters;
+  const newLoa = input.vesselLoa;
+  const newPosEnd = newPos !== null && newLoa !== null && newLoa > 0 ? newPos + newLoa : null;
 
   return existingSchedules.some((schedule) => {
     const existingStart = schedule.etb ?? schedule.eta;
     const existingEnd = schedule.etd;
-    return newStart < existingEnd && newEnd > existingStart;
+    const timeOverlap = newStart < existingEnd && newEnd > existingStart;
+    if (!timeOverlap) return false;
+
+    // If both sides have full position data, require position overlap too
+    const existingPos =
+      schedule.berthPositionMeters !== null ? Number(schedule.berthPositionMeters) : null;
+    const existingLoa =
+      schedule.vessel.lengthOverall !== null ? Number(schedule.vessel.lengthOverall) : null;
+    if (
+      newPos !== null &&
+      newPosEnd !== null &&
+      existingPos !== null &&
+      existingLoa !== null &&
+      existingLoa > 0
+    ) {
+      const existingPosEnd = existingPos + existingLoa;
+      return newPos < existingPosEnd && newPosEnd > existingPos;
+    }
+
+    // Position data missing on either side — fall back to time-only (conservative)
+    return true;
   });
 }
 
@@ -302,7 +331,7 @@ export async function POST(request: NextRequest) {
 
     const vessel = await prisma.vessel.findFirst({
       where: { id: vesselId, organizationId },
-      select: { id: true, isActive: true },
+      select: { id: true, isActive: true, lengthOverall: true },
     });
 
     if (!vessel) {
@@ -362,7 +391,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Only active berths can be selected" }, { status: 400 });
       }
 
-      const overlap = await hasBerthOverlap({ organizationId, berthId, eta, etb, etd });
+      const vesselLoa = vessel.lengthOverall !== null ? Number(vessel.lengthOverall) : null;
+      const overlap = await hasBerthOverlap({
+        organizationId,
+        berthId,
+        eta,
+        etb,
+        etd,
+        berthPositionMeters,
+        vesselLoa,
+      });
       if (overlap) {
         return NextResponse.json(
           { error: "The selected berth already has an overlapping schedule" },
