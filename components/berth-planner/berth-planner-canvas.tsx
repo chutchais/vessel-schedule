@@ -67,6 +67,7 @@ export type BerthPlannerCanvasProps = {
     berthPositionMeters: number;
     plannedStartTime: Date;
   }) => void;
+  onEditRequest?: (scheduleId: string) => void;
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -83,6 +84,7 @@ export function BerthPlannerCanvas({
   portTimezone,
   onInvalidRecords,
   onGridCreateRequest,
+  onEditRequest,
 }: BerthPlannerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -640,6 +642,18 @@ export function BerthPlannerCanvas({
         conflictingVessels={selectedConflictPartners}
         timezone={portTimezone}
         onClose={() => setSelectedSchedule(null)}
+        onEdit={
+          onEditRequest
+            ? () => {
+                if (!selectedSchedule) return;
+                const scheduleId = selectedSchedule.id;
+                setSelectedSchedule(null);
+                setSelectedBerthName("");
+                setSelectedConflictPartners([]);
+                onEditRequest(scheduleId);
+              }
+            : undefined
+        }
       />
     </div>
   );

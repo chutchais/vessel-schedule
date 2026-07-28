@@ -28,6 +28,15 @@
   - berth-planner-view.tsx — week state management (weekStart/weekEnd), timezone recalculation on terminal change, isLoading set in event handlers (React Compiler compatible)
 
 2026-07-28
+- Berth Planner Phase 3: click-to-edit schedule from canvas
+  - GET /api/schedules/[id] — new endpoint to fetch a single schedule (org-scoped, returns fields needed by edit form)
+  - lib/berth-planner/click-edit.ts — pure helper buildEditFormValues(EditableSchedule) → ScheduleFormValues
+  - lib/berth-planner/click-edit.test.ts — 8 unit tests covering field mapping, null coercion, status values, date format
+  - schedule-details-drawer.tsx — added onEdit prop, Edit Schedule button in footer, History (audit log) link via HistoryLink + useCanViewAuditLogs
+  - berth-planner-canvas.tsx — added onEditRequest prop; vessel click closes details drawer and delegates schedule ID to parent
+  - berth-planner-view.tsx — edit drawer with full state (isEditDrawerOpen, editSaving, editDataLoading, editError, editForm, editingScheduleId); handleEditRequest fetches schedule + form data in parallel, handles 404 (stale/deleted) with planner refresh; handleEditSubmit PATCHes API, handles 404/409, closes drawer and refreshes planner without full-page reload; edit conflict warning excludes the edited schedule; reuses existing ScheduleFormFields, validation helpers and PATCH API
+
+2026-07-28
 - Berth Planner click-to-create schedule from canvas
   - lib/berth-planner/click-create.ts — pure conversion helpers for click->berth position/time mapping, 5m berth snapping, 30-minute time snapping, and non-grid filtering
   - berth-planner-canvas.tsx — empty-grid click now emits create draft; ignores vessel hits and non-grid click targets

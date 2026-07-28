@@ -126,6 +126,49 @@ async function hasBerthOverlap(input: {
   });
 }
 
+export async function GET(_request: NextRequest, context: RouteContext) {
+  try {
+    const currentUser = await requireCurrentUser();
+    const organizationId = currentUser.activeOrganization.id;
+
+    const { id } = await context.params;
+
+    const schedule = await prisma.vesselSchedule.findFirst({
+      where: { id, organizationId },
+      select: {
+        id: true,
+        vesselId: true,
+        serviceId: true,
+        voyageNumber: true,
+        terminalId: true,
+        berthId: true,
+        eta: true,
+        etb: true,
+        etd: true,
+        ata: true,
+        atb: true,
+        atd: true,
+        status: true,
+        remarks: true,
+        berthPositionMeters: true,
+        headingReverse: true,
+      },
+    });
+
+    if (!schedule) {
+      return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: schedule });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+    console.error("Failed to load schedule:", error);
+    return NextResponse.json({ error: "Failed to load schedule" }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const currentUser = await requireCurrentUser();

@@ -71,7 +71,7 @@ npx prisma generate
 
 ### Berth Planner Phase 1 — ✅ complete
 ### Berth Planner Phase 2 — ✅ complete
-### Berth Planner Phase 3 (part) — ✅ click-to-create from canvas complete
+### Berth Planner Phase 3 (part) — ✅ click-to-create and click-to-edit complete
 
 **Weekly viewport — all berths side-by-side (read-only)**
 
@@ -96,6 +96,7 @@ lib/berth-planner/
   timezone.ts     — getWeekStart, getWeekEnd, addWeeks, formatWeekLabel, getMidnightsBetween,
                     get4HourMarks (all timezone-aware via DST-safe noon-UTC anchor)
   click-create.ts — pure click conversion helpers (grid click -> berth/time draft), 5m/30min snapping
+  click-edit.ts   — pure helper buildEditFormValues; converts fetched schedule to ScheduleFormValues
 
 components/berth-planner/
   berth-planner-view.tsx          — page orchestrator; weekStart state, week navigation handlers,
@@ -104,7 +105,17 @@ components/berth-planner/
   berth-planner-canvas.tsx        — HTML Canvas renderer; all berths on X, time on Y, dynamic height,
                                     empty-grid click emits creation draft
   schedule-tooltip.tsx            — hover tooltip (pure component)
-  schedule-details-drawer.tsx     — click-open schedule detail panel
+  schedule-details-drawer.tsx     — click-open schedule detail panel; Edit Schedule button + History audit link
+
+**Click-to-edit behavior (Phase 3 partial):**
+- Clicking a vessel shape selects it and opens the details drawer (already existed)
+- Details drawer footer shows "Edit Schedule" button and (for OWNER/ADMIN) "History" audit log link
+- Clicking "Edit" fetches the full schedule from `GET /api/schedules/[id]` and opens the existing form drawer pre-filled
+- `buildEditFormValues()` in `click-edit.ts` converts the API response to `ScheduleFormValues` (pure, tested)
+- Edit conflict warning excludes the schedule being edited (`excludeScheduleId`)
+- On successful PATCH, drawer closes and planner refreshes without full-page reload; selected terminal, week and filters are preserved
+- 404 on fetch = schedule deleted: shows error and refreshes planner
+- 404/409 on PATCH = stale/conflict: shows clear error message without closing the form
 
 components/schedules/
   schedule-form-fields.tsx        — shared schedule form reused by Schedules page and Planner click-create
@@ -264,6 +275,7 @@ Then consider:
 
 1. **Berth Planner Phase 3 remaining**: drag-and-drop schedule editing and resize
 2. **Datetime-domain view**: swap X/Y coordinate renderers (architecture supports this)
+
 3. **Realtime updates**: subscribe to schedule changes via Supabase Realtime
 4. **Image export**: export canvas as PNG
 

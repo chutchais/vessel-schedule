@@ -1,6 +1,10 @@
 "use client";
 
 import { Drawer } from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+import { HistoryLink } from "@/components/audit-logs/history-link";
+import { useCanViewAuditLogs } from "@/components/audit-logs/use-can-view-audit-logs";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
 import type { ValidatedSchedule } from "@/lib/berth-planner/types";
 
 type ScheduleDetailsDrawerProps = {
@@ -10,6 +14,7 @@ type ScheduleDetailsDrawerProps = {
   conflictingVessels: string[];
   timezone: string;
   onClose: () => void;
+  onEdit?: () => void;
 };
 
 function formatLocalDateTime(date: Date, timezone: string): string {
@@ -69,7 +74,9 @@ export function ScheduleDetailsDrawer({
   conflictingVessels,
   timezone,
   onClose,
+  onEdit,
 }: ScheduleDetailsDrawerProps) {
+  const canViewAuditLogs = useCanViewAuditLogs();
   const statusLabel = schedule ? (STATUS_LABELS[schedule.status] ?? schedule.status) : "";
   const statusBadge = schedule ? (STATUS_BADGE[schedule.status] ?? STATUS_BADGE.PLANNED!) : "";
 
@@ -79,6 +86,22 @@ export function ScheduleDetailsDrawer({
       title={schedule ? schedule.vesselName : "Schedule Details"}
       description={schedule?.serviceName ?? undefined}
       onRequestClose={onClose}
+      footer={schedule ? (
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            {canViewAuditLogs ? (
+              <HistoryLink
+                entityType={AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE}
+                entityId={schedule.id}
+                entityLabel={schedule.vesselName}
+              />
+            ) : null}
+          </div>
+          {onEdit ? (
+            <Button onClick={onEdit}>Edit Schedule</Button>
+          ) : null}
+        </div>
+      ) : undefined}
     >
       {schedule ? (
         <div className="space-y-4">

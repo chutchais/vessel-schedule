@@ -20,6 +20,7 @@ import {
   toDateTimeLocalValueInTimezone,
   toIsoUtc,
 } from "@/lib/schedules/form-validation";
+import { buildEditFormValues, type EditableSchedule } from "@/lib/berth-planner/click-edit";
 import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord } from "@/lib/berth-planner/types";
 
 const DEFAULT_TIMEZONE = "UTC";
@@ -129,6 +130,14 @@ export function BerthPlannerView() {
   const [createServices, setCreateServices] = useState<Service[]>([]);
   const [existingSchedules, setExistingSchedules] = useState<ScheduleRow[]>([]);
 
+  // Edit drawer state
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editDataLoading, setEditDataLoading] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editForm, setEditForm] = useState<ScheduleFormValues>(INITIAL_CREATE_FORM);
+  const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
+
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
   const loadPlannerData = useCallback(async (terminalId: string, start: Date, end: Date) => {
@@ -162,7 +171,7 @@ export function BerthPlannerView() {
     setIsLoading(false);
   }, []);
 
-  const loadCreateData = useCallback(async () => {
+  const loadCreateData = useCallback(async (): Promise<boolean> => {
     setCreateDataLoading(true);
     try {
       const [schedulesRes, vesselsRes, terminalsRes, berthsRes, servicesRes] = await Promise.all([
@@ -191,8 +200,10 @@ export function BerthPlannerView() {
       setCreateBerths(Array.isArray(berthsPayload.data) ? berthsPayload.data : []);
       setCreateServices(Array.isArray(servicesPayload.data) ? servicesPayload.data : []);
       setCreateError("");
+      return true;
     } catch (error) {
       setCreateError(error instanceof Error ? error.message : "Failed to load schedule form data");
+      return false;
     } finally {
       setCreateDataLoading(false);
     }
@@ -332,6 +343,20 @@ export function BerthPlannerView() {
     [createForm, existingSchedules],
   );
 
+  // Edit form derived values
+  const editFormBerths = useMemo(
+    () => availableBerths.filter((berth) => berth.terminalId === editForm.terminalId),
+    [availableBerths, editForm.terminalId],
+  );
+  const editFitError = useMemo(
+    () => getVesselFitError({ form: editForm, vessels: createVessels, berths: createBerths }),
+    [editForm, createVessels, createBerths],
+  );
+  const editConflictWarning = useMemo(
+    () => getBerthConflictWarning({ form: editForm, schedules: existingSchedules, excludeScheduleId: editingScheduleId }),
+    [editForm, existingSchedules, editingScheduleId],
+  );
+
   const headerDescription = plannerData
     ? `${plannerData.portName} — ${plannerData.terminalName} · ${formatTimezoneOffset(new Date(), portTimezone)}`
     : "Select a terminal to view the berth planner.";
@@ -365,6 +390,144 @@ export function BerthPlannerView() {
     setCreateError("");
     setCreateForm(INITIAL_CREATE_FORM);
   }, []);
+
+  const closeEditDrawer = useCallback(() => {
+    setIsEditDrawerOpen(false);
+    setEditError("");
+    setEditingScheduleId(null);
+    setEditForm(INITIAL_CREATE_FORM);
+  }, []);
+
+  const updateEditForm = useCallback(
+    <Field extends keyof ScheduleFormValues>(field: Field, value: ScheduleFormValues[Field]) => {
+      if (field === "terminalId") {
+        setEditForm((current) => {
+          const hasBerthForTerminal = createBerths.some(
+            (berth) => berth.id === current.berthId && berth.terminalId === value,
+          );
+          return {
+            ...current,
+            terminalId: value as string,
+            berthId: hasBerthForTerminal ? current.berthId : "",
+          };
+        });
+        return;
+      }
+      setEditForm((current) => ({ ...current, [field]: value }));
+    },
+    [createBerths],
+  );
+
+  const handleEditRequest = useCallback(async (scheduleId: string) => {
+    setEditError("");
+    setEditDataLoading(true);
+
+    const [dataOk, scheduleRes] = await Promise.all([
+      loadCreateData(),
+      fetch(`/api/schedules/${scheduleId}`, { cache: "no-store" }),
+    ]);
+
+    setEditDataLoading(false);
+
+    if (!dataOk) {
+      setEditError("Failed to load form data. Please try again.");
+      return;
+    }
+
+    if (scheduleRes.status === 404) {
+      setEditError("This schedule no longer exists. It may have been deleted. Refreshing planner...");
+      await refreshPlanner();
+      return;
+    }
+
+    if (!scheduleRes.ok) {
+      const body = (await scheduleRes.json()) as { error?: string };
+      setEditError(body.error ?? "Failed to load schedule");
+      return;
+    }
+
+    const payload = (await scheduleRes.json()) as { data?: EditableSchedule };
+    if (!payload.data) {
+      setEditError("Failed to load schedule data");
+      return;
+    }
+
+    setEditForm(buildEditFormValues(payload.data));
+    setEditingScheduleId(scheduleId);
+    setCreateSuccess("");
+    setIsEditDrawerOpen(true);
+  }, [loadCreateData, refreshPlanner]);
+
+  const handleEditSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingScheduleId) return;
+
+    setEditError("");
+    setCreateSuccess("");
+
+    const etaIso = toIsoUtc(editForm.eta);
+    const etdIso = toIsoUtc(editForm.etd);
+    const etbIso = toIsoUtc(editForm.etb);
+    const ataIso = toIsoUtc(editForm.ata);
+    const atbIso = toIsoUtc(editForm.atb);
+    const atdIso = toIsoUtc(editForm.atd);
+
+    if (!etaIso) {
+      setEditError("ETA is required and must be valid");
+      return;
+    }
+    if (!etdIso) {
+      setEditError("ETD is required and must be valid");
+      return;
+    }
+    if (editFitError) {
+      setEditError(editFitError);
+      return;
+    }
+
+    setEditSaving(true);
+    try {
+      const response = await fetch(`/api/schedules/${editingScheduleId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vesselId: editForm.vesselId,
+          serviceId: editForm.serviceId,
+          voyageNumber: editForm.voyageNumber,
+          terminalId: editForm.terminalId,
+          berthId: editForm.berthId,
+          eta: etaIso,
+          etb: etbIso ?? "",
+          etd: etdIso,
+          ata: ataIso ?? "",
+          atb: atbIso ?? "",
+          atd: atdIso ?? "",
+          status: editForm.status,
+          remarks: editForm.remarks,
+          berthPositionMeters: editForm.berthPositionMeters,
+          headingReverse: editForm.headingReverse,
+        }),
+      });
+
+      if (response.status === 404) {
+        setEditError("This schedule no longer exists. It may have been deleted by another user.");
+        return;
+      }
+
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Failed to update schedule");
+      }
+
+      closeEditDrawer();
+      setCreateSuccess("Schedule updated successfully.");
+      await refreshPlanner();
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : "Failed to save schedule");
+    } finally {
+      setEditSaving(false);
+    }
+  }, [editingScheduleId, editForm, editFitError, closeEditDrawer, refreshPlanner]);
 
   const handleGridCreateRequest = useCallback(async (draft: {
     berthId: string;
@@ -514,6 +677,7 @@ export function BerthPlannerView() {
               portTimezone={portTimezone}
               onInvalidRecords={setInvalidRecords}
               onGridCreateRequest={handleGridCreateRequest}
+              onEditRequest={handleEditRequest}
             />
           </>
         )}
@@ -568,6 +732,42 @@ export function BerthPlannerView() {
             onChange={updateCreateForm}
           />
         </form>
+      </Drawer>
+
+      <Drawer
+        isOpen={isEditDrawerOpen}
+        title="Edit Schedule"
+        description="Update vessel schedule details."
+        onRequestClose={closeEditDrawer}
+        footer={(
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="secondary" onClick={closeEditDrawer} disabled={editSaving}>
+              Cancel
+            </Button>
+            <Button type="submit" form="planner-edit-schedule-form" disabled={editSaving || editDataLoading}>
+              {editSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        )}
+      >
+        {editError ? <AlertMessage type="error" message={editError} className="mb-4" /> : null}
+        {editDataLoading ? (
+          <p className="py-8 text-center text-sm text-slate-500">Loading schedule…</p>
+        ) : (
+          <form id="planner-edit-schedule-form" onSubmit={handleEditSubmit}>
+            <ScheduleFormFields
+              form={editForm}
+              saving={editSaving}
+              availableVessels={availableVessels}
+              availableServices={availableServices}
+              availableTerminals={availableTerminals}
+              formBerths={editFormBerths}
+              fitError={editFitError ?? undefined}
+              conflictWarning={editConflictWarning ?? undefined}
+              onChange={updateEditForm}
+            />
+          </form>
+        )}
       </Drawer>
     </div>
   );
