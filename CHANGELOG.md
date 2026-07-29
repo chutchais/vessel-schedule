@@ -1,3 +1,32 @@
+2026-07-29
+- Berth Planner weekly print and PDF export
+  - Added filtered, high-resolution landscape export pages for Position and Datetime views with timezone-aware week labels, grids, berth context, vessel silhouettes, conflict markers and repeated legends.
+  - Wide terminals now paginate at berth boundaries; exports are disabled while loading or editing, and retain server-authorized active-organization/terminal planner scope.
+
+2026-07-28
+- Fix invitation public-route access
+  - Excluded invitation accept/register pages and status endpoint from proxy authentication redirects; protected-route login redirects now retain query strings.
+
+2026-07-28
+- Invitation-only account onboarding
+  - Replaced generic registration with a server-validated `/invitations/register` route that locks the email to a live invitation.
+  - Invitation guests now see account creation only when no invited user exists; existing users are directed to sign in, while normal guests remain on Request Access.
+
+2026-07-28
+- Invitation acceptance account states
+  - The acceptance page now distinguishes guest, invited-account, wrong-account, expired, revoked/replaced, accepted and invalid states.
+  - Added locked-email registration and token-preserving sign-in/sign-out returns for invite recipients without existing accounts.
+
+2026-07-28
+- Pending invitation management
+  - Settings → Members now defaults to active organization-scoped invitations, with history, timestamp-derived states, invited-by and created-date details.
+  - Revoke and replacement actions now confirm intent and enforce the active invitation definition server-side.
+
+2026-07-28
+- Copyable organization invitation links
+  - Added seven-day, single-use URLs with server-generated random tokens stored only as SHA-256 hashes.
+  - Added copy and replacement-link flows, token acceptance, email matching, transactional membership creation, audits and attempt limits.
+
 2026-07-28
 - Berth Planner in-place mutation refresh
   - Successful create, edit, move, resize and undo operations now retain the mounted planner canvas and re-fetch only the active terminal/week in the background, preserving planner context instead of showing a full loading replacement

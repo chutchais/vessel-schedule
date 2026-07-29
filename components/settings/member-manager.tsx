@@ -43,6 +43,7 @@ const ROLE_BADGE: Record<string, string> = {
 };
 
 const STATUS_BADGE: Record<string, string> = {
+  ACTIVE: "bg-yellow-100 text-yellow-700",
   PENDING: "bg-yellow-100 text-yellow-700",
   ACCEPTED: "bg-green-100 text-green-700",
   EXPIRED: "bg-slate-100 text-slate-500",
@@ -216,6 +217,10 @@ function MembersTab({ currentUserId, currentRole }: Props) {
 
   return (
     <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900">Pending Invitations</h2>
+        <p className="text-sm text-slate-500">Active links are shown first. Generating a new link invalidates the old one.</p>
+      </div>
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <input
@@ -466,6 +471,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [historyVisible, setHistoryVisible] = useState(false);
 
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -475,13 +481,15 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [invitationUrl, setInvitationUrl] = useState<string | null>(null);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "unavailable" | "error">("idle");
 
   const assignableRoles = ASSIGNABLE_ROLES_BY_ROLE[currentRole] ?? [];
 
   useEffect(() => {
     void loadInvitations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, statusFilter]);
+  }, [page, search, statusFilter, historyVisible]);
 
   async function loadInvitations() {
     setLoading(true);
@@ -489,7 +497,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "25" });
       if (search) params.set("search", search);
-      if (statusFilter) params.set("status", statusFilter);
+      params.set("view", historyVisible ? "history" : "active");
       const res = await fetch(`/api/organization/invitations?${params}`);
       if (!res.ok) throw new Error("Failed to load");
       const body = (await res.json()) as { data: Invitation[]; pagination: Pagination };
@@ -516,12 +524,14 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
           role: inviteRole,
         }),
       });
-      const body = (await res.json()) as { message?: string; error?: string };
+      const body = (await res.json()) as { data?: { invitationUrl?: string }; error?: string };
       if (!res.ok) {
         setInviteError(body.error ?? "Failed to send invitation");
         return;
       }
-      setInviteSuccess(body.message ?? "Invitation sent");
+      setInvitationUrl(body.data?.invitationUrl ?? null);
+      setCopyState("idle");
+      setInviteSuccess("Invitation link created. Copy it now; it will not be shown again.");
       setInviteEmail("");
       setInviteDisplayName("");
       setInviteRole("");
@@ -534,6 +544,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
   }
 
   async function handleRevoke(id: string) {
+    if (!window.confirm("Revoke this invitation? Its link will stop working immediately.")) return;
     setActionError(null);
     setProcessing(true);
     try {
@@ -551,16 +562,37 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
     }
   }
 
-  async function handleResend(id: string) {
+  async function copyInvitationUrl() {
+    if (!invitationUrl) return;
+    if (!navigator.clipboard?.writeText) { setCopyState("unavailable"); return; }
+    try { await navigator.clipboard.writeText(invitationUrl); setCopyState("copied"); }
+    catch { setCopyState("error"); }
+  }
+
+  async function handleResend(id: string, copyAfterCreating = false) {
+    if (!window.confirm("Generate a new link? This permanently invalidates the previous link.")) return;
     setActionError(null);
     setProcessing(true);
     try {
       const res = await fetch(`/api/organization/invitations/${id}/resend`, { method: "POST" });
-      const body = (await res.json()) as { error?: string };
+      const body = (await res.json()) as { data?: { invitationUrl?: string }; error?: string };
       if (!res.ok) {
         setActionError(body.error ?? "Failed to resend");
         return;
       }
+      const newUrl = body.data?.invitationUrl ?? null;
+      setInvitationUrl(newUrl);
+      if (copyAfterCreating && newUrl && navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(newUrl);
+          setCopyState("copied");
+        } catch {
+          setCopyState("error");
+        }
+      } else {
+        setCopyState(copyAfterCreating ? "unavailable" : "idle");
+      }
+      setInviteSuccess("Replacement link created. The previous link no longer works.");
       void loadInvitations();
     } catch {
       setActionError("Failed to resend invitation");
@@ -589,6 +621,9 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        <button onClick={() => { setHistoryVisible((visible) => !visible); setPage(1); }} className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          {historyVisible ? "Show active" : "View history"}
+        </button>
         {assignableRoles.length > 0 && (
           <button
             onClick={() => { setShowInviteForm((v) => !v); setInviteError(null); setInviteSuccess(null); }}
@@ -640,6 +675,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
           </div>
           {inviteError && <p className="mt-2 text-sm text-red-600">{inviteError}</p>}
           {inviteSuccess && <p className="mt-2 text-sm text-green-700">{inviteSuccess}</p>}
+          {invitationUrl && <div className="mt-3"><label className="mb-1 block text-xs font-medium text-slate-700">Invitation URL (shown once)</label><div className="flex gap-2"><input readOnly value={invitationUrl} className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700" aria-label="Invitation URL" /><button onClick={() => void copyInvitationUrl()} className="rounded-md border border-blue-300 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50">Copy link</button></div>{copyState === "copied" && <p className="mt-1 text-xs text-green-700">Copied.</p>}{copyState === "unavailable" && <p className="mt-1 text-xs text-amber-700">Clipboard access is unavailable. Select and copy the link manually.</p>}{copyState === "error" && <p className="mt-1 text-xs text-red-700">Could not copy the link. Select and copy it manually.</p>}</div>}
           <button
             onClick={() => void handleInvite()}
             disabled={processing || !inviteEmail || !inviteRole}
@@ -665,7 +701,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                {["Email", "Name", "Role", "Status", "Delivery", "Inviter", "Expires", "Actions"].map((h) => (
+                {["Email", "Role", "Status", "Invited by", "Created", "Expires", "Actions"].map((h) => (
                   <th key={h} className="px-4 py-3 text-left font-semibold">{h}</th>
                 ))}
               </tr>
@@ -673,14 +709,13 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
             <tbody className="divide-y divide-slate-100">
               {invitations.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
-                    No invitations found
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                    {historyVisible ? "No invitation history found" : "No active pending invitations"}
                   </td>
                 </tr>
               ) : invitations.map((inv) => (
                 <tr key={inv.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3 text-slate-900">{inv.email}</td>
-                  <td className="px-4 py-3 text-slate-500">{inv.displayName ?? "—"}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE[inv.role] ?? ""}`}>
                       {inv.role}
@@ -691,25 +726,28 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
                       {inv.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-400">
-                    <span title={inv.deliveryError ?? undefined}>{inv.deliveryStatus}</span>
-                    {inv.deliveryError && (
-                      <span className="ml-1 text-red-400" title={inv.deliveryError}>⚠</span>
-                    )}
-                  </td>
                   <td className="px-4 py-3 text-slate-500">{inv.inviterName}</td>
+                  <td className="px-4 py-3 text-xs text-slate-400">{new Date(inv.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-xs text-slate-400">
                     {new Date(inv.expiresAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
-                    {inv.status === "PENDING" && (
+                    {inv.status === "ACTIVE" && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => void handleResend(inv.id)}
                           disabled={processing}
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-60"
                         >
-                          Resend
+                          Replace link
+                        </button>
+                        <button
+                          onClick={() => void handleResend(inv.id, true)}
+                          disabled={processing}
+                          title="Creates and copies a replacement link; the previous link is invalidated."
+                          className="rounded-md border border-blue-300 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-60"
+                        >
+                          Copy link
                         </button>
                         <button
                           onClick={() => void handleRevoke(inv.id)}

@@ -51,6 +51,18 @@ npx prisma migrate dev --name migration_name
 npx prisma generate
 ```
 
+## Environment
+
+Set `APP_URL` to the trusted canonical application origin. Invitation links are derived only from this value, never from request headers.
+
+Organization Settings → Members lists active invitations by default. Active means no acceptance/revocation timestamp and an expiration in the future; history shows accepted, revoked, and expired links.
+
+Invitation acceptance pre-validates the hashed token without logging it. Guests can create an account only with the server-validated invited email or sign in; a mismatched signed-in account must sign out before acceptance is enabled.
+
+Public registration remains disabled. `/invitations/register?token=…` is the only registration route and validates a live invitation before rendering a locked invited-email form; successful sign-up returns to token acceptance.
+
+`proxy.ts` must keep `/invitations/accept`, `/invitations/register`, and `/api/invitations/accept` public. When redirecting other protected URLs to login, preserve both pathname and query string.
+
 ## Completed Modules
 
 ### Infrastructure
@@ -80,6 +92,13 @@ npx prisma generate
 ### Berth Planner Undo Recent Change — ✅ complete
 ### Berth Planner Realtime Changes — ✅ complete
 ### Berth Planner In-place Mutation Refresh — ✅ complete
+### Berth Planner Weekly Print/PDF Export — ✅ complete
+
+**Weekly export behavior:**
+- Print and Export PDF generate dedicated high-resolution landscape planner pages from filtered domain data, never a clipped screen capture.
+- Position pages split only between berths for wide terminals; Datetime pages repeat the complete seven-day time overview while splitting tall berth sets.
+- Output repeats terminal/week/timezone/filter metadata, date/grid/berth context, conflict legend and generated timestamp on every page. Browser print provides the PDF save destination.
+- Export uses the existing organization-scoped, terminal-authorized planner payload and is disabled during loading, drawers, confirmations and active canvas gestures.
 
 **Mutation refresh behavior:**
 - Planner create, edit, drag move, resize and undo continue to use their existing APIs and server-side authorization/validation/audit checks, then refresh only the current terminal/week without changing `isLoading`, so the canvas, terminal/week/domain/filter/selection context and panels remain mounted.

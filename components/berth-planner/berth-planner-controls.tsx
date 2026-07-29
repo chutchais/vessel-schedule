@@ -21,6 +21,10 @@ type BerthPlannerControlsProps = {
   onNextWeek: () => void;
   domain: PlannerDomain;
   onDomainChange: (domain: PlannerDomain) => void;
+  exportDisabled: boolean;
+  exportProgress: string;
+  onPrint: () => void;
+  onExportPdf: () => void;
 };
 
 export function BerthPlannerControls({
@@ -35,6 +39,10 @@ export function BerthPlannerControls({
   onNextWeek,
   domain,
   onDomainChange,
+  exportDisabled,
+  exportProgress,
+  onPrint,
+  onExportPdf,
 }: BerthPlannerControlsProps) {
   const weekLabel = portTimezone
     ? formatWeekLabel(weekStart, weekEnd, portTimezone)
@@ -121,6 +129,10 @@ export function BerthPlannerControls({
         >
           Datetime
         </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={onPrint} disabled={exportDisabled} className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">{exportProgress === "Printing…" ? exportProgress : "Print"}</button>
+        <button type="button" onClick={onExportPdf} disabled={exportDisabled} className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{exportProgress === "Preparing PDF…" ? exportProgress : "Export PDF"}</button>
       </div>
     </div>
   );

@@ -9,6 +9,9 @@ const PUBLIC_PATHS = [
   "/reset-password",
   "/request-access",
   "/auth/callback",
+  "/invitations/accept",
+  "/invitations/register",
+  "/api/invitations/accept",
   "/api/health",
   "/api/organization-requests",
 ] as const;
@@ -43,7 +46,7 @@ export async function proxy(request: NextRequest) {
     }
 
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 

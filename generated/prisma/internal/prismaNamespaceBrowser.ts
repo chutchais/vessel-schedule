@@ -163,6 +163,7 @@ export const OrganizationInvitationScalarFieldEnum = {
   status: 'status',
   deliveryStatus: 'deliveryStatus',
   pendingKey: 'pendingKey',
+  tokenHash: 'tokenHash',
   authUserId: 'authUserId',
   invitedById: 'invitedById',
   acceptedById: 'acceptedById',

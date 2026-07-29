@@ -140,6 +140,7 @@ export type BerthPlannerCanvasProps = {
   onEditRequest?: (scheduleId: string) => void;
   onDragDropRequest?: (request: DragDropRequest) => void;
   onDurationResizeRequest?: (request: DurationResizeRequest) => void;
+  onInteractionChange?: (active: boolean) => void;
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -317,6 +318,7 @@ export function BerthPlannerCanvas({
   onEditRequest,
   onDragDropRequest,
   onDurationResizeRequest,
+  onInteractionChange,
 }: BerthPlannerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -345,6 +347,10 @@ export function BerthPlannerCanvas({
   useEffect(() => {
     activeResizeRef.current = activeResize;
   }, [activeResize]);
+  useEffect(() => {
+    onInteractionChange?.(activeDrag !== null || activeResize !== null || pendingDragRef.current !== null);
+  }, [activeDrag, activeResize, onInteractionChange]);
+  useEffect(() => () => onInteractionChange?.(false), [onInteractionChange]);
 
   useEffect(() => {
     if (visibleScheduleIds && shouldClearHiddenSelection(selectedSchedule?.id ?? null, visibleScheduleIds)) {
@@ -1090,6 +1096,7 @@ export function BerthPlannerCanvas({
       startY: y,
       resizeEdge: getResizeEdgeAtPoint({ x, y, bounds: hit.bounds, domain }),
     };
+    onInteractionChange?.(true);
     canvasRef.current!.setPointerCapture(e.pointerId);
     e.preventDefault();
   }
@@ -1220,6 +1227,7 @@ export function BerthPlannerCanvas({
     activeResizeRef.current = null;
     setActiveDrag(null);
     setActiveResize(null);
+    onInteractionChange?.(false);
 
     if (wasDragging) {
       dragJustCompletedRef.current = true;
@@ -1273,6 +1281,7 @@ export function BerthPlannerCanvas({
     activeResizeRef.current = null;
     setActiveDrag(null);
     setActiveResize(null);
+    onInteractionChange?.(false);
   }
 
   function handleClick(e: React.MouseEvent<HTMLCanvasElement>) {

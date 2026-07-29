@@ -129,6 +129,7 @@ export async function GET(request: NextRequest) {
     }
 
     const responseData: PlannerDataRaw = {
+      organizationName: currentUser.activeOrganization.name,
       terminalId: terminal.id,
       terminalName: terminal.name,
       portName: terminal.port.name,

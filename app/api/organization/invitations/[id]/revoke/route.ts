@@ -20,14 +20,14 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
 
     const invitation = await prisma.organizationInvitation.findUnique({
       where: { id },
-      select: { id: true, organizationId: true, status: true, role: true },
+      select: { id: true, organizationId: true, status: true, role: true, expiresAt: true, acceptedAt: true, revokedAt: true },
     });
 
     if (!invitation || invitation.organizationId !== activeOrganization.id) {
       return NextResponse.json({ error: "Invitation not found" }, { status: 404 });
     }
 
-    if (invitation.status !== "PENDING") {
+    if (invitation.status !== "PENDING" || invitation.acceptedAt || invitation.revokedAt || invitation.expiresAt <= new Date()) {
       return NextResponse.json(
         { error: `Invitation is already ${invitation.status.toLowerCase()}` },
         { status: 400 },

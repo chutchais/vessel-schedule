@@ -207,6 +207,7 @@ model OrganizationInvitation {
   deliveryStatus InvitationDeliveryStatus     @default(NOT_ATTEMPTED)
 
   pendingKey String? @unique @db.VarChar(300)
+  tokenHash  String  @unique @db.Char(64)
 
   authUserId String? @db.Uuid
 

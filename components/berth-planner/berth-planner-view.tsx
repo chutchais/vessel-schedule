@@ -47,6 +47,7 @@ import {
 } from "@/lib/berth-planner/operational-filters";
 import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord, PlannerDomain } from "@/lib/berth-planner/types";
 import { highlightForChange, type ChangeHighlight, type PlannerChangeEvent, type PlannerChangesResponse } from "@/lib/berth-planner/realtime";
+import { renderWeeklyExport } from "@/lib/berth-planner/weekly-export";
 
 const DEFAULT_TIMEZONE = "UTC";
 
@@ -207,6 +208,9 @@ export function BerthPlannerView() {
   const [changesError, setChangesError] = useState<string | null>(null);
   const [recentHighlights, setRecentHighlights] = useState<Map<string, ChangeHighlight>>(new Map());
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [canvasInteractionActive, setCanvasInteractionActive] = useState(false);
+  const [exportProgress, setExportProgress] = useState("");
+  const [exportError, setExportError] = useState("");
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const plannerRequestRef = useRef(0);
@@ -550,6 +554,27 @@ export function BerthPlannerView() {
     () => berths.map((berth) => ({ value: berth.id, label: berth.name })),
     [berths],
   );
+  const activeFiltersSummary = useMemo(() => {
+    const values = [filters.search && `Search: ${filters.search}`, filters.service && `Service: ${filters.service}`, filters.status && `Status: ${filters.status}`, filters.berthId && `Berth: ${berths.find((berth) => berth.id === filters.berthId)?.name ?? filters.berthId}`, (filters.conflictsOnly || onlyConflicts) && "Conflicts only", filters.invalidOnly && "Incomplete placement"];
+    return values.filter((value): value is string => Boolean(value)).join("; ") || "None";
+  }, [filters, onlyConflicts, berths]);
+
+  const exportPlanner = useCallback((mode: "print" | "pdf") => {
+    if (!plannerData || isLoading || isInteractionActive || canvasInteractionActive) return;
+    setExportError(""); setExportProgress(mode === "pdf" ? "Preparing PDF…" : "Printing…");
+    try {
+      const pages = renderWeeklyExport({ organizationName: plannerData.organizationName, portName: plannerData.portName, terminalName: plannerData.terminalName, timezone: portTimezone, weekStart, weekEnd, domain, filtersSummary: activeFiltersSummary, berths: canvasBerths });
+      // `noopener` makes some browsers return null even when the tab opens, which
+      // leaves an export tab blank before its document can be written.
+      const popup = window.open("", "_blank");
+      if (!popup) throw new Error("Allow pop-ups to print or export the planner.");
+      popup.opener = null;
+      popup.document.title = `${plannerData.terminalName} weekly planner`;
+      popup.document.write(`<!doctype html><title>${plannerData.terminalName} weekly planner</title><style>@page{size:landscape;margin:8mm}body{margin:0}img{width:100%;display:block;break-after:page;page-break-after:always}img:last-child{break-after:auto;page-break-after:auto}</style>${pages.map((page) => `<img alt="Weekly berth planner page" src="${page.toDataURL("image/png")}">`).join("")}`);
+      popup.document.close();
+      window.setTimeout(() => { popup.focus(); popup.print(); setExportProgress(""); }, 250);
+    } catch (error) { setExportProgress(""); setExportError(error instanceof Error ? error.message : "Unable to prepare weekly export."); }
+  }, [plannerData, isLoading, isInteractionActive, canvasInteractionActive, portTimezone, weekStart, weekEnd, domain, activeFiltersSummary, canvasBerths]);
 
   const availableVessels = useMemo(
     () => createVessels.filter((vessel) => vessel.isActive),
@@ -1114,6 +1139,10 @@ export function BerthPlannerView() {
         onNextWeek={handleNextWeek}
         domain={domain}
         onDomainChange={handleDomainChange}
+        exportDisabled={!plannerData || isLoading || isInteractionActive || canvasInteractionActive || Boolean(exportProgress)}
+        exportProgress={exportProgress}
+        onPrint={() => exportPlanner("print")}
+        onExportPdf={() => exportPlanner("pdf")}
       />
 
       <OperationalFilterBar
@@ -1143,6 +1172,7 @@ export function BerthPlannerView() {
           {loadError}
         </div>
       )}
+      {exportError ? <AlertMessage type="error" message={exportError} /> : null}
 
       <div ref={canvasWrapperRef} className="flex-1">
         {isLoading ? (
@@ -1200,6 +1230,7 @@ export function BerthPlannerView() {
               onEditRequest={handleEditRequest}
               onDragDropRequest={handleDragDropRequest}
               onDurationResizeRequest={handleDurationResizeRequest}
+              onInteractionChange={setCanvasInteractionActive}
             />
           </>
         )}

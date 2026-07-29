@@ -74,6 +74,7 @@ export type PlannerBerthRaw = {
 };
 
 export type PlannerDataRaw = {
+  organizationName: string;
   terminalId: string;
   terminalName: string;
   portName: string;
