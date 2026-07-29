@@ -27,6 +27,13 @@ enum OrganizationRequestStatus {
   CANCELLED
 }
 
+enum OrganizationApprovalStage {
+  CLAIMED
+  ORGANIZATION_LINKED
+  AUTH_INVITATION_PENDING
+  AUTH_IDENTITY_LINKED
+}
+
 enum PlatformRole {
   USER
   SUPER_ADMIN
@@ -180,6 +187,10 @@ model OrganizationRequest {
   reviewedAt        DateTime?
   approvalStartedAt DateTime?
   invitationSentAt  DateTime?
+  approvalClaimId   String?                    @db.Uuid
+  approvalClaimedAt DateTime?
+  approvalVersion   Int                        @default(0)
+  approvalStage     OrganizationApprovalStage?
 
   reviewNotes   String? @db.Text
   failureReason String? @db.Text
@@ -191,6 +202,7 @@ model OrganizationRequest {
   @@index([requesterEmail])
   @@index([organizationId])
   @@index([reviewedById])
+  @@index([approvalClaimedAt])
   @@index([createdAt])
   @@map("organization_requests")
 }

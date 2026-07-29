@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { ScheduleStatus } from "@/generated/prisma/client";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageSchedules } from "@/lib/auth/permissions";
-import { createAuditLog } from "@/lib/audit/create-audit-log";
-import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
-import { formatVesselScheduleAuditEntityName } from "@/lib/audit/entity-name";
 import { prisma } from "@/lib/db/prisma";
-import { isResizeVersionCurrent } from "@/lib/berth-planner/duration-resize";
-import { getPlannerUndoUnavailableReason } from "@/lib/berth-planner/planner-undo";
+import {
+  undoSchedule,
+  updateSchedule,
+  type ScheduleMutationData,
+  type ScheduleMutationResult,
+} from "@/lib/schedules/schedule-mutations";
 
 const SCHEDULE_STATUSES = [
   "PLANNED",
@@ -17,97 +19,29 @@ const SCHEDULE_STATUSES = [
   "DEPARTED",
   "CANCELLED",
 ] as const;
-
-type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
-
-type RouteContext = {
-  params: Promise<{
-    id: string;
-  }>;
-};
-
-const PLANNER_UNDO_LIFETIME_MS = 15_000;
-
-type PlannerUndoSnapshot = {
-  vesselId: string;
-  terminalId: string;
-  berthId: string | null;
-  serviceId: string | null;
-  voyageNumber: string | null;
-  eta: string;
-  etb: string | null;
-  etd: string;
-  ata: string | null;
-  atb: string | null;
-  atd: string | null;
-  status: ScheduleStatus;
-  remarks: string | null;
-  berthPositionMeters: number | null;
-  headingReverse: boolean;
-};
-
-function toPlannerUndoSnapshot(schedule: PlannerUndoSnapshot | Record<string, unknown>): PlannerUndoSnapshot {
-  return {
-    vesselId: String(schedule.vesselId),
-    terminalId: String(schedule.terminalId),
-    berthId: typeof schedule.berthId === "string" ? schedule.berthId : null,
-    serviceId: typeof schedule.serviceId === "string" ? schedule.serviceId : null,
-    voyageNumber: typeof schedule.voyageNumber === "string" ? schedule.voyageNumber : null,
-    eta: new Date(schedule.eta as string).toISOString(),
-    etb: schedule.etb ? new Date(schedule.etb as string).toISOString() : null,
-    etd: new Date(schedule.etd as string).toISOString(),
-    ata: schedule.ata ? new Date(schedule.ata as string).toISOString() : null,
-    atb: schedule.atb ? new Date(schedule.atb as string).toISOString() : null,
-    atd: schedule.atd ? new Date(schedule.atd as string).toISOString() : null,
-    status: schedule.status as ScheduleStatus,
-    remarks: typeof schedule.remarks === "string" ? schedule.remarks : null,
-    berthPositionMeters: typeof schedule.berthPositionMeters === "number" ? schedule.berthPositionMeters : null,
-    headingReverse: schedule.headingReverse === true,
-  };
-}
+type RouteContext = { params: Promise<{ id: string }> };
 
 function parseOptionalDate(value: unknown): Date | null {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  if (typeof value !== "string") {
-    return null;
-  }
-
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string") return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function trimOptionalString(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
+  if (typeof value !== "string") return null;
+  return value.trim() || null;
 }
 
 function trimOptionalId(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
+  if (typeof value !== "string") return null;
+  return value.trim() || null;
 }
 
 function parseOptionalInteger(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
+  if (value === null || value === undefined || value === "") return null;
   const parsed = typeof value === "number" ? value : Number(value);
-  if (!Number.isInteger(parsed)) {
-    return null;
-  }
-
-  return parsed;
+  return Number.isInteger(parsed) ? parsed : null;
 }
 
 function mapSchedule<T extends {
@@ -124,86 +58,105 @@ function mapSchedule<T extends {
   };
 }
 
-function getScheduleEntityName(input: {
-  vesselName: string;
-  serviceCode: string | null;
-  voyageNumber: string | null;
-}) {
-  return formatVesselScheduleAuditEntityName({
-    vesselName: input.vesselName,
-    serviceCode: input.serviceCode,
-    voyageNumber: input.voyageNumber,
-  });
+function responseForResult(result: ScheduleMutationResult) {
+  if (result.ok) {
+    return NextResponse.json({
+      data: mapSchedule(result.schedule),
+      undoToken: result.undoToken,
+      undoExpiresAt: result.undoExpiresAt,
+      expectedUpdatedAt: result.schedule.updatedAt.toISOString(),
+    });
+  }
+  const status =
+    result.reason === "not_found"
+      ? 404
+      : result.reason === "validation"
+        ? 422
+        : result.reason === "conflict" ||
+            result.reason === "stale" ||
+            result.reason === "undo_unavailable" ||
+            result.reason === "retry"
+          ? 409
+          : 500;
+  return NextResponse.json({ error: result.message }, { status });
 }
 
-async function hasBerthOverlap(input: {
-  organizationId: string;
-  berthId: string;
-  eta: Date;
-  etb: Date | null;
-  etd: Date;
-  berthPositionMeters: number | null;
-  vesselLoa: number | null;
-  excludeScheduleId: string;
-}) {
-  const existingSchedules = await prisma.vesselSchedule.findMany({
-    where: {
-      organizationId: input.organizationId,
-      berthId: input.berthId,
-      status: { not: "CANCELLED" },
-      id: { not: input.excludeScheduleId },
-    },
-    select: {
-      eta: true,
-      etb: true,
-      etd: true,
-      berthPositionMeters: true,
-      vessel: {
-        select: { lengthOverall: true },
-      },
-    },
-  });
+function parseExpectedUpdatedAt(value: unknown) {
+  if (typeof value !== "string" || !value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
-  const newStart = input.etb ?? input.eta;
-  const newEnd = input.etd;
-  const newPos = input.berthPositionMeters;
-  const newLoa = input.vesselLoa;
-  const newPosEnd = newPos !== null && newLoa !== null && newLoa > 0 ? newPos + newLoa : null;
-
-  return existingSchedules.some((schedule) => {
-    const existingStart = schedule.etb ?? schedule.eta;
-    const existingEnd = schedule.etd;
-    const timeOverlap = newStart < existingEnd && newEnd > existingStart;
-    if (!timeOverlap) return false;
-
-    const existingPos =
-      schedule.berthPositionMeters !== null ? Number(schedule.berthPositionMeters) : null;
-    const existingLoa =
-      schedule.vessel.lengthOverall !== null ? Number(schedule.vessel.lengthOverall) : null;
-    if (
-      newPos !== null &&
-      newPosEnd !== null &&
-      existingPos !== null &&
-      existingLoa !== null &&
-      existingLoa > 0
-    ) {
-      const existingPosEnd = existingPos + existingLoa;
-      return newPos < existingPosEnd && newPosEnd > existingPos;
+function parseMutationData(body: Record<string, unknown>):
+  | { data: ScheduleMutationData }
+  | { error: string } {
+  if (typeof body.vesselId !== "string" || !body.vesselId.trim()) {
+    return { error: "Vessel is required" };
+  }
+  if (typeof body.terminalId !== "string" || !body.terminalId.trim()) {
+    return { error: "Terminal is required" };
+  }
+  if (typeof body.eta !== "string" || !body.eta) return { error: "ETA is required" };
+  if (typeof body.etd !== "string" || !body.etd) return { error: "ETD is required" };
+  const eta = parseOptionalDate(body.eta);
+  const etb = parseOptionalDate(body.etb);
+  const etd = parseOptionalDate(body.etd);
+  const ata = parseOptionalDate(body.ata);
+  const atb = parseOptionalDate(body.atb);
+  const atd = parseOptionalDate(body.atd);
+  if (!eta) return { error: "ETA must be a valid date" };
+  if (!etd) return { error: "ETD must be a valid date" };
+  for (const [label, raw, parsed] of [
+    ["ETB", body.etb, etb],
+    ["ATA", body.ata, ata],
+    ["ATB", body.atb, atb],
+    ["ATD", body.atd, atd],
+  ] as const) {
+    if (raw !== undefined && raw !== null && raw !== "" && !parsed) {
+      return { error: `${label} must be a valid date` };
     }
-
-    return true;
-  });
+  }
+  const status =
+    typeof body.status === "string" ? body.status.trim().toUpperCase() : "PLANNED";
+  if (!SCHEDULE_STATUSES.includes(status as (typeof SCHEDULE_STATUSES)[number])) {
+    return { error: "Invalid schedule status" };
+  }
+  const berthPositionMeters = parseOptionalInteger(body.berthPositionMeters);
+  if (
+    body.berthPositionMeters !== undefined &&
+    body.berthPositionMeters !== null &&
+    body.berthPositionMeters !== "" &&
+    berthPositionMeters === null
+  ) {
+    return { error: "Berth position meters must be an integer" };
+  }
+  return {
+    data: {
+      vesselId: body.vesselId.trim(),
+      terminalId: body.terminalId.trim(),
+      berthId: trimOptionalId(body.berthId),
+      serviceId: trimOptionalId(body.serviceId),
+      voyageNumber: trimOptionalString(body.voyageNumber),
+      eta,
+      etb,
+      etd,
+      ata,
+      atb,
+      atd,
+      status: status as ScheduleStatus,
+      remarks: trimOptionalString(body.remarks),
+      berthPositionMeters,
+      headingReverse: body.headingReverse === true,
+    },
+  };
 }
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     const currentUser = await requireCurrentUser();
-    const organizationId = currentUser.activeOrganization.id;
-
     const { id } = await context.params;
-
     const schedule = await prisma.vesselSchedule.findFirst({
-      where: { id, organizationId },
+      where: { id, organizationId: currentUser.activeOrganization.id },
       select: {
         id: true,
         vesselId: true,
@@ -224,11 +177,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         updatedAt: true,
       },
     });
-
-    if (!schedule) {
-      return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
-    }
-
+    if (!schedule) return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
     return NextResponse.json({ data: schedule });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -243,448 +192,121 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const currentUser = await requireCurrentUser();
     const organizationId = currentUser.activeOrganization.id;
-
     if (!canManageSchedules(currentUser.membership.role)) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
-
     const { id } = await context.params;
-    const body = await request.json();
-
-    const existingSchedule = await prisma.vesselSchedule.findFirst({
-      where: { id, organizationId },
-      select: {
-        id: true, vesselId: true, terminalId: true, berthId: true, serviceId: true,
-        eta: true, etb: true, etd: true, berthPositionMeters: true, updatedAt: true,
-        status: true,
-      },
-    });
-
-    if (!existingSchedule) {
-      return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+    const body = (await request.json()) as Record<string, unknown>;
+    const expectedUpdatedAt = parseExpectedUpdatedAt(body.expectedUpdatedAt);
+    if (!expectedUpdatedAt) {
+      return NextResponse.json(
+        { error: "expectedUpdatedAt is required for schedule updates" },
+        { status: 400 },
+      );
     }
 
     if (body.plannerAction === "undo") {
       if (typeof body.undoToken !== "string" || !body.undoToken) {
         return NextResponse.json({ error: "Invalid undo action" }, { status: 400 });
       }
-
-      const undo = await prisma.plannerUndo.findFirst({
-        where: { id: body.undoToken, scheduleId: id, organizationId },
-      });
-      if (!undo) {
-        return NextResponse.json({ error: "This undo action has expired or was already used." }, { status: 409 });
-      }
-      const unavailableReason = getPlannerUndoUnavailableReason({
-        now: new Date(), expiresAt: undo.expiresAt, usedAt: undo.usedAt,
-        expectedUpdatedAt: undo.expectedUpdatedAt, currentUpdatedAt: existingSchedule.updatedAt,
-      });
-      if (unavailableReason === "used" || unavailableReason === "expired") {
-        return NextResponse.json({ error: "This undo action has expired or was already used." }, { status: 409 });
-      }
-      if (unavailableReason === "stale") {
-        return NextResponse.json(
-          { error: "This schedule changed after the planner operation. Undo cannot overwrite a newer change." },
-          { status: 409 },
-        );
-      }
-
-      const restore = toPlannerUndoSnapshot(undo.beforeData as Record<string, unknown>);
-      const restoreEta = new Date(restore.eta);
-      const restoreEtb = restore.etb ? new Date(restore.etb) : null;
-      const restoreEtd = new Date(restore.etd);
-      const restoreVessel = await prisma.vessel.findFirst({
-        where: { id: restore.vesselId, organizationId },
-        select: { lengthOverall: true },
-      });
-      if (!restoreVessel) return NextResponse.json({ error: "The original vessel is no longer available" }, { status: 409 });
-      if (restore.berthId) {
-        const overlap = await hasBerthOverlap({
-          organizationId, berthId: restore.berthId, eta: restoreEta, etb: restoreEtb, etd: restoreEtd,
-          berthPositionMeters: restore.berthPositionMeters,
-          vesselLoa: restoreVessel.lengthOverall === null ? null : Number(restoreVessel.lengthOverall),
-          excludeScheduleId: id,
-        });
-        if (overlap) {
-          return NextResponse.json(
-            { error: "Undo would create a berth conflict, so the schedule was not changed." },
-            { status: 409 },
-          );
-        }
-      }
-
-      const schedule = await prisma.$transaction(async (tx) => {
-        const claimed = await tx.plannerUndo.updateMany({
-          where: { id: undo.id, organizationId, usedAt: null, expiresAt: { gt: new Date() } },
-          data: { usedAt: new Date() },
-        });
-        if (claimed.count !== 1) throw new Error("UNDO_UNAVAILABLE");
-        const current = await tx.vesselSchedule.findFirst({ where: { id, organizationId } });
-        if (!current || current.updatedAt.getTime() !== undo.expectedUpdatedAt.getTime()) throw new Error("STALE_UNDO");
-        const updated = await tx.vesselSchedule.update({
-          where: { id },
-          data: {
-            ...restore,
-            eta: restoreEta, etb: restoreEtb, etd: restoreEtd,
-            ata: restore.ata ? new Date(restore.ata) : null,
-            atb: restore.atb ? new Date(restore.atb) : null,
-            atd: restore.atd ? new Date(restore.atd) : null,
-          },
-          include: { vessel: { select: { id: true, imo: true, name: true, callSign: true } }, service: { select: { code: true } } },
-        });
-        await createAuditLog(tx, {
-          scope: "ORGANIZATION", organizationId,
-          actor: { id: currentUser.id, email: currentUser.email, displayName: currentUser.displayName },
-          action: "UPDATE", entityType: AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE, entityId: updated.id,
-          entityName: getScheduleEntityName({ vesselName: updated.vessel.name, serviceCode: updated.service?.code ?? null, voyageNumber: updated.voyageNumber }),
-          beforeData: current, afterData: updated,
-          metadata: { context: "Berth Planner undo", originalOperationAuditLogId: undo.originalAuditLogId },
-        });
-        return updated;
-      });
-      return NextResponse.json({ data: mapSchedule(schedule) });
+      return responseForResult(
+        await undoSchedule({
+          scheduleId: id,
+          organizationId,
+          actor: currentUser,
+          undoToken: body.undoToken,
+          expectedUpdatedAt,
+        }),
+      );
     }
 
-    const isPlannerResize = body.plannerAction === "resize";
-    const isPlannerMove = body.plannerAction === "move";
-    const isPlannerOperation = isPlannerResize || isPlannerMove;
-    if (isPlannerResize) {
-      if (existingSchedule.status === "CANCELLED") {
-        return NextResponse.json({ error: "Cancelled schedules cannot be resized" }, { status: 409 });
-      }
-      if (!isResizeVersionCurrent(existingSchedule.updatedAt, body.expectedUpdatedAt)) {
-        return NextResponse.json(
-          { error: "This schedule changed after resizing began. Refresh and try again." },
-          { status: 409 },
-        );
-      }
+    const parsed = parseMutationData(body);
+    if ("error" in parsed) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    const existing = await prisma.vesselSchedule.findFirst({
+      where: { id, organizationId },
+      select: {
+        vesselId: true,
+        terminalId: true,
+        berthId: true,
+        berthPositionMeters: true,
+        eta: true,
+        etb: true,
+        etd: true,
+        status: true,
+      },
+    });
+    if (!existing) return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+
+    const plannerAction =
+      body.plannerAction === "move" || body.plannerAction === "resize"
+        ? body.plannerAction
+        : undefined;
+    if (plannerAction && existing.status === "CANCELLED") {
+      return NextResponse.json(
+        { error: "Cancelled schedules cannot be moved or resized" },
+        { status: 409 },
+      );
+    }
+    if (plannerAction === "resize") {
       if (body.resizeEdge !== "start" && body.resizeEdge !== "end") {
         return NextResponse.json({ error: "Invalid resize edge" }, { status: 400 });
       }
       if (
-        body.vesselId !== existingSchedule.vesselId ||
-        body.terminalId !== existingSchedule.terminalId ||
-        trimOptionalId(body.berthId) !== existingSchedule.berthId ||
-        parseOptionalInteger(body.berthPositionMeters) !== existingSchedule.berthPositionMeters
+        parsed.data.vesselId !== existing.vesselId ||
+        parsed.data.terminalId !== existing.terminalId ||
+        parsed.data.berthId !== existing.berthId ||
+        parsed.data.berthPositionMeters !== existing.berthPositionMeters
       ) {
         return NextResponse.json(
-          { error: "A duration resize cannot change the vessel or berth geometry" },
+          { error: "A duration resize cannot change vessel or berth geometry" },
           { status: 400 },
         );
       }
-    }
-    if (isPlannerMove && !isResizeVersionCurrent(existingSchedule.updatedAt, body.expectedUpdatedAt)) {
-      return NextResponse.json(
-        { error: "This schedule changed after moving began. Refresh and try again." },
-        { status: 409 },
-      );
-    }
-
-    if (!body.vesselId || typeof body.vesselId !== "string") {
-      return NextResponse.json({ error: "Vessel is required" }, { status: 400 });
-    }
-
-    if (!body.terminalId || typeof body.terminalId !== "string") {
-      return NextResponse.json({ error: "Terminal is required" }, { status: 400 });
-    }
-
-    if (!body.eta || typeof body.eta !== "string") {
-      return NextResponse.json({ error: "ETA is required" }, { status: 400 });
-    }
-
-    if (!body.etd || typeof body.etd !== "string") {
-      return NextResponse.json({ error: "ETD is required" }, { status: 400 });
-    }
-
-    const vesselId = body.vesselId.trim();
-    const terminalId = body.terminalId.trim();
-    const berthId = trimOptionalId(body.berthId);
-    const serviceId = trimOptionalId(body.serviceId);
-    const eta = parseOptionalDate(body.eta);
-    const etb = parseOptionalDate(body.etb);
-    const etd = parseOptionalDate(body.etd);
-    const ata = parseOptionalDate(body.ata);
-    const atb = parseOptionalDate(body.atb);
-    const atd = parseOptionalDate(body.atd);
-    const status = typeof body.status === "string" ? body.status.trim().toUpperCase() : "PLANNED";
-    const berthPositionMeters = parseOptionalInteger(body.berthPositionMeters);
-    const headingReverse = typeof body.headingReverse === "boolean" ? body.headingReverse : false;
-
-    if (!vesselId) {
-      return NextResponse.json({ error: "Vessel is required" }, { status: 400 });
-    }
-
-    if (!terminalId) {
-      return NextResponse.json({ error: "Terminal is required" }, { status: 400 });
-    }
-
-    if (!eta) {
-      return NextResponse.json({ error: "ETA must be a valid date" }, { status: 400 });
-    }
-
-    if (!etd) {
-      return NextResponse.json({ error: "ETD must be a valid date" }, { status: 400 });
-    }
-
-    if (etd <= eta) {
-      return NextResponse.json({ error: "ETD must be later than ETA" }, { status: 400 });
-    }
-
-    if (body.etb !== undefined && body.etb !== null && body.etb !== "" && !etb) {
-      return NextResponse.json({ error: "ETB must be a valid date" }, { status: 400 });
-    }
-
-    if (etb && (etb < eta || etb > etd)) {
-      return NextResponse.json({ error: "ETB must be between ETA and ETD" }, { status: 400 });
-    }
-
-    const effectiveStart = etb ?? eta;
-    if (etd <= effectiveStart) {
-      return NextResponse.json({ error: "ETD must be later than ETB/ETA" }, { status: 400 });
-    }
-    if (isPlannerResize && etd.getTime() - effectiveStart.getTime() < 30 * 60 * 1000) {
-      return NextResponse.json(
-        { error: "Schedule duration must be at least 30 minutes" },
-        { status: 400 },
-      );
-    }
-    if (isPlannerResize && body.resizeEdge === "start") {
-      if (existingSchedule.etb && eta.getTime() !== existingSchedule.eta.getTime()) {
-        return NextResponse.json({ error: "ETA cannot change when resizing ETB" }, { status: 400 });
+      const effectiveStart = parsed.data.etb ?? parsed.data.eta;
+      if (parsed.data.etd.getTime() - effectiveStart.getTime() < 30 * 60 * 1000) {
+        return NextResponse.json(
+          { error: "Schedule duration must be at least 30 minutes" },
+          { status: 400 },
+        );
       }
-      if (!existingSchedule.etb && etb !== null) {
-        return NextResponse.json({ error: "Start resize must update ETA when ETB is absent" }, { status: 400 });
-      }
-      if (etd.getTime() !== existingSchedule.etd.getTime()) {
-        return NextResponse.json({ error: "Start resize cannot change ETD" }, { status: 400 });
-      }
-    }
-    if (isPlannerResize && body.resizeEdge === "end") {
-      if (
-        eta.getTime() !== existingSchedule.eta.getTime() ||
-        (etb?.getTime() ?? null) !== (existingSchedule.etb?.getTime() ?? null)
+      if (body.resizeEdge === "start") {
+        if (existing.etb && parsed.data.eta.getTime() !== existing.eta.getTime()) {
+          return NextResponse.json({ error: "ETA cannot change when resizing ETB" }, { status: 400 });
+        }
+        if (!existing.etb && parsed.data.etb !== null) {
+          return NextResponse.json(
+            { error: "Start resize must update ETA when ETB is absent" },
+            { status: 400 },
+          );
+        }
+        if (parsed.data.etd.getTime() !== existing.etd.getTime()) {
+          return NextResponse.json({ error: "Start resize cannot change ETD" }, { status: 400 });
+        }
+      } else if (
+        parsed.data.eta.getTime() !== existing.eta.getTime() ||
+        (parsed.data.etb?.getTime() ?? null) !== (existing.etb?.getTime() ?? null)
       ) {
         return NextResponse.json({ error: "End resize can only change ETD" }, { status: 400 });
       }
     }
 
-    if (body.ata !== undefined && body.ata !== null && body.ata !== "" && !ata) {
-      return NextResponse.json({ error: "ATA must be a valid date" }, { status: 400 });
-    }
-
-    if (body.atb !== undefined && body.atb !== null && body.atb !== "" && !atb) {
-      return NextResponse.json({ error: "ATB must be a valid date" }, { status: 400 });
-    }
-
-    if (body.atd !== undefined && body.atd !== null && body.atd !== "" && !atd) {
-      return NextResponse.json({ error: "ATD must be a valid date" }, { status: 400 });
-    }
-
-    if (!SCHEDULE_STATUSES.includes(status as ScheduleStatus)) {
-      return NextResponse.json({ error: "Invalid schedule status" }, { status: 400 });
-    }
-
-    if (
-      body.berthPositionMeters !== undefined &&
-      body.berthPositionMeters !== null &&
-      body.berthPositionMeters !== "" &&
-      berthPositionMeters === null
-    ) {
-      return NextResponse.json({ error: "Berth position meters must be an integer" }, { status: 400 });
-    }
-
-    const vessel = await prisma.vessel.findFirst({
-      where: { id: vesselId, organizationId },
-      select: { id: true, isActive: true, lengthOverall: true },
-    });
-
-    if (!vessel) {
-      return NextResponse.json({ error: "Vessel not found" }, { status: 404 });
-    }
-
-    if (!vessel.isActive && vessel.id !== existingSchedule.vesselId) {
-      return NextResponse.json({ error: "Only active vessels can be selected" }, { status: 400 });
-    }
-
-    const terminal = await prisma.terminal.findFirst({
-      where: { id: terminalId, organizationId },
-      select: { id: true, isActive: true },
-    });
-
-    if (!terminal) {
-      return NextResponse.json({ error: "Terminal not found" }, { status: 404 });
-    }
-
-    if (!terminal.isActive && terminal.id !== existingSchedule.terminalId) {
-      return NextResponse.json({ error: "Only active terminals can be selected" }, { status: 400 });
-    }
-
-    if (serviceId) {
-      const service = await prisma.service.findFirst({
-        where: { id: serviceId, organizationId },
-        select: { id: true, isActive: true },
-      });
-
-      if (!service) {
-        return NextResponse.json({ error: "Service not found" }, { status: 404 });
-      }
-
-      if (!service.isActive && service.id !== existingSchedule.serviceId) {
-        return NextResponse.json({ error: "Only active services can be selected" }, { status: 400 });
-      }
-    }
-
-    if (berthId) {
-      const berth = await prisma.berth.findFirst({
-        where: { id: berthId, organizationId },
-        select: { id: true, terminalId: true, isActive: true },
-      });
-
-      if (!berth) {
-        return NextResponse.json({ error: "Berth not found" }, { status: 404 });
-      }
-
-      if (berth.terminalId !== terminalId) {
-        return NextResponse.json(
-          { error: "The selected berth does not belong to the selected terminal" },
-          { status: 400 },
-        );
-      }
-
-      if (!berth.isActive && berth.id !== existingSchedule.berthId) {
-        return NextResponse.json({ error: "Only active berths can be selected" }, { status: 400 });
-      }
-
-      const vesselLoa = vessel.lengthOverall !== null ? Number(vessel.lengthOverall) : null;
-      const overlap = await hasBerthOverlap({
+    return responseForResult(
+      await updateSchedule({
+        scheduleId: id,
         organizationId,
-        berthId,
-        eta,
-        etb,
-        etd,
-        berthPositionMeters,
-        vesselLoa,
-        excludeScheduleId: id,
-      });
-
-      if (overlap) {
-        return NextResponse.json(
-          { error: "The selected berth already has an overlapping schedule" },
-          { status: 409 },
-        );
-      }
-    }
-
-    const schedule = await prisma.$transaction(async (tx) => {
-      const beforeSchedule = await tx.vesselSchedule.findFirst({
-        where: { id, organizationId },
-      });
-
-      if (!beforeSchedule) {
-        throw new Error("Schedule not found during update");
-      }
-      if (isPlannerOperation && beforeSchedule.updatedAt.toISOString() !== body.expectedUpdatedAt) {
-        throw new Error("STALE_SCHEDULE");
-      }
-
-      const updated = await tx.vesselSchedule.update({
-        where: { id },
-        data: {
-          vesselId,
-          terminalId,
-          berthId,
-          serviceId,
-          voyageNumber: trimOptionalString(body.voyageNumber),
-          eta,
-          etb,
-          etd,
-          ata,
-          atb,
-          atd,
-          status: status as ScheduleStatus,
-          remarks: trimOptionalString(body.remarks),
-          berthPositionMeters,
-          headingReverse,
-        },
-        include: {
-          vessel: { select: { id: true, imo: true, name: true, callSign: true } },
-          terminal: {
-            select: {
-              id: true,
-              code: true,
-              name: true,
-              port: { select: { id: true, code: true, name: true, timezone: true } },
-            },
-          },
-          berth: { select: { id: true, code: true, name: true, color: true, zeroOriginSide: true } },
-          service: {
-            select: {
-              id: true,
-              code: true,
-              name: true,
-              color: true,
-              isActive: true,
-              operatorCompany: { select: { id: true, code: true, name: true } },
-            },
-          },
-        },
-      });
-
-      const auditLog = await createAuditLog(tx, {
-        scope: "ORGANIZATION",
-        organizationId,
-        actor: {
-          id: currentUser.id,
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-        },
-        action: "UPDATE",
-        entityType: AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE,
-        entityId: updated.id,
-        entityName: getScheduleEntityName({
-          vesselName: updated.vessel.name,
-          serviceCode: updated.service?.code ?? null,
-          voyageNumber: updated.voyageNumber,
-        }),
-        beforeData: beforeSchedule,
-        afterData: updated,
-        metadata: isPlannerOperation ? {
-          context: isPlannerResize ? "Berth Planner resize" : "Berth Planner move",
-          ...(isPlannerResize ? { resizeEdge: body.resizeEdge } : {}),
-          changedFields: (["eta", "etb", "etd", "berthId", "berthPositionMeters"] as const).filter((field) => {
-            const before = beforeSchedule[field] instanceof Date ? beforeSchedule[field]?.toISOString() : beforeSchedule[field] ?? null;
-            const after = updated[field] instanceof Date ? updated[field]?.toISOString() : updated[field] ?? null;
-            return before !== after;
-          }),
-        } : undefined,
-      });
-
-      const undo = isPlannerOperation ? await tx.plannerUndo.create({
-        data: {
-          organizationId, scheduleId: updated.id, originalAuditLogId: auditLog.id,
-          beforeData: toPlannerUndoSnapshot(beforeSchedule),
-          expectedUpdatedAt: updated.updatedAt,
-          expiresAt: new Date(Date.now() + PLANNER_UNDO_LIFETIME_MS),
-        },
-      }) : null;
-
-      return { updated, undoToken: undo?.id ?? null, undoExpiresAt: undo?.expiresAt.toISOString() ?? null };
-    });
-
-    return NextResponse.json({ data: mapSchedule(schedule.updated), undoToken: schedule.undoToken, undoExpiresAt: schedule.undoExpiresAt });
+        actor: currentUser,
+        expectedUpdatedAt,
+        data: parsed.data,
+        plannerAction,
+        resizeEdge:
+          body.resizeEdge === "start" || body.resizeEdge === "end" ? body.resizeEdge : undefined,
+      }),
+    );
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-
-    if (error instanceof Error && error.message === "STALE_SCHEDULE") {
-      return NextResponse.json(
-        { error: "This schedule changed before it could be saved. Refresh and try again." },
-        { status: 409 },
-      );
-    }
-    if (error instanceof Error && (error.message === "STALE_UNDO" || error.message === "UNDO_UNAVAILABLE")) {
-      return NextResponse.json({ error: "This undo action has expired, was used, or the schedule changed." }, { status: 409 });
     }
     console.error("Failed to update schedule:", error);
     return NextResponse.json({ error: "Failed to update schedule" }, { status: 500 });

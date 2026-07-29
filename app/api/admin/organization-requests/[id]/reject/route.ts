@@ -81,17 +81,13 @@ export async function POST(
       );
     }
 
-    await prisma.$transaction(async (tx) => {
-      const beforeRequest = await tx.organizationRequest.findUnique({
-        where: { id },
-      });
-
-      if (!beforeRequest) {
-        throw new Error("Organization request not found during rejection");
-      }
-
-      const updatedRequest = await tx.organizationRequest.update({
-        where: { id },
+    const rejected = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.organizationRequest.updateMany({
+        where: {
+          id,
+          status: "PENDING",
+          organizationId: null,
+        },
         data: {
           status: "REJECTED",
           reviewedById: currentUser.id,
@@ -99,6 +95,8 @@ export async function POST(
           reviewNotes: normalized.reviewNotes,
         },
       });
+      if (claimed.count !== 1) return false;
+      const updatedRequest = await tx.organizationRequest.findUniqueOrThrow({ where: { id } });
 
       await createAuditLog(tx, {
         scope: "PLATFORM",
@@ -113,12 +111,12 @@ export async function POST(
         entityId: updatedRequest.id,
         entityName: updatedRequest.organizationName,
         beforeData: {
-          id: beforeRequest.id,
-          status: beforeRequest.status,
-          organizationName: beforeRequest.organizationName,
-          requesterName: beforeRequest.requesterName,
-          requesterEmail: beforeRequest.requesterEmail,
-          organizationId: beforeRequest.organizationId,
+          id: updatedRequest.id,
+          status: "PENDING",
+          organizationName: updatedRequest.organizationName,
+          requesterName: updatedRequest.requesterName,
+          requesterEmail: updatedRequest.requesterEmail,
+          organizationId: null,
         },
         afterData: {
           id: updatedRequest.id,
@@ -131,7 +129,14 @@ export async function POST(
           reviewNotes: normalized.reviewNotes,
         },
       });
+      return true;
     });
+    if (!rejected) {
+      return NextResponse.json(
+        { error: "This request is no longer eligible for rejection" },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json(
       { message: "Organization request rejected successfully" },

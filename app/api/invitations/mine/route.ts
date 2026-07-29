@@ -22,7 +22,13 @@ export async function GET() {
 
     // Expire stale pending invitations
     await prisma.organizationInvitation.updateMany({
-      where: { status: "PENDING", expiresAt: { lt: new Date() } },
+      where: {
+        status: "PENDING",
+        acceptedAt: null,
+        acceptedById: null,
+        revokedAt: null,
+        expiresAt: { lt: new Date() },
+      },
       data: { status: "EXPIRED", pendingKey: null },
     });
 

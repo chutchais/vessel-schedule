@@ -1,10 +1,12 @@
-import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
+import { assertDatabaseTarget, formatDatabaseTarget } from "../lib/db/target-guard";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function main() {
+  const target = assertDatabaseTarget({ purpose: "bootstrap" });
+  console.log(formatDatabaseTarget(target));
   const authUserId = process.env.BOOTSTRAP_AUTH_USER_ID;
   const email = process.env.BOOTSTRAP_USER_EMAIL?.toLowerCase().trim();
   const displayName = process.env.BOOTSTRAP_USER_DISPLAY_NAME?.trim();

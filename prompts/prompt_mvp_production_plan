@@ -1,0 +1,125 @@
+Perform Step 1 of the MVP production plan: a release-readiness and security audit.
+
+Do not add product features and do not deploy anything.
+
+First read AGENTS.md if present, PROJECT_HANDOFF.md, CHANGELOG.md, package.json, Prisma schema and all environment/deployment documentation.
+
+Inspect the application architecture and identify the commands and test suites available. Report a short audit plan before making changes.
+
+Audit these areas:
+
+1. Authentication and sessions
+   - Sign-in, sign-out and password handling
+   - Session expiration and invalidation
+   - Secure cookie settings
+   - Password hashing and reset behavior
+   - Protection of authenticated routes
+
+2. Authorization
+   - Platform Admin boundaries
+   - Organization Owner/Admin/Member permissions
+   - Server-side authorization for every mutation
+   - Prevention of role escalation
+   - Protection of administration routes
+
+3. Organization isolation
+   - Review every API route, server action and database query involving:
+     companies, ports, terminals, berths, vessels, services, schedules,
+     memberships, invitations, audit logs, planner changes and exports.
+   - Confirm organization context is derived server-side.
+   - Identify any query that could read or modify another organization’s data.
+   - Do not rely only on hidden UI controls.
+
+4. Invitations and onboarding
+   - Token generation, hashing, expiration, revocation and one-time use
+   - Email matching
+   - Invitation-only registration
+   - Concurrent acceptance
+   - Duplicate user/membership prevention
+   - No tokens in logs, audit entries or database fields intended for display
+
+5. Input and data integrity
+   - Server-side validation
+   - Prisma constraints and uniqueness
+   - Schedule dates, vessel geometry and berth positions
+   - Conflict policy
+   - Optimistic concurrency for edit, move, resize and undo
+   - Safe handling of deletes and dependent records
+
+6. API and application security
+   - CSRF protection where applicable
+   - XSS and unsafe HTML
+   - Open redirects
+   - Rate limiting on authentication, access requests and invitations
+   - Sensitive error disclosure
+   - Security headers
+   - File/export endpoint authorization
+   - Dependency vulnerabilities using existing project tooling
+
+7. Production configuration
+   - Environment-variable validation
+   - APP_URL and HTTPS assumptions
+   - SMTP secrets
+   - Database URL handling
+   - Production cookie configuration
+   - Development-only routes, email outbox, diagnostics, performance seed tools
+     and debug logging must be unavailable or safe in production
+   - Ensure secrets and environment files are not committed
+
+8. Reliability
+   - Error boundaries and useful error states
+   - Health/readiness endpoint
+   - Structured server logging without sensitive values
+   - Polling failure and retry behavior
+   - No full-page reload after normal planner mutations
+
+Verification:
+
+- Run Prisma validation.
+- Run TypeScript type-check.
+- Run lint.
+- Run all relevant automated tests.
+- Run the production build.
+- Run the repository’s existing dependency/security audit.
+- Do not perform automatic major dependency upgrades.
+- Do not access or modify production data.
+
+Classify every finding:
+
+- RELEASE BLOCKER: security, tenant isolation, authentication, data-loss or core-workflow failure that must be fixed before deployment.
+- IMPORTANT: should be addressed before production but is not an immediate critical vulnerability.
+- POST-MVP: worthwhile improvement that does not block release.
+- VERIFIED: reviewed and found acceptable, with evidence.
+
+For each finding provide:
+
+- Severity/classification
+- Exact file and affected code
+- Evidence or reproduction steps
+- Impact
+- Smallest safe remediation
+- Tests needed to prove the fix
+
+Changes:
+
+- You may fix only obvious, low-risk release blockers when the correct solution is clear.
+- Before changing authentication architecture, authorization design, Prisma schema,
+  migration history or public behavior, report the proposed change and wait for approval.
+- Avoid unrelated refactoring.
+- Do not commit, push, deploy or modify production infrastructure.
+
+Deliverables:
+
+1. Executive summary
+2. GO or NO-GO recommendation
+3. Release blockers
+4. Important findings
+5. Post-MVP backlog
+6. Verification command results
+7. Files changed, if any
+8. Recommended order for fixes
+9. Remaining items for Step 2: database readiness
+
+Create or update an MVP_RELEASE_CHECKLIST.md file and update PROJECT_HANDOFF.md
+and CHANGELOG.md with the audit status. Do not mark the application production-ready
+unless all release blockers are resolved.

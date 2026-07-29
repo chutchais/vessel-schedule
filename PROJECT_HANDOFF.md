@@ -1,5 +1,52 @@
 # Vessel Schedule — Project Handoff
 
+## MVP production audit status (2026-07-29)
+
+Step 1 release-readiness/security audit is complete. RB-1 through RB-3 are technically resolved, and the production build, Prisma validation, TypeScript, lint, and all 131 tests pass. RB-4's PostCSS vulnerabilities remain technically open under an approved exception expiring 2026-08-28. The release recommendation is **GO WITH TIME-LIMITED RB-4 EXCEPTION**.
+
+RB-4 is **ACCEPTED UNDER AN APPROVED TIME-LIMITED EXCEPTION**, not technically resolved. On 2026-07-29, the authorized approver accepted only Next.js 16.2.12's transitive PostCSS 8.4.31 risk for `GHSA-qx2v-qp2m-jg93`, `GHSA-6g55-p6wh-862q`, and `GHSA-r28c-9q8g-f849`. The exception expires no later than 2026-08-28. It requires no user-controlled CSS/source-map processing, immutable reviewed builds, Sharp exclusion, audits on lockfile changes and weekly, and upgrade to the first supported stable Next release containing PostCSS >=8.5.18.
+
+RB-4 remediation upgraded `prisma`, `@prisma/client`, and `@prisma/adapter-pg` together from 7.9.0 to exact 7.9.1. Stable Next 16.2.12 still pins PostCSS 8.4.31 and declares optional Sharp `^0.34.5`; Sharp's patch begins at 0.35.0. No override, forced downgrade, preview framework, Sharp 0.35 injection, or ESLint 10 major was accepted.
+
+Clean installation evidence:
+
+- `npm ci --omit=dev`: 189 packages; Next/PostCSS and optional Sharp present; ESLint absent.
+- `npm ci --omit=dev --omit=optional`: 49 packages; Next/PostCSS present; Sharp, Prisma CLI and ESLint absent.
+- A disposable artifact built with Sharp absent, was pruned using `npm prune --omit=dev --omit=optional`, started successfully, and served the authentication page, protected planner redirect, fonts, CSS, JavaScript and public SVG. Weekly PDF export passes its existing test.
+- Production artifact creation must use a clean build stage and run `npm prune --omit=dev --omit=optional` before copying runtime files. Fail the deployment if `npm ls --omit=dev sharp eslint prisma` finds any of them. Do not run the default Turbopack build after omitting every optional package because that also removes Next's native SWC binary.
+
+Incident verification completed read-only on 2026-07-30. The production target contains exactly one successful `20260729213000_add_organization_approval_progress` record; its checksum matches the repository, no later migrations exist, and the enum, four columns, defaults/nullability, and index match the migration. `_prisma_migrations` contains no failure log. No repair or rollback is required, and the incident no longer blocks release.
+
+Recurrence prevention is now fail-closed. `prisma.config.ts` does not load `.env`; Prisma commands require explicit `DATABASE_ENVIRONMENT`, `DATABASE_URL`, and `DIRECT_URL`. `npm run db:migrate:status` and `npm run db:migrate:deploy` validate the target and print only sanitized host/database information. Test, seed, benchmark, and EXPLAIN commands reject production targets. See `MVP_RELEASE_CHECKLIST.md` for exact local/staging/production commands.
+
+RB-4 enforcement lives in `.github/workflows/rb4-exception-controls.yml`. It builds first, prunes dev/optional packages, verifies the exact advisory/version allowlist and expiry, rejects Sharp/Prisma CLI/ESLint or runtime CSS processing, and smoke-tests the pruned server.
+
+## RB-1 invitation concurrency remediation (2026-07-29)
+
+Invitation acceptance, decline, and revoke now share explicit database transaction functions. PENDING is conditionally claimed using invitation/organization identity, null terminal fields, and a future expiry; only the one-row winner can create membership or audit data. Losing requests return HTTP 409 and cannot overwrite a terminal state.
+
+Valid terminal transitions are PENDING → ACCEPTED, DECLINED, REVOKED, or EXPIRED. DECLINED no longer misuses `revokedAt`; replacement atomically revokes the old invitation, reloads it, and creates a new row with a new token.
+
+The real PostgreSQL concurrency suite passed 10/10 RB-1 scenarios, and the complete suite passed 95/95. Prisma validation, TypeScript, lint, and production build also pass. No schema or migration change was made. The isolated test database required `pgcrypto` to be pre-enabled because the existing token-hash migration calls `gen_random_bytes`; that migration-readiness prerequisite remains for Step 2 and was not changed during RB-1 work.
+
+## RB-3 organization approval remediation (2026-07-29)
+
+Organization-request approval now uses a versioned conditional database claim. PENDING, failed retry and abandoned APPROVING recovery paths compare request status, organization linkage, approval version and claim timestamp; only a one-row winner proceeds. Losing administrators receive HTTP 409 without organization, external identity, membership or audit side effects.
+
+Organization creation and request linking commit in one transaction before Supabase is called. Durable claim/progress fields allow a retry to resume the same organization after any failure. Supabase invitation/account behavior is isolated behind an adapter; confirmed or already-existing Auth identities are persisted before the final transaction. Local user, OWNER membership, APPROVED transition and success audit then commit together. Recoverable failures remain APPROVAL_FAILED with safe audit metadata and never reset to PENDING. Rejection also uses an atomic PENDING claim.
+
+Migration `20260729213000_add_organization_approval_progress` adds `approvalClaimId`, `approvalClaimedAt`, `approvalVersion` and `OrganizationApprovalStage`. The disposable PostgreSQL 17 suite passed 16/16 RB-3 cases, including two-admin races, all nine failure boundaries, retries, abandoned claims, provider outcomes, permissions and audit consistency. The complete suite passed 111/111. No real Supabase, SMTP or production service was contacted.
+
+## RB-2 schedule integrity remediation (2026-07-29)
+
+All schedule mutation paths now share one authoritative server transaction domain. Physical occupancy is `[ETB ?? ETA, ETD)` in time and `[position, position + LOA)` in local berth metres. All statuses except CANCELLED participate, strict endpoint touching is allowed, and display origin/heading never change the occupied interval.
+
+Incomplete schedules remain intentional but have no physical occupancy until a berth position and positive vessel LOA are available. A positioned schedule is rejected unless its server-loaded same-organization vessel and berth have positive dimensions, the position is non-negative, and the vessel fits completely.
+
+Physical writes acquire PostgreSQL transaction-scoped advisory locks keyed by active organization and berth. Moves lock old/new berths in deterministic sorted order. Authoritative rows are reloaded after locking; geometry, conflict query, conditional timestamp write and audit then commit together. Every PATCH—including ordinary form/status edits, planner move, resize and undo—requires `expectedUpdatedAt`. Undo claims remain rollback-safe and cannot restore stale or newly conflicting occupancy.
+
+The disposable PostgreSQL 17 suite passed 14/14 RB-2 database scenarios plus the PATCH caller contract test; the complete suite passed 126/126. Prisma validation, TypeScript, lint and production build pass. No schema or migration change was required.
+
 ## Berth Planner Performance Benchmark (development only)
 
 Use the isolated, deterministic dataset only on a local database, or explicitly opt in to an approved remote development database:

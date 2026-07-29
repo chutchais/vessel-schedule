@@ -1,0 +1,52 @@
+name: RB-4 exception controls
+
+on:
+  push:
+    paths:
+      - package.json
+      - package-lock.json
+      - app/**
+      - components/**
+      - lib/**
+      - scripts/verify-rb4-runtime.mjs
+      - scripts/smoke-production.mjs
+      - .github/workflows/rb4-exception-controls.yml
+  pull_request:
+    paths:
+      - package.json
+      - package-lock.json
+      - app/**
+      - components/**
+      - lib/**
+      - scripts/verify-rb4-runtime.mjs
+      - scripts/smoke-production.mjs
+      - .github/workflows/rb4-exception-controls.yml
+  schedule:
+    - cron: "17 2 * * 1"
+  workflow_dispatch:
+
+jobs:
+  verify-runtime-exception:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://build:build@127.0.0.1:1/build
+      DIRECT_URL: postgresql://build:build@127.0.0.1:1/build
+      DATABASE_ENVIRONMENT: local
+      NEXT_PUBLIC_SUPABASE_URL: https://rb4-build.invalid
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: rb4-build-key
+      SUPABASE_SECRET_KEY: rb4-build-secret
+      APP_URL: http://127.0.0.1:3316
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3316
+      PORT: "3316"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm prune --omit=dev --omit=optional
+      - run: npm run verify:rb4-runtime
+      - run: npm run smoke:production

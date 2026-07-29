@@ -16,6 +16,9 @@ interface OrganizationRequestDetail {
   reviewedAt: string | null;
   approvalStartedAt: string | null;
   invitationSentAt: string | null;
+  approvalClaimedAt: string | null;
+  approvalVersion: number;
+  approvalStage: string | null;
   reviewNotes: string | null;
   failureReason: string | null;
   createdAt: string;
@@ -43,9 +46,9 @@ export function OrganizationRequestManager({ request, onClose, onUpdated }: Prop
     reviewNotes: request.reviewNotes || "",
   });
 
-  const canApprove = request.status === "PENDING" || request.status === "APPROVAL_FAILED";
+  const canApprove = request.status === "PENDING";
   const canReject = request.status === "PENDING";
-  const canRetry = request.status === "APPROVAL_FAILED";
+  const canRetry = request.status === "APPROVAL_FAILED" || request.status === "APPROVING";
 
   const handleApprove = async () => {
     setIsProcessing(true);

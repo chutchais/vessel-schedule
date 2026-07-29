@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type State = { status: "LOADING" | "INVALID" | "EXPIRED" | "REVOKED" | "ACCEPTED" | "ACTIVE"; invitedEmail?: string; signedInEmail?: string | null; accountExists?: boolean };
-const statusText: Record<string, string> = { INVALID: "This invitation link is invalid.", EXPIRED: "This invitation has expired.", REVOKED: "This invitation has been revoked or replaced.", ACCEPTED: "This invitation has already been accepted." };
+type State = { status: "LOADING" | "INVALID" | "EXPIRED" | "REVOKED" | "DECLINED" | "ACCEPTED" | "ACTIVE"; invitedEmail?: string; signedInEmail?: string | null; accountExists?: boolean };
+const statusText: Record<string, string> = { INVALID: "This invitation link is invalid.", EXPIRED: "This invitation has expired.", REVOKED: "This invitation has been revoked or replaced.", DECLINED: "This invitation has been declined.", ACCEPTED: "This invitation has already been accepted." };
 
 export function InvitationAcceptance({ token }: { token: string }) {
   const router = useRouter(); const [state, setState] = useState<State>({ status: token ? "LOADING" : "INVALID" }); const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null);

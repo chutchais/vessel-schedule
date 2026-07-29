@@ -1,6 +1,6 @@
-import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
+import { assertDatabaseTarget, formatDatabaseTarget } from "../lib/db/target-guard";
 
 const ORGANIZATION_SLUG = "__berth-planner-performance-test__";
 const ORGANIZATION_NAME = "Berth Planner Performance Test — Generated Data";
@@ -8,14 +8,8 @@ const WEEK_START = new Date("2026-07-27T00:00:00.000Z");
 const WEEK_END = new Date("2026-08-03T00:00:00.000Z");
 
 function assertSafeEnvironment() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not configured");
-  if (process.env.NODE_ENV === "production") throw new Error("EXPLAIN refuses to run when NODE_ENV=production");
-  const host = new URL(url).hostname;
-  const local = host === "localhost" || host === "127.0.0.1" || host === "::1";
-  if (!local && process.env.PLANNER_PERFORMANCE_ALLOW_REMOTE_DEV !== "true") {
-    throw new Error("Refusing a non-local database. Set PLANNER_PERFORMANCE_ALLOW_REMOTE_DEV=true only for an approved development database.");
-  }
+  const target = assertDatabaseTarget({ purpose: "explain" });
+  console.log(formatDatabaseTarget(target));
 }
 
 type ExplainNode = { "Node Type": string; "Actual Total Time"?: number; "Actual Rows"?: number; "Plan Rows"?: number; "Sort Key"?: unknown; Plans?: ExplainNode[] };

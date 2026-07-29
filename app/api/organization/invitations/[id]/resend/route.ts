@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db/prisma";
 import { deliverInvitation } from "@/lib/email/deliver-invitation";
 
 type RouteContext = { params: Promise<{ id: string }> };
+class InvitationReplacementConflict extends Error {}
 
 export async function POST(_request: NextRequest, { params }: RouteContext) {
   try {
@@ -28,9 +29,11 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     const replacement = await prisma.$transaction(async (tx) => {
       const now = new Date();
       const revoked = await tx.organizationInvitation.updateMany({ where: { id, organizationId: currentUser.activeOrganization.id, status: "PENDING", acceptedAt: null, revokedAt: null, expiresAt: { gt: now } }, data: { status: "REVOKED", revokedAt: now, pendingKey: null } });
-      if (revoked.count !== 1) throw new Error("Invitation is no longer pending");
-      const created = await tx.organizationInvitation.create({ data: { organizationId: existing.organizationId, email: existing.email, role: existing.role, pendingKey: `${existing.organizationId}:${existing.email}`, tokenHash, expiresAt: getInvitationExpiry(now), invitedById: currentUser.id, deliveryStatus: "PENDING" } });
-      await createAuditLog(tx, { scope: "ORGANIZATION", organizationId: existing.organizationId, actor: currentUser, action: "RESEND_INVITATION", entityType: "OrganizationInvitation", entityId: created.id, entityName: created.email, beforeData: { id: existing.id, status: existing.status }, afterData: { id: created.id, email: created.email, role: created.role, status: created.status, expiresAt: created.expiresAt }, metadata: { replacedInvitationId: existing.id } });
+      if (revoked.count !== 1) throw new InvitationReplacementConflict();
+      const claimed = await tx.organizationInvitation.findUnique({ where: { id } });
+      if (!claimed) throw new Error("Claimed invitation could not be loaded");
+      const created = await tx.organizationInvitation.create({ data: { organizationId: claimed.organizationId, email: claimed.email, role: claimed.role, pendingKey: `${claimed.organizationId}:${claimed.email}`, tokenHash, expiresAt: getInvitationExpiry(now), invitedById: currentUser.id, deliveryStatus: "PENDING" } });
+      await createAuditLog(tx, { scope: "ORGANIZATION", organizationId: claimed.organizationId, actor: currentUser, action: "RESEND_INVITATION", entityType: "OrganizationInvitation", entityId: created.id, entityName: created.email, beforeData: { id: claimed.id, status: "PENDING" }, afterData: { id: created.id, email: created.email, role: created.role, status: created.status, expiresAt: created.expiresAt }, metadata: { replacedInvitationId: claimed.id } });
       return created;
     });
     const invitationUrl = buildInvitationUrl(token);
@@ -38,6 +41,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ data: { id: replacement.id, expiresAt: replacement.expiresAt, deliveryStatus: delivery.ok ? "SENT" : "FAILED", deliveryFailed: !delivery.ok, invitationUrl } });
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    if (error instanceof InvitationReplacementConflict) return NextResponse.json({ error: "This invitation is no longer active." }, { status: 409 });
     console.error("Invitation replacement failed:", error);
     return NextResponse.json({ error: "Unable to replace invitation" }, { status: 500 });
   }

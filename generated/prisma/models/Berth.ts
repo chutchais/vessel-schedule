@@ -638,14 +638,6 @@ export type EnumZeroOriginSideFieldUpdateOperationsInput = {
   set?: $Enums.ZeroOriginSide
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type BerthCreateNestedOneWithoutSchedulesInput = {
   create?: Prisma.XOR<Prisma.BerthCreateWithoutSchedulesInput, Prisma.BerthUncheckedCreateWithoutSchedulesInput>
   connectOrCreate?: Prisma.BerthCreateOrConnectWithoutSchedulesInput

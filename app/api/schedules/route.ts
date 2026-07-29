@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { canManageSchedules } from "@/lib/auth/permissions";
-import { createAuditLog } from "@/lib/audit/create-audit-log";
-import { AUDIT_ENTITY_TYPES } from "@/lib/audit/entity-types";
-import { formatVesselScheduleAuditEntityName } from "@/lib/audit/entity-name";
 import { prisma } from "@/lib/db/prisma";
+import { createSchedule } from "@/lib/schedules/schedule-mutations";
 
 const SCHEDULE_STATUSES = [
   "PLANNED",
@@ -87,79 +85,6 @@ function serializeSchedule<T extends {
         ? normalized.berthPositionMeters
         : normalized.berthPositionMeters,
   };
-}
-
-function getScheduleEntityName(input: {
-  vesselName: string;
-  serviceCode: string | null;
-  voyageNumber: string | null;
-}) {
-  return formatVesselScheduleAuditEntityName({
-    vesselName: input.vesselName,
-    serviceCode: input.serviceCode,
-    voyageNumber: input.voyageNumber,
-  });
-}
-
-async function hasBerthOverlap(input: {
-  organizationId: string;
-  berthId: string;
-  eta: Date;
-  etb: Date | null;
-  etd: Date;
-  berthPositionMeters: number | null;
-  vesselLoa: number | null;
-  excludeScheduleId?: string;
-}) {
-  const existingSchedules = await prisma.vesselSchedule.findMany({
-    where: {
-      organizationId: input.organizationId,
-      berthId: input.berthId,
-      status: { not: "CANCELLED" },
-      ...(input.excludeScheduleId ? { id: { not: input.excludeScheduleId } } : {}),
-    },
-    select: {
-      eta: true,
-      etb: true,
-      etd: true,
-      berthPositionMeters: true,
-      vessel: {
-        select: { lengthOverall: true },
-      },
-    },
-  });
-
-  const newStart = input.etb ?? input.eta;
-  const newEnd = input.etd;
-  const newPos = input.berthPositionMeters;
-  const newLoa = input.vesselLoa;
-  const newPosEnd = newPos !== null && newLoa !== null && newLoa > 0 ? newPos + newLoa : null;
-
-  return existingSchedules.some((schedule) => {
-    const existingStart = schedule.etb ?? schedule.eta;
-    const existingEnd = schedule.etd;
-    const timeOverlap = newStart < existingEnd && newEnd > existingStart;
-    if (!timeOverlap) return false;
-
-    // If both sides have full position data, require position overlap too
-    const existingPos =
-      schedule.berthPositionMeters !== null ? Number(schedule.berthPositionMeters) : null;
-    const existingLoa =
-      schedule.vessel.lengthOverall !== null ? Number(schedule.vessel.lengthOverall) : null;
-    if (
-      newPos !== null &&
-      newPosEnd !== null &&
-      existingPos !== null &&
-      existingLoa !== null &&
-      existingLoa > 0
-    ) {
-      const existingPosEnd = existingPos + existingLoa;
-      return newPos < existingPosEnd && newPosEnd > existingPos;
-    }
-
-    // Position data missing on either side — fall back to time-only (conservative)
-    return true;
-  });
 }
 
 export async function GET() {
@@ -329,160 +254,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Berth position meters must be an integer" }, { status: 400 });
     }
 
-    const vessel = await prisma.vessel.findFirst({
-      where: { id: vesselId, organizationId },
-      select: { id: true, isActive: true, lengthOverall: true },
-    });
-
-    if (!vessel) {
-      return NextResponse.json({ error: "Vessel not found" }, { status: 404 });
-    }
-
-    if (!vessel.isActive) {
-      return NextResponse.json({ error: "Only active vessels can be selected" }, { status: 400 });
-    }
-
-    const terminal = await prisma.terminal.findFirst({
-      where: { id: terminalId, organizationId },
-      select: { id: true, isActive: true },
-    });
-
-    if (!terminal) {
-      return NextResponse.json({ error: "Terminal not found" }, { status: 404 });
-    }
-
-    if (!terminal.isActive) {
-      return NextResponse.json({ error: "Only active terminals can be selected" }, { status: 400 });
-    }
-
-    if (serviceId) {
-      const service = await prisma.service.findFirst({
-        where: { id: serviceId, organizationId },
-        select: { id: true, isActive: true },
-      });
-
-      if (!service) {
-        return NextResponse.json({ error: "Service not found" }, { status: 404 });
-      }
-
-      if (!service.isActive) {
-        return NextResponse.json({ error: "Only active services can be selected" }, { status: 400 });
-      }
-    }
-
-    if (berthId) {
-      const berth = await prisma.berth.findFirst({
-        where: { id: berthId, organizationId },
-        select: { id: true, terminalId: true, isActive: true },
-      });
-
-      if (!berth) {
-        return NextResponse.json({ error: "Berth not found" }, { status: 404 });
-      }
-
-      if (berth.terminalId !== terminalId) {
-        return NextResponse.json(
-          { error: "The selected berth does not belong to the selected terminal" },
-          { status: 400 },
-        );
-      }
-
-      if (!berth.isActive) {
-        return NextResponse.json({ error: "Only active berths can be selected" }, { status: 400 });
-      }
-
-      const vesselLoa = vessel.lengthOverall !== null ? Number(vessel.lengthOverall) : null;
-      const overlap = await hasBerthOverlap({
-        organizationId,
+    const result = await createSchedule({
+      organizationId,
+      actor: currentUser,
+      data: {
+        vesselId,
+        terminalId,
         berthId,
+        serviceId,
+        voyageNumber: trimOptionalString(body.voyageNumber),
         eta,
         etb,
         etd,
+        ata,
+        atb,
+        atd,
+        status: status as ScheduleStatus,
+        remarks: trimOptionalString(body.remarks),
         berthPositionMeters,
-        vesselLoa,
-      });
-      if (overlap) {
-        return NextResponse.json(
-          { error: "The selected berth already has an overlapping schedule" },
-          { status: 409 },
-        );
-      }
-    }
-
-    const schedule = await prisma.$transaction(async (tx) => {
-      const created = await tx.vesselSchedule.create({
-        data: {
-          organizationId,
-          vesselId,
-          terminalId,
-          berthId,
-          serviceId,
-          voyageNumber: trimOptionalString(body.voyageNumber),
-          eta,
-          etb,
-          etd,
-          ata,
-          atb,
-          atd,
-          status: status as ScheduleStatus,
-          remarks: trimOptionalString(body.remarks),
-          berthPositionMeters,
-          headingReverse,
-        },
-        include: {
-          vessel: {
-            select: { id: true, imo: true, name: true, callSign: true },
-          },
-          terminal: {
-            select: {
-              id: true,
-              code: true,
-              name: true,
-              port: {
-                select: { id: true, code: true, name: true, timezone: true },
-              },
-            },
-          },
-          berth: {
-            select: { id: true, code: true, name: true, color: true, zeroOriginSide: true },
-          },
-          service: {
-            select: {
-              id: true,
-              code: true,
-              name: true,
-              color: true,
-              isActive: true,
-              operatorCompany: { select: { id: true, code: true, name: true } },
-            },
-          },
-        },
-      });
-
-      await createAuditLog(tx, {
-        scope: "ORGANIZATION",
-        organizationId,
-        actor: {
-          id: currentUser.id,
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-        },
-        action: "CREATE",
-        entityType: AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE,
-        entityId: created.id,
-        entityName: getScheduleEntityName({
-          vesselName: created.vessel.name,
-          serviceCode: created.service?.code ?? null,
-          voyageNumber: created.voyageNumber,
-        }),
-        beforeData: null,
-        afterData: created,
-      });
-
-      return created;
+        headingReverse,
+      },
     });
-
-    return NextResponse.json({ data: serializeSchedule(schedule) }, { status: 201 });
+    if (!result.ok) {
+      const statusCode =
+        result.reason === "not_found"
+          ? 404
+          : result.reason === "validation"
+            ? 422
+            : result.reason === "conflict" || result.reason === "retry"
+              ? 409
+              : 500;
+      return NextResponse.json({ error: result.message }, { status: statusCode });
+    }
+    return NextResponse.json({ data: serializeSchedule(result.schedule) }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });

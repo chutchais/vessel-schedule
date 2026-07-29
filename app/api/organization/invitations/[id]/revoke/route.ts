@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCurrentUser } from "@/lib/auth/current-user";
-import { prisma } from "@/lib/db/prisma";
 import { AuthError } from "@/lib/auth/auth-errors";
-import { canManageInvitation } from "@/lib/auth/invitations";
-import { createAuditLog } from "@/lib/audit/create-audit-log";
+import { revokeOrganizationInvitation } from "@/lib/auth/invitation-transitions";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -18,59 +16,31 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
 
     const { id } = await params;
 
-    const invitation = await prisma.organizationInvitation.findUnique({
-      where: { id },
-      select: { id: true, organizationId: true, status: true, role: true, expiresAt: true, acceptedAt: true, revokedAt: true },
+    const result = await revokeOrganizationInvitation({
+      invitationId: id,
+      organizationId: activeOrganization.id,
+      organizationRole: membership.role,
+      actor: {
+        id: currentUser.id,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+      },
     });
-
-    if (!invitation || invitation.organizationId !== activeOrganization.id) {
+    if (!result.ok && result.reason === "not_found") {
       return NextResponse.json({ error: "Invitation not found" }, { status: 404 });
     }
-
-    if (invitation.status !== "PENDING" || invitation.acceptedAt || invitation.revokedAt || invitation.expiresAt <= new Date()) {
-      return NextResponse.json(
-        { error: `Invitation is already ${invitation.status.toLowerCase()}` },
-        { status: 400 },
-      );
-    }
-
-    if (!canManageInvitation(membership.role, invitation.role)) {
+    if (!result.ok && result.reason === "forbidden") {
       return NextResponse.json(
         { error: "You do not have permission to revoke this invitation" },
         { status: 403 },
       );
     }
-
-    await prisma.$transaction(async (tx) => {
-      const beforeInvitation = await tx.organizationInvitation.findUnique({
-        where: { id },
-      });
-
-      if (!beforeInvitation) {
-        throw new Error("Invitation not found during revoke");
-      }
-
-      const updatedInvitation = await tx.organizationInvitation.update({
-        where: { id },
-        data: { status: "REVOKED", revokedAt: new Date(), pendingKey: null },
-      });
-
-      await createAuditLog(tx, {
-        scope: "ORGANIZATION",
-        organizationId: activeOrganization.id,
-        actor: {
-          id: currentUser.id,
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-        },
-        action: "REVOKE_INVITATION",
-        entityType: "OrganizationInvitation",
-        entityId: updatedInvitation.id,
-        entityName: updatedInvitation.email,
-        beforeData: beforeInvitation,
-        afterData: updatedInvitation,
-      });
-    });
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: "This invitation is no longer active." },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

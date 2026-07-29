@@ -1,20 +1,18 @@
-import "dotenv/config";
 import { performance } from "node:perf_hooks";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { buildConflictGroups } from "../lib/berth-planner/conflict-panel";
 import { filterPlannerBerths, EMPTY_OPERATIONAL_FILTERS } from "../lib/berth-planner/operational-filters";
 import type { PlannerBerth } from "../lib/berth-planner/types";
+import { assertDatabaseTarget, formatDatabaseTarget } from "../lib/db/target-guard";
 
 const ORGANIZATION_SLUG = "__berth-planner-performance-test__";
 const WEEK_START = new Date("2026-07-27T00:00:00.000Z");
 const WEEK_END = new Date("2026-08-03T00:00:00.000Z");
 
 function assertSafeEnvironment() {
-  const url = process.env.DATABASE_URL;
-  if (!url || process.env.NODE_ENV === "production") throw new Error("Benchmark requires a non-production DATABASE_URL");
-  const host = new URL(url).hostname;
-  if (!["localhost", "127.0.0.1", "::1"].includes(host) && process.env.PLANNER_PERFORMANCE_ALLOW_REMOTE_DEV !== "true") throw new Error("Set PLANNER_PERFORMANCE_ALLOW_REMOTE_DEV=true only for an approved development database.");
+  const target = assertDatabaseTarget({ purpose: "benchmark" });
+  console.log(formatDatabaseTarget(target));
 }
 
 function median(values: number[]) { return [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]!; }

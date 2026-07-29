@@ -126,6 +126,7 @@ type PlannerUndoAction = {
   scheduleId: string;
   token: string;
   expiresAt: string;
+  expectedUpdatedAt: string;
 };
 
 function parsePlannerBerths(raw: PlannerDataRaw): PlannerBerth[] {
@@ -188,6 +189,7 @@ export function BerthPlannerView() {
   const [editError, setEditError] = useState("");
   const [editForm, setEditForm] = useState<ScheduleFormValues>(INITIAL_CREATE_FORM);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
+  const [editingUpdatedAt, setEditingUpdatedAt] = useState<string | null>(null);
 
   // Conflict panel state (preserved across Position/Datetime domain switches)
   const [selectedConflictId, setSelectedConflictId] = useState<string | null>(null);
@@ -226,11 +228,11 @@ export function BerthPlannerView() {
   const changesContextRef = useRef("");
   const highlightTimersRef = useRef<Map<string, number>>(new Map());
 
-  const showUndoAction = useCallback((scheduleId: string, payload: { undoToken?: string; undoExpiresAt?: string }) => {
-    if (!payload.undoToken || !payload.undoExpiresAt) return;
+  const showUndoAction = useCallback((scheduleId: string, payload: { undoToken?: string; undoExpiresAt?: string; expectedUpdatedAt?: string }) => {
+    if (!payload.undoToken || !payload.undoExpiresAt || !payload.expectedUpdatedAt) return;
     if (undoExpiryTimerRef.current !== null) window.clearTimeout(undoExpiryTimerRef.current);
     setUndoError("");
-    setUndoAction({ scheduleId, token: payload.undoToken, expiresAt: payload.undoExpiresAt });
+    setUndoAction({ scheduleId, token: payload.undoToken, expiresAt: payload.undoExpiresAt, expectedUpdatedAt: payload.expectedUpdatedAt });
     undoExpiryTimerRef.current = window.setTimeout(() => setUndoAction(null), Math.max(0, new Date(payload.undoExpiresAt).getTime() - Date.now()));
   }, []);
 
@@ -747,6 +749,7 @@ export function BerthPlannerView() {
     setIsEditDrawerOpen(false);
     setEditError("");
     setEditingScheduleId(null);
+    setEditingUpdatedAt(null);
     setEditForm(INITIAL_CREATE_FORM);
   }, []);
 
@@ -850,7 +853,7 @@ export function BerthPlannerView() {
         return;
       }
 
-      const patchPayload = await patchRes.json() as { undoToken?: string; undoExpiresAt?: string };
+      const patchPayload = await patchRes.json() as { undoToken?: string; undoExpiresAt?: string; expectedUpdatedAt?: string };
       setIsDragConfirmOpen(false);
       setDragDropPending(null);
       setCreateSuccess("Schedule moved successfully.");
@@ -918,7 +921,7 @@ export function BerthPlannerView() {
           expectedUpdatedAt: resizePending.expectedUpdatedAt,
         }),
       });
-      const body = await patchRes.json().catch(() => ({})) as { error?: string; undoToken?: string; undoExpiresAt?: string };
+      const body = await patchRes.json().catch(() => ({})) as { error?: string; undoToken?: string; undoExpiresAt?: string; expectedUpdatedAt?: string };
       if (!patchRes.ok) {
         setResizeSaveError(body.error ?? "Failed to resize schedule.");
         if (patchRes.status === 409 && (body.error ?? "").toLowerCase().includes("changed")) await refreshPlanner();
@@ -947,7 +950,7 @@ export function BerthPlannerView() {
       const response = await fetch(`/api/schedules/${undoAction.scheduleId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plannerAction: "undo", undoToken: undoAction.token }),
+        body: JSON.stringify({ plannerAction: "undo", undoToken: undoAction.token, expectedUpdatedAt: undoAction.expectedUpdatedAt }),
       });
       const body = await response.json().catch(() => ({})) as { error?: string };
       if (!response.ok) {
@@ -1022,6 +1025,7 @@ export function BerthPlannerView() {
 
     setEditForm(buildEditFormValues(payload.data));
     setEditingScheduleId(scheduleId);
+    setEditingUpdatedAt(payload.data.updatedAt ?? null);
     setCreateSuccess("");
     setIsEditDrawerOpen(true);
   }, [loadCreateData, refreshPlanner]);
@@ -1074,6 +1078,7 @@ export function BerthPlannerView() {
           remarks: editForm.remarks,
           berthPositionMeters: editForm.berthPositionMeters,
           headingReverse: editForm.headingReverse,
+          expectedUpdatedAt: editingUpdatedAt,
         }),
       });
 
@@ -1098,7 +1103,7 @@ export function BerthPlannerView() {
     } finally {
       setEditSaving(false);
     }
-  }, [editingScheduleId, editForm, editFitError, closeEditDrawer, highlightCurrentUserChange, refreshPlanner]);
+  }, [editingScheduleId, editingUpdatedAt, editForm, editFitError, closeEditDrawer, highlightCurrentUserChange, refreshPlanner]);
 
   const handleGridCreateRequest = useCallback(async (draft: {
     berthId: string;

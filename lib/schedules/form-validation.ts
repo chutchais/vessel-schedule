@@ -159,8 +159,8 @@ export function getBerthConflictWarning(input: {
         return newPosition < existingPosEnd && newPositionEnd > existingPos;
       }
 
-      // Position data missing on either side — fall back to time-only (conservative)
-      return true;
+      // Incomplete geometry has no physical occupancy until position and LOA are available.
+      return false;
     });
 
   return overlaps ? "Selected berth has overlapping schedules in this time window." : null;

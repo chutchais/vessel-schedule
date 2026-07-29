@@ -237,6 +237,7 @@ export function ScheduleManager() {
   const [form, setForm] = useState<ScheduleFormValues>(INITIAL_FORM);
   const [initialFormState, setInitialFormState] = useState<ScheduleFormValues>(INITIAL_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingUpdatedAt, setEditingUpdatedAt] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showDiscardChanges, setShowDiscardChanges] = useState(false);
 
@@ -446,6 +447,7 @@ export function ScheduleManager() {
     setForm(INITIAL_FORM);
     setInitialFormState(INITIAL_FORM);
     setEditingId(null);
+    setEditingUpdatedAt(null);
     setDrawerError("");
     setShowDiscardChanges(false);
     setIsDrawerOpen(false);
@@ -468,6 +470,7 @@ export function ScheduleManager() {
     setForm(INITIAL_FORM);
     setInitialFormState(INITIAL_FORM);
     setEditingId(null);
+    setEditingUpdatedAt(null);
     setDrawerError("");
     setPageError("");
     setSuccess("");
@@ -495,6 +498,7 @@ export function ScheduleManager() {
     };
 
     setEditingId(schedule.id);
+    setEditingUpdatedAt(schedule.updatedAt);
     setForm(editForm);
     setInitialFormState(editForm);
     setDrawerError("");
@@ -567,11 +571,13 @@ export function ScheduleManager() {
           remarks: form.remarks,
           berthPositionMeters: form.berthPositionMeters,
           headingReverse: form.headingReverse,
+          ...(editingId ? { expectedUpdatedAt: editingUpdatedAt } : {}),
         }),
       });
 
       const result = (await response.json()) as SchedulesSingleResponse;
       if (!response.ok) {
+        if (response.status === 409) await loadSchedulesOnly();
         throw new Error(result.error || `Failed to ${editingId ? "update" : "create"} schedule`);
       }
 

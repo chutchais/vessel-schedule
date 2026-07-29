@@ -28,6 +28,9 @@ interface OrganizationRequestDetail {
   reviewedAt: string | null;
   approvalStartedAt: string | null;
   invitationSentAt: string | null;
+  approvalClaimedAt: string | null;
+  approvalVersion: number;
+  approvalStage: string | null;
   reviewNotes: string | null;
   failureReason: string | null;
   createdAt: string;

@@ -21,6 +21,16 @@ export const OrganizationRequestStatus = {
 export type OrganizationRequestStatus = (typeof OrganizationRequestStatus)[keyof typeof OrganizationRequestStatus]
 
 
+export const OrganizationApprovalStage = {
+  CLAIMED: 'CLAIMED',
+  ORGANIZATION_LINKED: 'ORGANIZATION_LINKED',
+  AUTH_INVITATION_PENDING: 'AUTH_INVITATION_PENDING',
+  AUTH_IDENTITY_LINKED: 'AUTH_IDENTITY_LINKED'
+} as const
+
+export type OrganizationApprovalStage = (typeof OrganizationApprovalStage)[keyof typeof OrganizationApprovalStage]
+
+
 export const PlatformRole = {
   USER: 'USER',
   SUPER_ADMIN: 'SUPER_ADMIN'

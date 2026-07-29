@@ -1,6 +1,6 @@
-import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, ScheduleStatus, VesselType, ZeroOriginSide } from "../generated/prisma/client";
+import { assertDatabaseTarget, formatDatabaseTarget } from "../lib/db/target-guard";
 
 const ORGANIZATION_SLUG = "__berth-planner-performance-test__";
 const ORGANIZATION_NAME = "Berth Planner Performance Test — Generated Data";
@@ -20,16 +20,8 @@ function parseArgs() {
 }
 
 function assertSafeEnvironment() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not configured");
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Planner performance seed refuses to run when NODE_ENV=production");
-  }
-  const host = new URL(url).hostname;
-  const isLocalDatabase = host === "localhost" || host === "127.0.0.1" || host === "::1";
-  if (!isLocalDatabase && process.env.PLANNER_PERFORMANCE_ALLOW_REMOTE_DEV !== "true") {
-    throw new Error("Refusing a non-local database. Set PLANNER_PERFORMANCE_ALLOW_REMOTE_DEV=true only for an approved development database.");
-  }
+  const target = assertDatabaseTarget({ purpose: "seed" });
+  console.log(formatDatabaseTarget(target));
 }
 
 async function removeGeneratedData(prisma: PrismaClient) {

@@ -53,7 +53,14 @@ export async function POST(request: NextRequest) {
     const invitation = await prisma.$transaction(async (tx) => {
       const now = new Date();
       await tx.organizationInvitation.updateMany({
-        where: { organizationId: activeOrganization.id, email, status: "PENDING" },
+        where: {
+          organizationId: activeOrganization.id,
+          email,
+          status: "PENDING",
+          acceptedAt: null,
+          acceptedById: null,
+          revokedAt: null,
+        },
         data: { status: "REVOKED", revokedAt: now, pendingKey: null },
       });
       const created = await tx.organizationInvitation.create({ data: { organizationId: activeOrganization.id, email, role, pendingKey, tokenHash, expiresAt: getInvitationExpiry(now), invitedById: currentUser.id, deliveryStatus: "PENDING" } });
@@ -79,8 +86,8 @@ export async function GET(request: NextRequest) {
       organizationId: currentUser.activeOrganization.id,
       ...(search ? { email: { contains: search, mode: "insensitive" as const } } : {}),
       ...(view === "active"
-        ? { acceptedAt: null, revokedAt: null, expiresAt: { gt: now } }
-        : { OR: [{ acceptedAt: { not: null } }, { revokedAt: { not: null } }, { expiresAt: { lte: now } }] }),
+        ? { status: "PENDING" as const, acceptedAt: null, revokedAt: null, expiresAt: { gt: now } }
+        : { OR: [{ status: { not: "PENDING" as const } }, { expiresAt: { lte: now } }] }),
     };
     const [total, items] = await Promise.all([
       prisma.organizationInvitation.count({ where }),

@@ -1,3 +1,73 @@
+2026-07-30
+- Closed the RB-4 verification database connection incident and added fail-closed controls
+  - Performed an explicitly approved read-only inspection of the sanitized production target. Migration `20260729213000_add_organization_approval_progress` exists exactly once, completed successfully, matches the repository checksum, has no later migration or stored failure log, and produced the expected enum, columns and index.
+  - Determined that no rollback, repair, manual `_prisma_migrations` edit or compensating migration is required. The incident no longer blocks release.
+  - Removed implicit `.env` loading from `prisma.config.ts`; Prisma now requires explicit `DATABASE_ENVIRONMENT`, `DATABASE_URL`, and `DIRECT_URL`.
+  - Added sanitized target matching/approval guards and guarded migration wrappers. Integration tests, seeds, benchmarks and EXPLAIN reject production targets.
+  - Added five target-guard unit tests covering missing variables, matching local targets, mismatches, forbidden production use and exact remote approval.
+  - Added weekly/change-triggered RB-4 CI enforcement with an exact three-advisory allowlist, 2026-08-28 expiry, pruned-runtime dependency/source checks and production startup smoke testing.
+  - Clarified that PostCSS vulnerabilities remain technically open under accepted risk; they are not marked technically resolved.
+
+2026-07-29
+- Approved the temporary RB-4 PostCSS risk exception
+  - Approval is limited to Next.js 16.2.12's transitive PostCSS 8.4.31 and `GHSA-qx2v-qp2m-jg93`, `GHSA-6g55-p6wh-862q`, and `GHSA-r28c-9q8g-f849`.
+  - Required controls are immutable reviewed builds, no user-controlled CSS/source-map processing, Sharp exclusion, dependency audits on every lockfile change and weekly, and upgrade to the first supported stable Next release containing PostCSS >=8.5.18.
+  - The exception expires no later than 2026-08-28. The PostCSS vulnerabilities remain technically open under accepted risk.
+
+2026-07-29
+- Final RB-4 technical remediation and disposition
+  - Upgraded `prisma`, `@prisma/client`, and `@prisma/adapter-pg` together from 7.9.0 to exact 7.9.1; patched `@prisma/dev`, `find-my-way`, and `valibot` transitives resolve the Prisma audit paths.
+  - Reduced the full audit from 16 findings (15 high, 1 moderate) to 12 high and the normal production audit from 7 findings (6 high, 1 moderate) to 3 high.
+  - Proved a clean 49-package `npm ci --omit=dev --omit=optional` runtime excludes Sharp, Prisma CLI and ESLint. A no-Sharp artifact built, started and served authentication/planner routing, fonts and static assets; weekly PDF export remains covered by the passing suite.
+  - Retained stable Next 16.2.12. Rejected forced Next downgrade, unsupported Sharp 0.35 injection, an unapproved override of Next's exact PostCSS 8.4.31 pin, preview Next and ESLint 10.
+  - Proposed a 30-day non-exploitable PostCSS exception; it was subsequently approved under the exact scope and controls recorded above.
+  - Prisma Client generation/validation, TypeScript, lint, all 126 tests including RB-1/RB-2/RB-3 PostgreSQL suites, production build and no-Sharp production startup pass.
+  - Safety note: a verification migration command omitted the `DIRECT_URL` override and applied existing migration `20260729213000_add_organization_approval_progress` to the configured Supabase database. No compensating action was taken; environment-owner verification is required before release.
+
+2026-07-29
+- Resolved MVP release blocker RB-2: authoritative schedule geometry and serialized occupancy
+  - Centralized schedule create, ordinary edit/status, planner move, resize and undo validation in one server transaction domain.
+  - Defined physical occupancy as strict-overlap time `[ETB ?? ETA, ETD)` and local berth metres `[position, position + LOA)`; CANCELLED and explicitly incomplete records do not claim occupancy.
+  - Added authoritative same-organization berth/vessel geometry validation for positive dimensions, non-negative positions and complete berth fit.
+  - Added organization-and-berth PostgreSQL transaction advisory locks with deterministic old/new berth ordering, bounded lock/transaction timeouts and safe retry responses.
+  - Required `expectedUpdatedAt` for every PATCH caller and made schedule writes conditional by ID, organization and timestamp.
+  - Made undo conflict/stale checks, token consumption, restoration and audit atomic and rollback-safe.
+  - Added 14 real PostgreSQL RB-2 scenarios plus a complete PATCH-caller contract test. The full suite passes 126/126.
+  - No schema migration was needed. RB-4 remains BLOCKED/NOT RESOLVED, so the release recommendation remains NO-GO.
+
+2026-07-29
+- Resolved MVP release blocker RB-3: atomic, recoverable organization approval
+  - Added a versioned PostgreSQL claim and durable approval progress state so only one administrator can start or recover an approval attempt.
+  - Made organization creation and request linking transactional and committed them before Supabase invitation/account work.
+  - Added retry-safe Supabase adapter behavior for successful, failed and already-existing identities without storing provider responses or sensitive values.
+  - Made local owner creation, membership, terminal APPROVED transition and success audit one transaction; recoverable failures retain their organization and write accurate safe audit history.
+  - Made rejection conditionally claim only unlinked PENDING requests, preventing approval/rejection overwrite races.
+  - Added migration `20260729213000_add_organization_approval_progress` and 16 real PostgreSQL concurrency/failure-recovery tests. The full suite passes 111/111.
+  - RB-4 remains BLOCKED/NOT RESOLVED, and the release recommendation remains NO-GO.
+
+2026-07-29
+- Resolved MVP release blocker RB-1: invitation terminal-state concurrency
+  - Added atomic PostgreSQL transaction claims for acceptance, decline and revoke; losing concurrent requests return 409 without membership or audit side effects.
+  - Preserved invited-email, active-organization and Owner/Admin role boundaries; successfully claimed rows are reloaded before audit creation.
+  - Corrected acceptance user/foreign-key ordering with rollback on a lost claim, and stopped using `revokedAt` for declined invitations.
+  - Hardened replacement lost-race behavior while retaining fresh rows/tokens and one-way invalidation of old invitations.
+  - Added real PostgreSQL concurrency coverage for all required races, terminal invariants, tenant isolation, permissions, memberships and audit consistency; RB-1 tests pass 10/10 and the full suite passes 95/95.
+  - Prisma validation, TypeScript, lint and production build pass. No schema, migration, dependency, deployment or production-data change was made.
+
+2026-07-29
+- Investigated RB-4 dependency vulnerability remediation
+  - Reproduced the full audit (15 high, 1 moderate) and npm's production-omit audit (6 high, 1 moderate), then traced every advisory to Next.js, Prisma CLI or ESLint tooling.
+  - Identified Prisma 7.9.1 as a compatible patch for `@prisma/dev` findings.
+  - Confirmed there is no newer stable Next.js release and that the Sharp fix requires the breaking 0.35 line outside Next.js 16.2.12's declared dependency range; PostCSS is also pinned exactly by Next.js.
+  - Stopped before dependency edits as required for a major/transitively unsupported upgrade. RB-4 remains unresolved; package manifests and application behavior are unchanged.
+
+2026-07-29
+- MVP production Step 1 release-readiness and security audit
+  - Added `MVP_RELEASE_CHECKLIST.md` with a NO-GO recommendation, exact release blockers, important findings, verified controls, command results, remediation order and Step 2 database-readiness items.
+  - Prisma validation, TypeScript, lint, all 18 tests and the production build pass.
+  - Dependency audit reports 16 known vulnerabilities (15 high, 1 moderate); invitation/approval concurrency and schedule integrity also remain release blockers.
+  - Audit changed documentation only; no product, authentication, authorization, schema, migration or deployment behavior was modified.
+
 2026-07-29
 - Invitation email delivery and confirmation enforcement
   - Added server-only SMTP invitation delivery with development-safe logging, trusted `APP_URL` links, escaped HTML templates and explicit failed-delivery handling.
