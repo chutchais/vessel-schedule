@@ -1,4 +1,9 @@
 2026-07-29
+- Berth Planner compact landscape controls and Focus Mode
+  - Added measured short-landscape layout handling, compact shell navigation, locally remembered Show/Hide controls, active-filter summary and a single-row primary planner toolbar.
+  - Added application-level Planner Focus Mode with preserved planner state, accessible Exit Focus action, Escape support and responsive canvas recalculation.
+
+2026-07-29
 - Berth Planner tablet, touch and keyboard usability
   - Added intentional touch creation via an explicit Add schedule mode, while preserving desktop grid creation and tap-to-open schedule details.
   - Expanded pen/touch vessel and resize hit targets, retained pointer capture and drag threshold behavior, and prevent scrolling only during an active canvas gesture.

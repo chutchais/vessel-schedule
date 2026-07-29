@@ -123,6 +123,13 @@ Public registration remains disabled. `/invitations/register?token=…` is the o
 ### Berth Planner In-place Mutation Refresh — ✅ complete
 ### Berth Planner Weekly Print/PDF Export — ✅ complete
 ### Berth Planner Tablet, Touch and Keyboard Usability — ✅ complete
+### Berth Planner Compact Landscape and Focus Mode — ✅ complete
+
+**Compact landscape and Focus Mode:**
+- Short landscape viewports (including 1024×768 and 1366×768) use measured dimensions rather than device names to collapse the shell sidebar into the existing mobile navigation and default planner secondary controls to hidden.
+- The always-visible planner toolbar retains terminal, week navigation, domain switch, Show/Hide controls and Focus Mode. Hidden controls preserve filters and show an active-filter count; export, add-schedule and filters remain available through Show controls.
+- Focus Mode is application-level (not browser fullscreen): it hides navigation, heading and nonessential panels, keeps an Exit Focus control, restores the same terminal/week/domain/filter/selection state, announces entry, and exits with Escape when no dialog is active.
+- Canvas resizing continues to use its ResizeObserver after controls, shell or Focus Mode dimensions change. Remaining device testing: verify rotation and focus-toolbar safe-area spacing on physical tablet browsers.
 
 **Tablet interaction behavior:**
 - Verified layout targets: 768×1024, 1024×768, 820×1180 and 1366×768. The seven-day canvas stays visible while controls, filters and the Conflict/Recent Changes panels wrap into reachable columns.

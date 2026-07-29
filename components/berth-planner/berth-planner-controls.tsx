@@ -27,6 +27,10 @@ type BerthPlannerControlsProps = {
   onExportPdf: () => void;
   createMode: boolean;
   onCreateModeChange: () => void;
+  controlsCollapsed: boolean;
+  onToggleControls: () => void;
+  focusMode: boolean;
+  onToggleFocusMode: () => void;
 };
 
 export function BerthPlannerControls({
@@ -47,6 +51,10 @@ export function BerthPlannerControls({
   onExportPdf,
   createMode,
   onCreateModeChange,
+  controlsCollapsed,
+  onToggleControls,
+  focusMode,
+  onToggleFocusMode,
 }: BerthPlannerControlsProps) {
   const weekLabel = portTimezone
     ? formatWeekLabel(weekStart, weekEnd, portTimezone)
@@ -57,12 +65,10 @@ export function BerthPlannerControls({
     : null;
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 sm:px-4">
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2 sm:px-3">
       {/* Terminal selector */}
       <div className="min-w-[180px] flex-1">
-        <label className="mb-1 block text-xs font-medium text-slate-500" htmlFor="planner-terminal">
-          Terminal
-        </label>
+        <label className="sr-only" htmlFor="planner-terminal">Terminal</label>
         <select
           id="planner-terminal"
           value={selectedTerminalId}
@@ -89,7 +95,7 @@ export function BerthPlannerControls({
           ‹
         </button>
 
-        <div className="min-w-[160px] rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+        <div className="hidden min-w-[160px] rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-center sm:block">
           <p className="text-xs font-semibold text-slate-900">{weekLabel}</p>
           {tzLabel && (
             <p className="text-[10px] text-slate-500">{tzLabel}</p>
@@ -114,7 +120,7 @@ export function BerthPlannerControls({
         This Week
       </button>
 
-      <div className="ml-auto inline-flex rounded-md border border-slate-300 bg-white p-0.5">
+      <div className="inline-flex rounded-md border border-slate-300 bg-white p-0.5">
         <button
           type="button"
           onClick={() => onDomainChange("position")}
@@ -134,11 +140,17 @@ export function BerthPlannerControls({
           Datetime
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="ml-auto flex items-center gap-2">
+        <button type="button" onClick={onToggleControls} aria-expanded={!controlsCollapsed} aria-controls="planner-secondary-controls" className="min-h-11 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">{controlsCollapsed ? "Show controls" : "Hide controls"}</button>
+        <button data-focus-exit={focusMode ? "true" : undefined} type="button" onClick={onToggleFocusMode} aria-pressed={focusMode} className="min-h-11 rounded-md border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">{focusMode ? "Exit Focus" : "Focus Mode"}</button>
+      </div>
+      {!controlsCollapsed && (
+      <div id="planner-secondary-controls" className="flex w-full flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
         <button type="button" onClick={onCreateModeChange} aria-pressed={createMode} className={`min-h-11 rounded-md border px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${createMode ? "border-blue-700 bg-blue-50 text-blue-800" : "border-slate-300 text-slate-700 hover:bg-slate-100"}`}>{createMode ? "Add schedule: on" : "Add schedule"}</button>
         <button type="button" onClick={onPrint} disabled={exportDisabled} className="min-h-11 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">{exportProgress === "Printing…" ? exportProgress : "Print"}</button>
         <button type="button" onClick={onExportPdf} disabled={exportDisabled} className="min-h-11 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{exportProgress === "Preparing PDF…" ? exportProgress : "Export PDF"}</button>
       </div>
+      )}
     </div>
   );
 }

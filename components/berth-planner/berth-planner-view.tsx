@@ -49,6 +49,7 @@ import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord, PlannerDomain
 import { highlightForChange, type ChangeHighlight, type PlannerChangeEvent, type PlannerChangesResponse } from "@/lib/berth-planner/realtime";
 import { renderWeeklyExport } from "@/lib/berth-planner/weekly-export";
 import { recordPlannerPerformance, startPlannerPerformance } from "@/lib/berth-planner/performance";
+import { isCompactPlannerLandscape, readControlsCollapsed, writeControlsCollapsed } from "@/lib/berth-planner/planner-layout";
 
 const DEFAULT_TIMEZONE = "UTC";
 
@@ -213,6 +214,9 @@ export function BerthPlannerView() {
   const [exportProgress, setExportProgress] = useState("");
   const [exportError, setExportError] = useState("");
   const [createMode, setCreateMode] = useState(false);
+  const [controlsCollapsed, setControlsCollapsed] = useState(() => readControlsCollapsed(typeof window === "undefined" ? null : window.localStorage));
+  const [compactLandscape, setCompactLandscape] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const plannerRequestRef = useRef(0);
@@ -249,6 +253,39 @@ export function BerthPlannerView() {
     update(); media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    const update = () => setCompactLandscape(isCompactPlannerLandscape(window.innerWidth, window.innerHeight));
+    const observer = new ResizeObserver(update);
+    observer.observe(document.documentElement);
+    update();
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!compactLandscape) return;
+    const timer = window.setTimeout(() => setControlsCollapsed(true), 0);
+    return () => window.clearTimeout(timer);
+  }, [compactLandscape]);
+
+  useEffect(() => {
+    writeControlsCollapsed(window.localStorage, controlsCollapsed);
+  }, [controlsCollapsed]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("planner-focus-mode", { detail: focusMode }));
+    if (focusMode) window.requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-focus-exit='true']")?.focus());
+    return () => { window.dispatchEvent(new CustomEvent("planner-focus-mode", { detail: false })); };
+  }, [focusMode]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || !focusMode || document.querySelector("[role='dialog'][aria-modal='true']")) return;
+      setFocusMode(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [focusMode]);
 
   const isInteractionActive = isCreateDrawerOpen || isEditDrawerOpen || isDragConfirmOpen || Boolean(resizePending) || undoSaving || createSaving || editSaving || isDragSaving || isResizeSaving;
 
@@ -1155,9 +1192,12 @@ export function BerthPlannerView() {
     }
   }, [createForm, fitError, closeCreateDrawer, highlightCurrentUserChange, refreshPlanner]);
 
+  const activeFilterCount = [filters.search, filters.service, filters.status, filters.berthId, filters.conflictsOnly, filters.invalidOnly].filter(Boolean).length;
+
   return (
-    <div className="-mb-6 flex flex-col gap-3">
-      <PageHeader title="Berth Planner" description={headerDescription} />
+    <div className={`${focusMode ? "fixed inset-0 z-40 flex min-h-0 flex-col overflow-hidden bg-slate-100 p-[max(env(safe-area-inset-top),0.5rem)] pb-[max(env(safe-area-inset-bottom),0.5rem)]" : "-mb-6"} flex flex-col gap-3`} aria-live={focusMode ? "polite" : undefined}>
+      {!focusMode && <PageHeader title="Berth Planner" description={headerDescription} />}
+      {focusMode && <span className="sr-only">Planner Focus Mode enabled. Press Escape to exit.</span>}
 
       {createSuccess ? <AlertMessage type="success" message={createSuccess} /> : null}
 
@@ -1179,9 +1219,17 @@ export function BerthPlannerView() {
         onExportPdf={() => exportPlanner("pdf")}
         createMode={createMode}
         onCreateModeChange={() => setCreateMode((current) => !current)}
+        controlsCollapsed={controlsCollapsed}
+        onToggleControls={() => setControlsCollapsed((current) => !current)}
+        focusMode={focusMode}
+        onToggleFocusMode={() => setFocusMode((current) => {
+          const next = !current;
+          if (next) setControlsCollapsed(true);
+          return next;
+        })}
       />
 
-      <OperationalFilterBar
+      {!controlsCollapsed && <OperationalFilterBar
         filters={{ ...filters, conflictsOnly: filters.conflictsOnly || onlyConflicts }}
         searchInput={searchInput}
         serviceOptions={serviceOptions}
@@ -1198,7 +1246,8 @@ export function BerthPlannerView() {
           setFilters(EMPTY_OPERATIONAL_FILTERS);
           setOnlyConflicts(false);
         }}
-      />
+      />}
+      {controlsCollapsed && activeFilterCount > 0 ? <div className="text-xs font-medium text-slate-600" role="status">{activeFilterCount} active filter{activeFilterCount === 1 ? "" : "s"} · Show controls to edit</div> : null}
 
       {filterNotice && <div role="status" className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">{filterNotice}</div>}
       {isRefreshing ? <div role="status" className="text-xs text-slate-500">Updating planner…</div> : null}
@@ -1274,7 +1323,7 @@ export function BerthPlannerView() {
       </div>
 
       {/* Conflict panel — shown whenever a terminal is selected and data is loaded */}
-      {selectedTerminalId && !isLoading && (
+      {selectedTerminalId && !isLoading && !controlsCollapsed && !focusMode && (
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
           <ConflictPanel groups={conflictGroups} selectedConflictId={selectedConflictId} onSelectConflict={handleSelectConflict} onlyConflicts={onlyConflicts} onToggleOnlyConflicts={handleToggleOnlyConflicts} portTimezone={portTimezone} />
           <RecentChangesPanel changes={recentChanges} loading={changesLoading} error={changesError} portTimezone={portTimezone} visibleScheduleIds={visibleScheduleIds} onFocus={(id) => setHighlightedScheduleIds(new Set([id]))} onNotice={setFilterNotice} />
