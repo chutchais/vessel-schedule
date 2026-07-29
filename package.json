@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "bootstrap:super-admin": "tsx scripts/bootstrap-super-admin.ts"
+    "bootstrap:super-admin": "tsx scripts/bootstrap-super-admin.ts",
+    "seed:planner-performance": "tsx scripts/seed-planner-performance.ts",
+    "explain:planner-performance": "tsx scripts/explain-planner-performance.ts",
+    "benchmark:planner-performance": "tsx scripts/benchmark-planner-performance.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.0",

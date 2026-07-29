@@ -42,6 +42,7 @@ import { ScheduleTooltip } from "./schedule-tooltip";
 import { ScheduleDetailsDrawer } from "./schedule-details-drawer";
 import type { ChangeHighlight } from "@/lib/berth-planner/realtime";
 import { shouldClearHiddenSelection } from "@/lib/berth-planner/operational-filters";
+import { recordPlannerPerformance, startPlannerPerformance } from "@/lib/berth-planner/performance";
 import type {
   PlannerBerth,
   ValidatedSchedule,
@@ -373,6 +374,7 @@ export function BerthPlannerCanvas({
   );
 
   const [conflictedIds, conflictPairs] = useMemo<[Set<string>, ConflictPairInfo[]]>(() => {
+    const performanceStartedAt = startPlannerPerformance();
     const ids = new Set<string>();
     const pairs: ConflictPairInfo[] = [];
     for (const { valid } of classifiedBerths) {
@@ -391,6 +393,7 @@ export function BerthPlannerCanvas({
         }
       }
     }
+    recordPlannerPerformance("planner-canvas-conflict-calculation", performanceStartedAt, { schedules: classifiedBerths.reduce((sum, item) => sum + item.valid.length, 0) });
     return [ids, pairs];
   }, [classifiedBerths]);
 
@@ -420,6 +423,7 @@ export function BerthPlannerCanvas({
   }, []);
 
   useEffect(() => {
+    const performanceStartedAt = startPlannerPerformance();
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -1039,6 +1043,7 @@ export function BerthPlannerCanvas({
     } // end else (datetime domain)
 
     hitTargetsRef.current = newHitTargets;
+    recordPlannerPerformance(domain === "position" ? "planner-position-canvas-draw-and-geometry" : "planner-datetime-canvas-draw-and-geometry", performanceStartedAt, { hitTargets: newHitTargets.length, width: canvasWidth, height: canvasHeight });
   }, [
     canvasWidth,
     canvasHeight,
@@ -1071,14 +1076,19 @@ export function BerthPlannerCanvas({
   }, [berths, canvasHeight]);
 
   function findHit(clientX: number, clientY: number): HitTarget | null {
+    const performanceStartedAt = startPlannerPerformance();
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return null;
     const x = clientX - rect.left;
     const y = clientY - rect.top;
     for (let i = hitTargetsRef.current.length - 1; i >= 0; i--) {
       const t = hitTargetsRef.current[i]!;
-      if (isPointInsidePolygon(x, y, t.polygon)) return t;
+      if (isPointInsidePolygon(x, y, t.polygon)) {
+        recordPlannerPerformance("planner-hit-test", performanceStartedAt, { targets: hitTargetsRef.current.length, hit: true });
+        return t;
+      }
     }
+    recordPlannerPerformance("planner-hit-test", performanceStartedAt, { targets: hitTargetsRef.current.length, hit: false });
     return null;
   }
 
@@ -1102,6 +1112,7 @@ export function BerthPlannerCanvas({
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    const performanceStartedAt = startPlannerPerformance();
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = e.clientX - rect.left;
@@ -1129,6 +1140,7 @@ export function BerthPlannerCanvas({
       activeResizeRef.current = next;
       setActiveResize(next);
       setTooltip(null);
+      recordPlannerPerformance("planner-resize-pointer-update", performanceStartedAt, { schedules: otherSchedules.length });
       return;
     }
 
@@ -1154,6 +1166,7 @@ export function BerthPlannerCanvas({
       activeDragRef.current = next;
       setActiveDrag(next);
       setTooltip(null);
+      recordPlannerPerformance("planner-drag-pointer-update", performanceStartedAt, { schedules: otherSchedules.length });
       return;
     }
 

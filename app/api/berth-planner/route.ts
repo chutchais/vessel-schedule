@@ -11,6 +11,7 @@ function serializeDecimal(value: { toNumber(): number } | null): number | null {
 
 export async function GET(request: NextRequest) {
   try {
+    const requestStartedAt = performance.now();
     const currentUser = await requireCurrentUser();
     const organizationId = currentUser.activeOrganization.id;
 
@@ -81,6 +82,7 @@ export async function GET(request: NextRequest) {
     // Fetch schedules that intersect the selected date range.
     // Overlap condition: schedule.eta < rangeEnd AND schedule.etd > rangeStart
     // (uses eta as the "start anchor" for interval overlap to catch all relevant records)
+    const plannerQueryStartedAt = performance.now();
     const schedules = await prisma.vesselSchedule.findMany({
       where: {
         ...buildPlannerScheduleScope({
@@ -128,6 +130,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const plannerQueryDurationMs = performance.now() - plannerQueryStartedAt;
+    const transformStartedAt = performance.now();
     const responseData: PlannerDataRaw = {
       organizationName: currentUser.activeOrganization.name,
       terminalId: terminal.id,
@@ -160,7 +164,11 @@ export async function GET(request: NextRequest) {
       })),
     };
 
-    return NextResponse.json({ data: responseData });
+    const response = NextResponse.json({ data: responseData });
+    if (process.env.NODE_ENV !== "production") {
+      response.headers.set("Server-Timing", `planner-api;dur=${(performance.now() - requestStartedAt).toFixed(2)}, planner-query;dur=${plannerQueryDurationMs.toFixed(2)}, planner-transform;dur=${(performance.now() - transformStartedAt).toFixed(2)}`);
+    }
+    return response;
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });

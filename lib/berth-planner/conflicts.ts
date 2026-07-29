@@ -34,30 +34,46 @@ export function detectConflicts(schedules: ValidatedSchedule[]): {
   conflictedIds: Set<string>;
   pairs: ConflictPair[];
 } {
-  const active = schedules.filter((s) => s.status !== "CANCELLED");
+  const active = schedules
+    .map((schedule, index) => ({ schedule, index }))
+    .filter(({ schedule }) => schedule.status !== "CANCELLED");
   const pairs: ConflictPair[] = [];
   const conflictedIds = new Set<string>();
 
-  for (let i = 0; i < active.length; i++) {
-    for (let j = i + 1; j < active.length; j++) {
-      const a = active[i]!;
-      const b = active[j]!;
+  // A time-ordered active window avoids comparing schedules whose intervals
+  // cannot overlap. The final sort retains the public pair order from the
+  // previous nested-loop implementation.
+  const byStart = [...active].sort((a, b) =>
+    a.schedule.startTime.getTime() - b.schedule.startTime.getTime() || a.index - b.index,
+  );
+  const activeWindow: typeof byStart = [];
+  const orderedPairs: Array<ConflictPair & { firstIndex: number; secondIndex: number }> = [];
 
-      const timeConflict = hasTimeOverlap(a.startTime, a.endTime, b.startTime, b.endTime);
-      const posConflict = hasPositionOverlap(
-        a.positionStart,
-        a.positionEnd,
-        b.positionStart,
-        b.positionEnd,
-      );
-
-      if (timeConflict && posConflict) {
-        pairs.push({ scheduleAId: a.id, scheduleBId: b.id });
-        conflictedIds.add(a.id);
-        conflictedIds.add(b.id);
-      }
+  for (const current of byStart) {
+    for (let index = activeWindow.length - 1; index >= 0; index--) {
+      if (activeWindow[index]!.schedule.endTime <= current.schedule.startTime) activeWindow.splice(index, 1);
     }
+    for (const previous of activeWindow) {
+      if (!hasPositionOverlap(
+        previous.schedule.positionStart,
+        previous.schedule.positionEnd,
+        current.schedule.positionStart,
+        current.schedule.positionEnd,
+      )) continue;
+      conflictedIds.add(previous.schedule.id);
+      conflictedIds.add(current.schedule.id);
+      orderedPairs.push({
+        scheduleAId: previous.index < current.index ? previous.schedule.id : current.schedule.id,
+        scheduleBId: previous.index < current.index ? current.schedule.id : previous.schedule.id,
+        firstIndex: Math.min(previous.index, current.index),
+        secondIndex: Math.max(previous.index, current.index),
+      });
+    }
+    activeWindow.push(current);
   }
+
+  orderedPairs.sort((a, b) => a.firstIndex - b.firstIndex || a.secondIndex - b.secondIndex);
+  for (const { scheduleAId, scheduleBId } of orderedPairs) pairs.push({ scheduleAId, scheduleBId });
 
   return { conflictedIds, pairs };
 }

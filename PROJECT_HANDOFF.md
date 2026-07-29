@@ -1,5 +1,34 @@
 # Vessel Schedule — Project Handoff
 
+## Berth Planner Performance Benchmark (development only)
+
+Use the isolated, deterministic dataset only on a local database, or explicitly opt in to an approved remote development database:
+
+```bash
+npm run seed:planner-performance -- --schedules=100
+npm run seed:planner-performance -- --schedules=500
+npm run seed:planner-performance -- --schedules=1000
+npm run explain:planner-performance
+npm run benchmark:planner-performance
+npm run seed:planner-performance -- --cleanup
+```
+
+`seed:planner-performance` accepts only 100, 500 or 1,000 schedules. It refuses `NODE_ENV=production` and non-local databases unless `PLANNER_PERFORMANCE_ALLOW_REMOTE_DEV=true` is explicitly set. Reseeding removes and recreates only the exact `__berth-planner-performance-test__` generated organization; cleanup has the same scope.
+
+The benchmark uses week `2026-07-27T00:00:00.000Z` through `2026-08-03T00:00:00.000Z`, UTC, eight ordered berths, services, users, normal records, conflicts, incomplete placement/LOA records and week-boundary crossings. It does not create Supabase Auth identities, so browser interaction benchmarks require signing in as a development user who is safely made a member of the generated organization.
+
+Baseline (remote development database; median pure-client timings, query total includes network):
+
+| Schedules | DB plan | Query total | Payload | Transform | Conflict | Filter |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 100 | Index Scan, 0.071 ms | 873.87 ms | 45,904 B | 0.06 ms | 0.59 ms | 0.21 ms |
+| 500 | Index Scan, 0.238 ms | 1,222.03 ms | 225,013 B | 0.28 ms | 7.20 ms | 0.64 ms |
+| 1,000 | Index Scan, 0.454 ms | 1,482.64 ms | 448,954 B | 0.34 ms | 27.48 ms | 0.94 ms |
+
+Optimized median conflict timings were 0.71 ms (100), 2.50 ms (500), and 5.77 ms (1,000), compared with 0.59 ms, 7.20 ms, and 27.48 ms at baseline. The 100-schedule variation is timer noise; the measured optimization changes conflict detection from all-pairs to a time-window scan while preserving pair ordering, reducing the 1,000-schedule result by 79%. No database index was added: `EXPLAIN ANALYZE` selected an Index Scan at every size and did not report a sequential scan or expensive sort.
+
+In development, browser timings stay in the bounded `window.__berthPlannerPerformance` array (last 200 entries) and dispatch `berth-planner-performance` events. They never log in production or include schedule names/IDs. Open the planner on the generated terminal, clear the array, then load it; switch views; search/filter; drag/resize; wait for an unchanged poll then make a schedule change and wait for the next poll; export PDF. The entries cover API/client transform and response size, initial render, conflict calculation, both canvas draw/geometry paths, hit testing, search/filter, view switching, pointer responsiveness, no-change/changed polling, PDF export and available JS heap usage.
+
 ## Tech Stack
 
 * Next.js App Router

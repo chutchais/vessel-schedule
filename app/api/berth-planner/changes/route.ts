@@ -41,6 +41,7 @@ function getString(value: unknown): string | null {
 
 export async function GET(request: NextRequest) {
   try {
+    const requestStartedAt = performance.now();
     const currentUser = await requireCurrentUser();
     const organizationId = currentUser.activeOrganization.id;
     const params = request.nextUrl.searchParams;
@@ -99,11 +100,15 @@ export async function GET(request: NextRequest) {
       });
     }
     const last = ordered.at(-1);
-    return NextResponse.json({
+    const response = NextResponse.json({
       data: events,
       cursor: encodeCursor(last ? { id: last.id, createdAt: last.createdAt.toISOString() } : cursor ?? undefined),
       hasMore: Boolean(cursor && records.length === POLL_BATCH_SIZE),
     });
+    if (process.env.NODE_ENV !== "production") {
+      response.headers.set("Server-Timing", `planner-changes-db-and-transform;dur=${(performance.now() - requestStartedAt).toFixed(2)}`);
+    }
+    return response;
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.statusCode });
     console.error("Failed to load berth planner changes:", error);

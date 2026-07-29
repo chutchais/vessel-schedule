@@ -48,6 +48,7 @@ import {
 import type { PlannerDataRaw, PlannerBerth, InvalidScheduleRecord, PlannerDomain } from "@/lib/berth-planner/types";
 import { highlightForChange, type ChangeHighlight, type PlannerChangeEvent, type PlannerChangesResponse } from "@/lib/berth-planner/realtime";
 import { renderWeeklyExport } from "@/lib/berth-planner/weekly-export";
+import { recordPlannerPerformance, startPlannerPerformance } from "@/lib/berth-planner/performance";
 
 const DEFAULT_TIMEZONE = "UTC";
 
@@ -251,6 +252,7 @@ export function BerthPlannerView() {
   const isInteractionActive = isCreateDrawerOpen || isEditDrawerOpen || isDragConfirmOpen || Boolean(resizePending) || undoSaving || createSaving || editSaving || isDragSaving || isResizeSaving;
 
   const loadPlannerData = useCallback(async (terminalId: string, start: Date, end: Date, preserveCurrentData = false) => {
+    const performanceStartedAt = startPlannerPerformance();
     const requestId = ++plannerRequestRef.current;
     const params = new URLSearchParams({
       terminalId,
@@ -281,6 +283,13 @@ export function BerthPlannerView() {
     const payload = await res.json();
     if (requestId !== plannerRequestRef.current) return;
     const data = payload.data as PlannerDataRaw;
+    if (process.env.NODE_ENV !== "production") {
+      recordPlannerPerformance("planner-api-and-client-transform", performanceStartedAt, {
+        schedules: data.berths.reduce((total, berth) => total + berth.schedules.length, 0),
+        responseBytes: new Blob([JSON.stringify(payload)]).size,
+        serverTiming: res.headers.get("server-timing") ?? "",
+      });
+    }
     const validServices = new Set(data.berths.flatMap((berth) => berth.schedules.map((schedule) => schedule.serviceName).filter(Boolean)));
     const validBerths = new Set(data.berths.map((berth) => berth.id));
     setFilters((current) => ({
@@ -290,6 +299,11 @@ export function BerthPlannerView() {
     }));
     setLoadError(null);
     setPlannerData(data);
+    if (!preserveCurrentData) {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+        recordPlannerPerformance("planner-initial-render", performanceStartedAt, { schedules: data.berths.reduce((total, berth) => total + berth.schedules.length, 0) });
+      }));
+    }
     setIsLoading(false);
   }, []);
 
@@ -344,6 +358,7 @@ export function BerthPlannerView() {
   const loadChanges = useCallback(async (initial = false) => {
     if (!selectedTerminalId || changeRequestRef.current || (!initial && isInteractionActive)) return;
     changeRequestRef.current = true;
+    const performanceStartedAt = startPlannerPerformance();
     if (initial) setChangesLoading(true);
     const params = new URLSearchParams({ terminalId: selectedTerminalId, startDate: weekStart.toISOString(), endDate: weekEnd.toISOString() });
     if (!initial && changeCursorRef.current) params.set("cursor", changeCursorRef.current);
@@ -352,6 +367,10 @@ export function BerthPlannerView() {
       const payload = await response.json() as PlannerChangesResponse & { error?: string };
       if (!response.ok) throw new Error(payload.error ?? "Failed to load recent changes");
       changeCursorRef.current = payload.cursor;
+      recordPlannerPerformance(payload.data.length ? "planner-poll-changed" : "planner-poll-no-change", performanceStartedAt, {
+        events: payload.data.length,
+        serverTiming: response.headers.get("server-timing") ?? "",
+      });
       setChangesError(null);
       if (initial) setRecentChanges(payload.data.slice(-50).reverse());
       else if (payload.data.length) {
@@ -464,6 +483,7 @@ export function BerthPlannerView() {
   }, [urlStateReady, selectedTerminalId, weekStart, portTimezone, domain, filters]);
 
   const handleDomainChange = useCallback((nextDomain: PlannerDomain) => {
+    const performanceStartedAt = startPlannerPerformance();
     setDomain((current) => {
       const switched = switchPlannerDomainPreservingState(
         {
@@ -476,6 +496,7 @@ export function BerthPlannerView() {
       );
       return switched.domain;
     });
+    window.requestAnimationFrame(() => recordPlannerPerformance("planner-view-switch", performanceStartedAt, { domain: nextDomain }));
   }, [selectedTerminalId, weekStart]);
 
   function handleTerminalChange(id: string) {
@@ -534,12 +555,20 @@ export function BerthPlannerView() {
   );
 
   // Conflict groups — computed from domain values, reuses the same engine as the canvas
-  const conflictGroups = useMemo(() => buildConflictGroups(berths), [berths]);
+  const conflictGroups = useMemo(() => {
+    const startedAt = startPlannerPerformance();
+    const groups = buildConflictGroups(berths);
+    recordPlannerPerformance("planner-conflict-calculation", startedAt, { schedules: countSchedules(berths) });
+    return groups;
+  }, [berths]);
   const conflictedScheduleIds = useMemo(() => getConflictedScheduleIds(conflictGroups), [conflictGroups]);
 
   const canvasBerths = useMemo(() => {
+    const startedAt = startPlannerPerformance();
     const effectiveFilters = { ...filters, conflictsOnly: filters.conflictsOnly || onlyConflicts };
-    return filterPlannerBerths({ berths, filters: effectiveFilters, conflictedScheduleIds });
+    const result = filterPlannerBerths({ berths, filters: effectiveFilters, conflictedScheduleIds });
+    recordPlannerPerformance("planner-search-and-filter", startedAt, { schedules: countSchedules(berths), visible: countSchedules(result) });
+    return result;
   }, [berths, filters, onlyConflicts, conflictedScheduleIds]);
   const totalScheduleCount = useMemo(() => countSchedules(berths), [berths]);
   const visibleScheduleCount = useMemo(() => countSchedules(canvasBerths), [canvasBerths]);
@@ -562,6 +591,7 @@ export function BerthPlannerView() {
   const exportPlanner = useCallback((mode: "print" | "pdf") => {
     if (!plannerData || isLoading || isInteractionActive || canvasInteractionActive) return;
     setExportError(""); setExportProgress(mode === "pdf" ? "Preparing PDF…" : "Printing…");
+    const performanceStartedAt = startPlannerPerformance();
     try {
       const pages = renderWeeklyExport({ organizationName: plannerData.organizationName, portName: plannerData.portName, terminalName: plannerData.terminalName, timezone: portTimezone, weekStart, weekEnd, domain, filtersSummary: activeFiltersSummary, berths: canvasBerths });
       // `noopener` makes some browsers return null even when the tab opens, which
@@ -572,6 +602,7 @@ export function BerthPlannerView() {
       popup.document.title = `${plannerData.terminalName} weekly planner`;
       popup.document.write(`<!doctype html><title>${plannerData.terminalName} weekly planner</title><style>@page{size:landscape;margin:8mm}body{margin:0}img{width:100%;display:block;break-after:page;page-break-after:always}img:last-child{break-after:auto;page-break-after:auto}</style>${pages.map((page) => `<img alt="Weekly berth planner page" src="${page.toDataURL("image/png")}">`).join("")}`);
       popup.document.close();
+      recordPlannerPerformance("planner-pdf-export", performanceStartedAt, { pages: pages.length, schedules: countSchedules(canvasBerths), mode });
       window.setTimeout(() => { popup.focus(); popup.print(); setExportProgress(""); }, 250);
     } catch (error) { setExportProgress(""); setExportError(error instanceof Error ? error.message : "Unable to prepare weekly export."); }
   }, [plannerData, isLoading, isInteractionActive, canvasInteractionActive, portTimezone, weekStart, weekEnd, domain, activeFiltersSummary, canvasBerths]);

@@ -1,4 +1,11 @@
 2026-07-29
+- Berth Planner performance benchmark and measured optimization
+  - Added safe, deterministic 100/500/1,000-schedule performance seed, cleanup, EXPLAIN and pure benchmark commands. Generated data is isolated to one clearly named organization and the scripts refuse production and unapproved remote databases.
+  - Added development-only bounded browser performance records for planner API/client transform, initial render, conflicts, both canvas/geometry paths, hit testing, filters, view switching, drag/resize updates, polling, PDF export and available heap usage.
+  - `EXPLAIN ANALYZE` on the generated dataset selected an Index Scan at 100, 500 and 1,000 schedules, so no database migration/index was added.
+  - Replaced measured all-pairs conflict detection with a time-window scan preserving conflict pair order; at 1,000 generated schedules median conflict calculation fell from 27.48 ms to 5.77 ms (79%).
+
+2026-07-29
 - Berth Planner weekly print and PDF export
   - Added filtered, high-resolution landscape export pages for Position and Datetime views with timezone-aware week labels, grids, berth context, vessel silhouettes, conflict markers and repeated legends.
   - Wide terminals now paginate at berth boundaries; exports are disabled while loading or editing, and retain server-authorized active-organization/terminal planner scope.
