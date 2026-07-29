@@ -8,6 +8,7 @@ import { requireCurrentUser } from "@/lib/auth/current-user";
 import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 import { getInvitationState } from "@/lib/auth/invitation-status";
+import { deliverInvitation } from "@/lib/email/deliver-invitation";
 
 const VALID_ROLES = ["ADMIN", "PLANNER", "VIEWER"] as const;
 type InviteRole = (typeof VALID_ROLES)[number];
@@ -38,8 +39,10 @@ export async function POST(request: NextRequest) {
     if (typeof body.role !== "string" || !(VALID_ROLES as readonly string[]).includes(body.role)) return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     const role = body.role as InviteRole;
     if (!canInviteRole(membership.role, role)) return NextResponse.json({ error: "You cannot assign that role" }, { status: 403 });
+    const duplicateLimit = checkInvitationRateLimit(`create-email:${activeOrganization.id}:${email}`, 1, 60 * 1000);
+    if (!duplicateLimit.allowed) return NextResponse.json({ error: "An invitation for this email was just sent. Please wait before trying again.", retryAfterSeconds: duplicateLimit.retryAfterSeconds }, { status: 429 });
 
-    const organization = await prisma.organization.findUnique({ where: { id: activeOrganization.id }, select: { isActive: true } });
+    const organization = await prisma.organization.findUnique({ where: { id: activeOrganization.id }, select: { isActive: true, name: true } });
     if (!organization?.isActive) return NextResponse.json({ error: "Organization is not active" }, { status: 400 });
 
     const member = await prisma.user.findFirst({ where: { email }, select: { memberships: { where: { organizationId: activeOrganization.id, isActive: true }, select: { userId: true } } } });
@@ -53,12 +56,13 @@ export async function POST(request: NextRequest) {
         where: { organizationId: activeOrganization.id, email, status: "PENDING" },
         data: { status: "REVOKED", revokedAt: now, pendingKey: null },
       });
-      const created = await tx.organizationInvitation.create({ data: { organizationId: activeOrganization.id, email, role, pendingKey, tokenHash, expiresAt: getInvitationExpiry(now), invitedById: currentUser.id } });
-      await createAuditLog(tx, { scope: "ORGANIZATION", organizationId: activeOrganization.id, actor: currentUser, action: "INVITE", entityType: "OrganizationInvitation", entityId: created.id, entityName: created.email, afterData: { id: created.id, email: created.email, role: created.role, status: created.status, expiresAt: created.expiresAt }, metadata: { delivery: "copyable_link" } });
+      const created = await tx.organizationInvitation.create({ data: { organizationId: activeOrganization.id, email, role, pendingKey, tokenHash, expiresAt: getInvitationExpiry(now), invitedById: currentUser.id, deliveryStatus: "PENDING" } });
+      await createAuditLog(tx, { scope: "ORGANIZATION", organizationId: activeOrganization.id, actor: currentUser, action: "INVITE", entityType: "OrganizationInvitation", entityId: created.id, entityName: created.email, afterData: { id: created.id, email: created.email, role: created.role, status: created.status, expiresAt: created.expiresAt }, metadata: { delivery: "pending" } });
       return created;
     });
-
-    return NextResponse.json({ data: { id: invitation.id, email: invitation.email, role: invitation.role, status: invitation.status, expiresAt: invitation.expiresAt, invitationUrl: buildInvitationUrl(token) } }, { status: 201 });
+    const invitationUrl = buildInvitationUrl(token);
+    const delivery = await deliverInvitation({ invitationId: invitation.id, email: invitation.email, organizationId: activeOrganization.id, organizationName: organization.name, inviterName: currentUser.displayName, role: invitation.role, expiresAt: invitation.expiresAt, invitationUrl, actor: currentUser });
+    return NextResponse.json({ data: { id: invitation.id, email: invitation.email, role: invitation.role, status: invitation.status, expiresAt: invitation.expiresAt, deliveryStatus: delivery.ok ? "SENT" : "FAILED", deliveryFailed: !delivery.ok, invitationUrl } }, { status: 201 });
   } catch (error) { return jsonError(error); }
 }
 
@@ -80,8 +84,8 @@ export async function GET(request: NextRequest) {
     };
     const [total, items] = await Promise.all([
       prisma.organizationInvitation.count({ where }),
-      prisma.organizationInvitation.findMany({ where, select: { id: true, email: true, role: true, expiresAt: true, acceptedAt: true, revokedAt: true, createdAt: true, invitedBy: { select: { displayName: true } } }, orderBy: { createdAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize }),
+      prisma.organizationInvitation.findMany({ where, select: { id: true, email: true, role: true, expiresAt: true, acceptedAt: true, revokedAt: true, createdAt: true, deliveryStatus: true, deliveryError: true, deliveryFailureCategory: true, deliveryAttemptedAt: true, invitationSentAt: true, invitedBy: { select: { displayName: true } } }, orderBy: { createdAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize }),
     ]);
-    return NextResponse.json({ data: items.map((item) => ({ ...item, status: getInvitationState(item, now), inviterName: item.invitedBy.displayName })), pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
+    return NextResponse.json({ data: items.map((item) => ({ ...item, status: getInvitationState(item, now), inviterName: item.invitedBy.displayName, sentAt: item.invitationSentAt })), pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
   } catch (error) { return jsonError(error); }
 }

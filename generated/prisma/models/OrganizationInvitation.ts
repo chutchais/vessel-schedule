@@ -37,11 +37,13 @@ export type OrganizationInvitationMinAggregateOutputType = {
   authUserId: string | null
   invitedById: string | null
   acceptedById: string | null
+  deliveryAttemptedAt: Date | null
   invitationSentAt: Date | null
   acceptedAt: Date | null
   revokedAt: Date | null
   expiresAt: Date | null
   deliveryError: string | null
+  deliveryFailureCategory: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -59,11 +61,13 @@ export type OrganizationInvitationMaxAggregateOutputType = {
   authUserId: string | null
   invitedById: string | null
   acceptedById: string | null
+  deliveryAttemptedAt: Date | null
   invitationSentAt: Date | null
   acceptedAt: Date | null
   revokedAt: Date | null
   expiresAt: Date | null
   deliveryError: string | null
+  deliveryFailureCategory: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -81,11 +85,13 @@ export type OrganizationInvitationCountAggregateOutputType = {
   authUserId: number
   invitedById: number
   acceptedById: number
+  deliveryAttemptedAt: number
   invitationSentAt: number
   acceptedAt: number
   revokedAt: number
   expiresAt: number
   deliveryError: number
+  deliveryFailureCategory: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -105,11 +111,13 @@ export type OrganizationInvitationMinAggregateInputType = {
   authUserId?: true
   invitedById?: true
   acceptedById?: true
+  deliveryAttemptedAt?: true
   invitationSentAt?: true
   acceptedAt?: true
   revokedAt?: true
   expiresAt?: true
   deliveryError?: true
+  deliveryFailureCategory?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -127,11 +135,13 @@ export type OrganizationInvitationMaxAggregateInputType = {
   authUserId?: true
   invitedById?: true
   acceptedById?: true
+  deliveryAttemptedAt?: true
   invitationSentAt?: true
   acceptedAt?: true
   revokedAt?: true
   expiresAt?: true
   deliveryError?: true
+  deliveryFailureCategory?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -149,11 +159,13 @@ export type OrganizationInvitationCountAggregateInputType = {
   authUserId?: true
   invitedById?: true
   acceptedById?: true
+  deliveryAttemptedAt?: true
   invitationSentAt?: true
   acceptedAt?: true
   revokedAt?: true
   expiresAt?: true
   deliveryError?: true
+  deliveryFailureCategory?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -244,11 +256,13 @@ export type OrganizationInvitationGroupByOutputType = {
   authUserId: string | null
   invitedById: string
   acceptedById: string | null
+  deliveryAttemptedAt: Date | null
   invitationSentAt: Date | null
   acceptedAt: Date | null
   revokedAt: Date | null
   expiresAt: Date
   deliveryError: string | null
+  deliveryFailureCategory: string | null
   createdAt: Date
   updatedAt: Date
   _count: OrganizationInvitationCountAggregateOutputType | null
@@ -287,11 +301,13 @@ export type OrganizationInvitationWhereInput = {
   authUserId?: Prisma.UuidNullableFilter<"OrganizationInvitation"> | string | null
   invitedById?: Prisma.UuidFilter<"OrganizationInvitation"> | string
   acceptedById?: Prisma.UuidNullableFilter<"OrganizationInvitation"> | string | null
+  deliveryAttemptedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   invitationSentAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   acceptedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   expiresAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
   deliveryError?: Prisma.StringNullableFilter<"OrganizationInvitation"> | string | null
+  deliveryFailureCategory?: Prisma.StringNullableFilter<"OrganizationInvitation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
@@ -312,11 +328,13 @@ export type OrganizationInvitationOrderByWithRelationInput = {
   authUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   invitedById?: Prisma.SortOrder
   acceptedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveryAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   invitationSentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   acceptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   deliveryError?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveryFailureCategory?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   organization?: Prisma.OrganizationOrderByWithRelationInput
@@ -340,11 +358,13 @@ export type OrganizationInvitationWhereUniqueInput = Prisma.AtLeast<{
   authUserId?: Prisma.UuidNullableFilter<"OrganizationInvitation"> | string | null
   invitedById?: Prisma.UuidFilter<"OrganizationInvitation"> | string
   acceptedById?: Prisma.UuidNullableFilter<"OrganizationInvitation"> | string | null
+  deliveryAttemptedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   invitationSentAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   acceptedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   expiresAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
   deliveryError?: Prisma.StringNullableFilter<"OrganizationInvitation"> | string | null
+  deliveryFailureCategory?: Prisma.StringNullableFilter<"OrganizationInvitation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
@@ -365,11 +385,13 @@ export type OrganizationInvitationOrderByWithAggregationInput = {
   authUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   invitedById?: Prisma.SortOrder
   acceptedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveryAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   invitationSentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   acceptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   deliveryError?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveryFailureCategory?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrganizationInvitationCountOrderByAggregateInput
@@ -393,11 +415,13 @@ export type OrganizationInvitationScalarWhereWithAggregatesInput = {
   authUserId?: Prisma.UuidNullableWithAggregatesFilter<"OrganizationInvitation"> | string | null
   invitedById?: Prisma.UuidWithAggregatesFilter<"OrganizationInvitation"> | string
   acceptedById?: Prisma.UuidNullableWithAggregatesFilter<"OrganizationInvitation"> | string | null
+  deliveryAttemptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"OrganizationInvitation"> | Date | string | null
   invitationSentAt?: Prisma.DateTimeNullableWithAggregatesFilter<"OrganizationInvitation"> | Date | string | null
   acceptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"OrganizationInvitation"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"OrganizationInvitation"> | Date | string | null
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"OrganizationInvitation"> | Date | string
   deliveryError?: Prisma.StringNullableWithAggregatesFilter<"OrganizationInvitation"> | string | null
+  deliveryFailureCategory?: Prisma.StringNullableWithAggregatesFilter<"OrganizationInvitation"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OrganizationInvitation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"OrganizationInvitation"> | Date | string
 }
@@ -412,11 +436,13 @@ export type OrganizationInvitationCreateInput = {
   pendingKey?: string | null
   tokenHash: string
   authUserId?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutInvitationsInput
@@ -437,11 +463,13 @@ export type OrganizationInvitationUncheckedCreateInput = {
   authUserId?: string | null
   invitedById: string
   acceptedById?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -456,11 +484,13 @@ export type OrganizationInvitationUpdateInput = {
   pendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutInvitationsNestedInput
@@ -481,11 +511,13 @@ export type OrganizationInvitationUncheckedUpdateInput = {
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitedById?: Prisma.StringFieldUpdateOperationsInput | string
   acceptedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -503,11 +535,13 @@ export type OrganizationInvitationCreateManyInput = {
   authUserId?: string | null
   invitedById: string
   acceptedById?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -522,11 +556,13 @@ export type OrganizationInvitationUpdateManyMutationInput = {
   pendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -544,11 +580,13 @@ export type OrganizationInvitationUncheckedUpdateManyInput = {
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitedById?: Prisma.StringFieldUpdateOperationsInput | string
   acceptedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -576,11 +614,13 @@ export type OrganizationInvitationCountOrderByAggregateInput = {
   authUserId?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
   acceptedById?: Prisma.SortOrder
+  deliveryAttemptedAt?: Prisma.SortOrder
   invitationSentAt?: Prisma.SortOrder
   acceptedAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   deliveryError?: Prisma.SortOrder
+  deliveryFailureCategory?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -598,11 +638,13 @@ export type OrganizationInvitationMaxOrderByAggregateInput = {
   authUserId?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
   acceptedById?: Prisma.SortOrder
+  deliveryAttemptedAt?: Prisma.SortOrder
   invitationSentAt?: Prisma.SortOrder
   acceptedAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   deliveryError?: Prisma.SortOrder
+  deliveryFailureCategory?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -620,11 +662,13 @@ export type OrganizationInvitationMinOrderByAggregateInput = {
   authUserId?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
   acceptedById?: Prisma.SortOrder
+  deliveryAttemptedAt?: Prisma.SortOrder
   invitationSentAt?: Prisma.SortOrder
   acceptedAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   deliveryError?: Prisma.SortOrder
+  deliveryFailureCategory?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -773,11 +817,13 @@ export type OrganizationInvitationCreateWithoutOrganizationInput = {
   pendingKey?: string | null
   tokenHash: string
   authUserId?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy: Prisma.UserCreateNestedOneWithoutSentOrganizationInvitationsInput
@@ -796,11 +842,13 @@ export type OrganizationInvitationUncheckedCreateWithoutOrganizationInput = {
   authUserId?: string | null
   invitedById: string
   acceptedById?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -847,11 +895,13 @@ export type OrganizationInvitationScalarWhereInput = {
   authUserId?: Prisma.UuidNullableFilter<"OrganizationInvitation"> | string | null
   invitedById?: Prisma.UuidFilter<"OrganizationInvitation"> | string
   acceptedById?: Prisma.UuidNullableFilter<"OrganizationInvitation"> | string | null
+  deliveryAttemptedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   invitationSentAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   acceptedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableFilter<"OrganizationInvitation"> | Date | string | null
   expiresAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
   deliveryError?: Prisma.StringNullableFilter<"OrganizationInvitation"> | string | null
+  deliveryFailureCategory?: Prisma.StringNullableFilter<"OrganizationInvitation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"OrganizationInvitation"> | Date | string
 }
@@ -866,11 +916,13 @@ export type OrganizationInvitationCreateWithoutInvitedByInput = {
   pendingKey?: string | null
   tokenHash: string
   authUserId?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutInvitationsInput
@@ -889,11 +941,13 @@ export type OrganizationInvitationUncheckedCreateWithoutInvitedByInput = {
   tokenHash: string
   authUserId?: string | null
   acceptedById?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -918,11 +972,13 @@ export type OrganizationInvitationCreateWithoutAcceptedByInput = {
   pendingKey?: string | null
   tokenHash: string
   authUserId?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   organization: Prisma.OrganizationCreateNestedOneWithoutInvitationsInput
@@ -941,11 +997,13 @@ export type OrganizationInvitationUncheckedCreateWithoutAcceptedByInput = {
   tokenHash: string
   authUserId?: string | null
   invitedById: string
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1004,11 +1062,13 @@ export type OrganizationInvitationCreateManyOrganizationInput = {
   authUserId?: string | null
   invitedById: string
   acceptedById?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1023,11 +1083,13 @@ export type OrganizationInvitationUpdateWithoutOrganizationInput = {
   pendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneRequiredWithoutSentOrganizationInvitationsNestedInput
@@ -1046,11 +1108,13 @@ export type OrganizationInvitationUncheckedUpdateWithoutOrganizationInput = {
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitedById?: Prisma.StringFieldUpdateOperationsInput | string
   acceptedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1067,11 +1131,13 @@ export type OrganizationInvitationUncheckedUpdateManyWithoutOrganizationInput = 
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitedById?: Prisma.StringFieldUpdateOperationsInput | string
   acceptedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1088,11 +1154,13 @@ export type OrganizationInvitationCreateManyInvitedByInput = {
   tokenHash: string
   authUserId?: string | null
   acceptedById?: string | null
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1109,11 +1177,13 @@ export type OrganizationInvitationCreateManyAcceptedByInput = {
   tokenHash: string
   authUserId?: string | null
   invitedById: string
+  deliveryAttemptedAt?: Date | string | null
   invitationSentAt?: Date | string | null
   acceptedAt?: Date | string | null
   revokedAt?: Date | string | null
   expiresAt: Date | string
   deliveryError?: string | null
+  deliveryFailureCategory?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1128,11 +1198,13 @@ export type OrganizationInvitationUpdateWithoutInvitedByInput = {
   pendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutInvitationsNestedInput
@@ -1151,11 +1223,13 @@ export type OrganizationInvitationUncheckedUpdateWithoutInvitedByInput = {
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1172,11 +1246,13 @@ export type OrganizationInvitationUncheckedUpdateManyWithoutInvitedByInput = {
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   acceptedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1191,11 +1267,13 @@ export type OrganizationInvitationUpdateWithoutAcceptedByInput = {
   pendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutInvitationsNestedInput
@@ -1214,11 +1292,13 @@ export type OrganizationInvitationUncheckedUpdateWithoutAcceptedByInput = {
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitedById?: Prisma.StringFieldUpdateOperationsInput | string
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1235,11 +1315,13 @@ export type OrganizationInvitationUncheckedUpdateManyWithoutAcceptedByInput = {
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
   authUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitedById?: Prisma.StringFieldUpdateOperationsInput | string
+  deliveryAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitationSentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveryError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryFailureCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1259,11 +1341,13 @@ export type OrganizationInvitationSelect<ExtArgs extends runtime.Types.Extension
   authUserId?: boolean
   invitedById?: boolean
   acceptedById?: boolean
+  deliveryAttemptedAt?: boolean
   invitationSentAt?: boolean
   acceptedAt?: boolean
   revokedAt?: boolean
   expiresAt?: boolean
   deliveryError?: boolean
+  deliveryFailureCategory?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
@@ -1284,11 +1368,13 @@ export type OrganizationInvitationSelectCreateManyAndReturn<ExtArgs extends runt
   authUserId?: boolean
   invitedById?: boolean
   acceptedById?: boolean
+  deliveryAttemptedAt?: boolean
   invitationSentAt?: boolean
   acceptedAt?: boolean
   revokedAt?: boolean
   expiresAt?: boolean
   deliveryError?: boolean
+  deliveryFailureCategory?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
@@ -1309,11 +1395,13 @@ export type OrganizationInvitationSelectUpdateManyAndReturn<ExtArgs extends runt
   authUserId?: boolean
   invitedById?: boolean
   acceptedById?: boolean
+  deliveryAttemptedAt?: boolean
   invitationSentAt?: boolean
   acceptedAt?: boolean
   revokedAt?: boolean
   expiresAt?: boolean
   deliveryError?: boolean
+  deliveryFailureCategory?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
@@ -1334,16 +1422,18 @@ export type OrganizationInvitationSelectScalar = {
   authUserId?: boolean
   invitedById?: boolean
   acceptedById?: boolean
+  deliveryAttemptedAt?: boolean
   invitationSentAt?: boolean
   acceptedAt?: boolean
   revokedAt?: boolean
   expiresAt?: boolean
   deliveryError?: boolean
+  deliveryFailureCategory?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OrganizationInvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "email" | "displayName" | "role" | "status" | "deliveryStatus" | "pendingKey" | "tokenHash" | "authUserId" | "invitedById" | "acceptedById" | "invitationSentAt" | "acceptedAt" | "revokedAt" | "expiresAt" | "deliveryError" | "createdAt" | "updatedAt", ExtArgs["result"]["organizationInvitation"]>
+export type OrganizationInvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "email" | "displayName" | "role" | "status" | "deliveryStatus" | "pendingKey" | "tokenHash" | "authUserId" | "invitedById" | "acceptedById" | "deliveryAttemptedAt" | "invitationSentAt" | "acceptedAt" | "revokedAt" | "expiresAt" | "deliveryError" | "deliveryFailureCategory" | "createdAt" | "updatedAt", ExtArgs["result"]["organizationInvitation"]>
 export type OrganizationInvitationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   invitedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1380,11 +1470,13 @@ export type $OrganizationInvitationPayload<ExtArgs extends runtime.Types.Extensi
     authUserId: string | null
     invitedById: string
     acceptedById: string | null
+    deliveryAttemptedAt: Date | null
     invitationSentAt: Date | null
     acceptedAt: Date | null
     revokedAt: Date | null
     expiresAt: Date
     deliveryError: string | null
+    deliveryFailureCategory: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["organizationInvitation"]>
@@ -1825,11 +1917,13 @@ export interface OrganizationInvitationFieldRefs {
   readonly authUserId: Prisma.FieldRef<"OrganizationInvitation", 'String'>
   readonly invitedById: Prisma.FieldRef<"OrganizationInvitation", 'String'>
   readonly acceptedById: Prisma.FieldRef<"OrganizationInvitation", 'String'>
+  readonly deliveryAttemptedAt: Prisma.FieldRef<"OrganizationInvitation", 'DateTime'>
   readonly invitationSentAt: Prisma.FieldRef<"OrganizationInvitation", 'DateTime'>
   readonly acceptedAt: Prisma.FieldRef<"OrganizationInvitation", 'DateTime'>
   readonly revokedAt: Prisma.FieldRef<"OrganizationInvitation", 'DateTime'>
   readonly expiresAt: Prisma.FieldRef<"OrganizationInvitation", 'DateTime'>
   readonly deliveryError: Prisma.FieldRef<"OrganizationInvitation", 'String'>
+  readonly deliveryFailureCategory: Prisma.FieldRef<"OrganizationInvitation", 'String'>
   readonly createdAt: Prisma.FieldRef<"OrganizationInvitation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"OrganizationInvitation", 'DateTime'>
 }

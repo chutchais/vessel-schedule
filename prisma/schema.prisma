@@ -48,8 +48,9 @@ enum OrganizationInvitationStatus {
 }
 
 enum InvitationDeliveryStatus {
-  NOT_ATTEMPTED
+  PENDING
   SENT
+  // Kept for records created before copyable-link delivery was introduced.
   EXISTING_ACCOUNT
   FAILED
 }
@@ -66,6 +67,7 @@ enum AuditAction {
   DEACTIVATE
   INVITE
   RESEND_INVITATION
+  INVITATION_DELIVERY_FAILED
   REVOKE_INVITATION
   ACCEPT_INVITATION
   DECLINE_INVITATION
@@ -204,7 +206,7 @@ model OrganizationInvitation {
   role        OrganizationRole
 
   status         OrganizationInvitationStatus @default(PENDING)
-  deliveryStatus InvitationDeliveryStatus     @default(NOT_ATTEMPTED)
+  deliveryStatus InvitationDeliveryStatus     @default(PENDING)
 
   pendingKey String? @unique @db.VarChar(300)
   tokenHash  String  @unique @db.Char(64)
@@ -217,12 +219,14 @@ model OrganizationInvitation {
   acceptedById String? @db.Uuid
   acceptedBy   User?   @relation("OrganizationInvitationAcceptor", fields: [acceptedById], references: [id], onDelete: SetNull)
 
-  invitationSentAt DateTime?
-  acceptedAt       DateTime?
-  revokedAt        DateTime?
-  expiresAt        DateTime
+  deliveryAttemptedAt DateTime?
+  invitationSentAt    DateTime?
+  acceptedAt          DateTime?
+  revokedAt           DateTime?
+  expiresAt           DateTime
 
-  deliveryError String? @db.VarChar(500)
+  deliveryError           String? @db.VarChar(500)
+  deliveryFailureCategory String? @db.VarChar(80)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     if (authError || !authUser) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     const email = normalizeEmail(authUser.email ?? "");
     if (!email) return NextResponse.json({ error: INVALID_INVITATION }, { status: 400 });
+    if (!authUser.email_confirmed_at) return NextResponse.json({ error: "Confirm the invited email address before accepting this invitation." }, { status: 403 });
 
     const result = await prisma.$transaction(async (tx) => {
       const invitation = await tx.organizationInvitation.findUnique({ where: { tokenHash }, include: { organization: { select: { id: true, slug: true, isActive: true } } } });

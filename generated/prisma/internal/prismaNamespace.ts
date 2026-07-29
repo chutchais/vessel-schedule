@@ -1663,11 +1663,13 @@ export const OrganizationInvitationScalarFieldEnum = {
   authUserId: 'authUserId',
   invitedById: 'invitedById',
   acceptedById: 'acceptedById',
+  deliveryAttemptedAt: 'deliveryAttemptedAt',
   invitationSentAt: 'invitationSentAt',
   acceptedAt: 'acceptedAt',
   revokedAt: 'revokedAt',
   expiresAt: 'expiresAt',
   deliveryError: 'deliveryError',
+  deliveryFailureCategory: 'deliveryFailureCategory',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

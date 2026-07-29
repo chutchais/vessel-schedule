@@ -1,4 +1,10 @@
 2026-07-29
+- Invitation email delivery and confirmation enforcement
+  - Added server-only SMTP invitation delivery with development-safe logging, trusted `APP_URL` links, escaped HTML templates and explicit failed-delivery handling.
+  - Pending invitations now show delivery status and allow resend/retry by creating a new invalidating link; delivery metadata retains only safe timestamps/categories.
+  - Invitation acceptance now requires Supabase-confirmed control of the invited email; new accounts continue through the existing single confirmation flow.
+
+2026-07-29
 - Berth Planner compact landscape controls and Focus Mode
   - Added measured short-landscape layout handling, compact shell navigation, locally remembered Show/Hide controls, active-filter summary and a single-row primary planner toolbar.
   - Added application-level Planner Focus Mode with preserved planner state, accessible Exit Focus action, Escape support and responsive canvas recalculation.

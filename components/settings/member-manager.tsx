@@ -524,14 +524,14 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
           role: inviteRole,
         }),
       });
-      const body = (await res.json()) as { data?: { invitationUrl?: string }; error?: string };
+      const body = (await res.json()) as { data?: { invitationUrl?: string; deliveryFailed?: boolean }; error?: string };
       if (!res.ok) {
         setInviteError(body.error ?? "Failed to send invitation");
         return;
       }
       setInvitationUrl(body.data?.invitationUrl ?? null);
       setCopyState("idle");
-      setInviteSuccess("Invitation link created. Copy it now; it will not be shown again.");
+      setInviteSuccess(body.data?.deliveryFailed ? "Invitation created, but email delivery failed. Copy the link now and retry delivery from the invitation list." : "Invitation email sent. Copy the link now as a backup; it will not be shown again.");
       setInviteEmail("");
       setInviteDisplayName("");
       setInviteRole("");
@@ -575,7 +575,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
     setProcessing(true);
     try {
       const res = await fetch(`/api/organization/invitations/${id}/resend`, { method: "POST" });
-      const body = (await res.json()) as { data?: { invitationUrl?: string }; error?: string };
+      const body = (await res.json()) as { data?: { invitationUrl?: string; deliveryFailed?: boolean }; error?: string };
       if (!res.ok) {
         setActionError(body.error ?? "Failed to resend");
         return;
@@ -592,7 +592,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
       } else {
         setCopyState(copyAfterCreating ? "unavailable" : "idle");
       }
-      setInviteSuccess("Replacement link created. The previous link no longer works.");
+      setInviteSuccess(body.data?.deliveryFailed ? "Replacement link created, but email delivery failed. Copy the link now and retry from the invitation list." : "Replacement invitation email sent. The previous link no longer works.");
       void loadInvitations();
     } catch {
       setActionError("Failed to resend invitation");
@@ -701,7 +701,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                {["Email", "Role", "Status", "Invited by", "Created", "Expires", "Actions"].map((h) => (
+                {["Email", "Role", "Status", "Delivery", "Invited by", "Created", "Expires", "Actions"].map((h) => (
                   <th key={h} className="px-4 py-3 text-left font-semibold">{h}</th>
                 ))}
               </tr>
@@ -709,7 +709,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
             <tbody className="divide-y divide-slate-100">
               {invitations.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                     {historyVisible ? "No invitation history found" : "No active pending invitations"}
                   </td>
                 </tr>
@@ -726,6 +726,12 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
                       {inv.status}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-xs">
+                    <span className={`rounded-full px-2 py-0.5 font-medium ${inv.deliveryStatus === "SENT" ? "bg-green-100 text-green-700" : inv.deliveryStatus === "FAILED" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
+                      {inv.deliveryStatus === "SENT" ? "Sent" : inv.deliveryStatus === "FAILED" ? "Failed" : inv.deliveryStatus === "EXISTING_ACCOUNT" ? "Existing account" : "Pending"}
+                    </span>
+                    {inv.deliveryStatus === "FAILED" && inv.deliveryError && <p className="mt-1 max-w-44 text-slate-500">{inv.deliveryError}</p>}
+                  </td>
                   <td className="px-4 py-3 text-slate-500">{inv.inviterName}</td>
                   <td className="px-4 py-3 text-xs text-slate-400">{new Date(inv.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-xs text-slate-400">
@@ -739,8 +745,13 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
                           disabled={processing}
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-60"
                         >
-                          Replace link
+                          Resend invitation
                         </button>
+                        {inv.deliveryStatus === "FAILED" && (
+                          <button onClick={() => void handleResend(inv.id)} disabled={processing} className="rounded-md border border-amber-300 px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-60">
+                            Retry delivery
+                          </button>
+                        )}
                         <button
                           onClick={() => void handleResend(inv.id, true)}
                           disabled={processing}

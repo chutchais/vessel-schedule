@@ -92,6 +92,14 @@ Public registration remains disabled. `/invitations/register?token=…` is the o
 
 `proxy.ts` must keep `/invitations/accept`, `/invitations/register`, and `/api/invitations/accept` public. When redirecting other protected URLs to login, preserve both pathname and query string.
 
+## Invitation email delivery
+
+Organization invitation emails use the server-only SMTP abstraction in `lib/email/`. Set `APP_URL` to the trusted canonical origin plus `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD` and `EMAIL_FROM` in production. SMTP variables are never client-exposed. Development with no SMTP configuration deliberately logs only recipient, subject and message type.
+
+Invitations remain valid and their one-time copyable URL is returned once even if email delivery fails. Delivery state is `Pending`, `Sent` or `Failed`, with a safe failure category and attempt timestamp. Resend/Retry always creates a replacement invitation with a newly generated token, invalidating the previous link. Never log or persist the raw token.
+
+New invited accounts use the existing Supabase confirmation email; acceptance requires `email_confirmed_at`. This is the sole account-email verification flow. Existing verified users do not repeat verification.
+
 ## Completed Modules
 
 ### Infrastructure
