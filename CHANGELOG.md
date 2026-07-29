@@ -1,4 +1,10 @@
 2026-07-29
+- Berth Planner tablet, touch and keyboard usability
+  - Added intentional touch creation via an explicit Add schedule mode, while preserving desktop grid creation and tap-to-open schedule details.
+  - Expanded pen/touch vessel and resize hit targets, retained pointer capture and drag threshold behavior, and prevent scrolling only during an active canvas gesture.
+  - Made planner controls, filters, confirmations, conflict navigation and responsive side panels fit tablet viewports with reachable actions and an accessible schedule-list alternative.
+
+2026-07-29
 - Berth Planner performance benchmark and measured optimization
   - Added safe, deterministic 100/500/1,000-schedule performance seed, cleanup, EXPLAIN and pure benchmark commands. Generated data is isolated to one clearly named organization and the scripts refuse production and unapproved remote databases.
   - Added development-only bounded browser performance records for planner API/client transform, initial render, conflicts, both canvas/geometry paths, hit testing, filters, view switching, drag/resize updates, polling, PDF export and available heap usage.

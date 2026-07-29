@@ -212,6 +212,7 @@ export function BerthPlannerView() {
   const [canvasInteractionActive, setCanvasInteractionActive] = useState(false);
   const [exportProgress, setExportProgress] = useState("");
   const [exportError, setExportError] = useState("");
+  const [createMode, setCreateMode] = useState(false);
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const plannerRequestRef = useRef(0);
@@ -393,7 +394,8 @@ export function BerthPlannerView() {
     if (!selectedTerminalId || changesContextRef.current === context) return;
     changesContextRef.current = context;
     changeCursorRef.current = null; setRecentChanges([]); setRecentHighlights(new Map());
-    if (selectedTerminalId) void loadChanges(true);
+    const timer = window.setTimeout(() => void loadChanges(true), 0);
+    return () => window.clearTimeout(timer);
   }, [selectedTerminalId, weekStart, weekEnd, loadChanges]);
 
   useEffect(() => {
@@ -1067,6 +1069,7 @@ export function BerthPlannerView() {
     plannedStartTime: Date;
   }) => {
     setCreateSuccess("");
+    setCreateMode(false);
     await loadCreateData();
 
     const startInput = toDateTimeLocalValueInTimezone(draft.plannedStartTime, portTimezone);
@@ -1174,6 +1177,8 @@ export function BerthPlannerView() {
         exportProgress={exportProgress}
         onPrint={() => exportPlanner("print")}
         onExportPdf={() => exportPlanner("pdf")}
+        createMode={createMode}
+        onCreateModeChange={() => setCreateMode((current) => !current)}
       />
 
       <OperationalFilterBar
@@ -1205,7 +1210,7 @@ export function BerthPlannerView() {
       )}
       {exportError ? <AlertMessage type="error" message={exportError} /> : null}
 
-      <div ref={canvasWrapperRef} className="flex-1">
+      <div ref={canvasWrapperRef} className="min-w-0 flex-1">
         {isLoading ? (
           <div className="flex items-center justify-center rounded-lg border border-slate-200 bg-white py-16">
             <p className="text-sm text-slate-500">Loading planner data…</p>
@@ -1262,6 +1267,7 @@ export function BerthPlannerView() {
               onDragDropRequest={handleDragDropRequest}
               onDurationResizeRequest={handleDurationResizeRequest}
               onInteractionChange={setCanvasInteractionActive}
+              createMode={createMode}
             />
           </>
         )}
@@ -1269,7 +1275,7 @@ export function BerthPlannerView() {
 
       {/* Conflict panel — shown whenever a terminal is selected and data is loaded */}
       {selectedTerminalId && !isLoading && (
-        <div className="grid gap-3 xl:grid-cols-2">
+        <div className="grid min-w-0 gap-3 lg:grid-cols-2">
           <ConflictPanel groups={conflictGroups} selectedConflictId={selectedConflictId} onSelectConflict={handleSelectConflict} onlyConflicts={onlyConflicts} onToggleOnlyConflicts={handleToggleOnlyConflicts} portTimezone={portTimezone} />
           <RecentChangesPanel changes={recentChanges} loading={changesLoading} error={changesError} portTimezone={portTimezone} visibleScheduleIds={visibleScheduleIds} onFocus={(id) => setHighlightedScheduleIds(new Set([id]))} onNotice={setFilterNotice} />
         </div>

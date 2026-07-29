@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { formatDateTime } from "@/lib/berth-planner/timezone";
 
 export type DragConfirmDialogProps = {
@@ -37,17 +38,26 @@ export function DragConfirmDialog({
   onConfirm,
   onCancel,
 }: DragConfirmDialogProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSaving) onCancel();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isOpen, isSaving, onCancel]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center" role="presentation">
+      <div role="dialog" aria-modal="true" aria-labelledby="drag-confirm-title" className="max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl">
         <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Confirm Vessel Move</h2>
+          <h2 id="drag-confirm-title" className="text-base font-semibold text-slate-900">Confirm Vessel Move</h2>
           <p className="mt-0.5 text-sm text-slate-500">{vesselName}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 px-5 py-4">
+        <div className="grid gap-4 px-5 py-4 sm:grid-cols-2">
           <div>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Current location
@@ -111,12 +121,12 @@ export function DragConfirmDialog({
           </div>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={onCancel}
             disabled={isSaving}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="min-h-11 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -124,7 +134,7 @@ export function DragConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isSaving}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="min-h-11 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {isSaving ? "Saving…" : "Confirm Move"}
           </button>

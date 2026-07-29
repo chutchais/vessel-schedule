@@ -43,6 +43,7 @@ import { ScheduleDetailsDrawer } from "./schedule-details-drawer";
 import type { ChangeHighlight } from "@/lib/berth-planner/realtime";
 import { shouldClearHiddenSelection } from "@/lib/berth-planner/operational-filters";
 import { recordPlannerPerformance, startPlannerPerformance } from "@/lib/berth-planner/performance";
+import { canCreateFromPointer, hitSlopForPointer, resizeHitAreaForPointer } from "@/lib/berth-planner/pointer-interaction";
 import type {
   PlannerBerth,
   ValidatedSchedule,
@@ -142,6 +143,7 @@ export type BerthPlannerCanvasProps = {
   onDragDropRequest?: (request: DragDropRequest) => void;
   onDurationResizeRequest?: (request: DurationResizeRequest) => void;
   onInteractionChange?: (active: boolean) => void;
+  createMode?: boolean;
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -320,6 +322,7 @@ export function BerthPlannerCanvas({
   onDragDropRequest,
   onDurationResizeRequest,
   onInteractionChange,
+  createMode = false,
 }: BerthPlannerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -339,6 +342,7 @@ export function BerthPlannerCanvas({
   const activeResizeRef = useRef<ActiveResize | null>(null);
   const pendingDragRef = useRef<{ hit: HitTarget; startX: number; startY: number; resizeEdge: ResizeEdge | null } | null>(null);
   const dragJustCompletedRef = useRef(false);
+  const lastPointerTypeRef = useRef("mouse");
   const [hoverResizeEdge, setHoverResizeEdge] = useState<ResizeEdge | null>(null);
 
   // Keep activeDragRef in sync with activeDrag state so pointer handlers see the latest value
@@ -1075,7 +1079,7 @@ export function BerthPlannerCanvas({
     );
   }, [berths, canvasHeight]);
 
-  function findHit(clientX: number, clientY: number): HitTarget | null {
+  function findHit(clientX: number, clientY: number, hitSlop = 0): HitTarget | null {
     const performanceStartedAt = startPlannerPerformance();
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return null;
@@ -1083,7 +1087,8 @@ export function BerthPlannerCanvas({
     const y = clientY - rect.top;
     for (let i = hitTargetsRef.current.length - 1; i >= 0; i--) {
       const t = hitTargetsRef.current[i]!;
-      if (isPointInsidePolygon(x, y, t.polygon)) {
+      const inExpandedBounds = x >= t.bounds.left - hitSlop && x <= t.bounds.right + hitSlop && y >= t.bounds.top - hitSlop && y <= t.bounds.bottom + hitSlop;
+      if (isPointInsidePolygon(x, y, t.polygon) || inExpandedBounds) {
         recordPlannerPerformance("planner-hit-test", performanceStartedAt, { targets: hitTargetsRef.current.length, hit: true });
         return t;
       }
@@ -1094,7 +1099,8 @@ export function BerthPlannerCanvas({
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    const hit = findHit(e.clientX, e.clientY);
+    lastPointerTypeRef.current = e.pointerType;
+    const hit = findHit(e.clientX, e.clientY, hitSlopForPointer(e.pointerType));
     if (!hit) return;
     if (hit.schedule.status === "CANCELLED") return;
     const rect = canvasRef.current!.getBoundingClientRect();
@@ -1104,7 +1110,7 @@ export function BerthPlannerCanvas({
       hit,
       startX: x,
       startY: y,
-      resizeEdge: getResizeEdgeAtPoint({ x, y, bounds: hit.bounds, domain }),
+      resizeEdge: getResizeEdgeAtPoint({ x, y, bounds: hit.bounds, domain, hitAreaPx: resizeHitAreaForPointer(e.pointerType) }),
     };
     onInteractionChange?.(true);
     canvasRef.current!.setPointerCapture(e.pointerId);
@@ -1220,7 +1226,7 @@ export function BerthPlannerCanvas({
     }
 
     // Normal hover
-    const t = findHit(e.clientX, e.clientY);
+    const t = findHit(e.clientX, e.clientY, hitSlopForPointer(e.pointerType));
     if (t) {
       setHoverResizeEdge(getResizeEdgeAtPoint({ x, y, bounds: t.bounds, domain }));
       setTooltip({ x, y, schedule: t.schedule, berthName: t.berthName, isConflict: t.isConflict });
@@ -1233,6 +1239,7 @@ export function BerthPlannerCanvas({
   function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
     const current = activeDragRef.current;
     const resize = activeResizeRef.current;
+    const pending = pendingDragRef.current;
     const wasDragging = current !== null || resize !== null;
 
     pendingDragRef.current = null;
@@ -1245,6 +1252,12 @@ export function BerthPlannerCanvas({
     if (wasDragging) {
       dragJustCompletedRef.current = true;
       // Clear flag after click event fires
+      setTimeout(() => { dragJustCompletedRef.current = false; }, 0);
+    }
+    if (!wasDragging && pending) {
+      selectHit(pending.hit);
+      // Avoid the synthetic click reprocessing this touch/pen tap.
+      dragJustCompletedRef.current = true;
       setTimeout(() => { dragJustCompletedRef.current = false; }, 0);
     }
 
@@ -1288,13 +1301,24 @@ export function BerthPlannerCanvas({
     }
   }
 
-  function handlePointerCancel() {
+  function handlePointerCancel(e: React.PointerEvent<HTMLCanvasElement>) {
     pendingDragRef.current = null;
     activeDragRef.current = null;
     activeResizeRef.current = null;
     setActiveDrag(null);
     setActiveResize(null);
     onInteractionChange?.(false);
+    if (canvasRef.current) try { canvasRef.current.releasePointerCapture(e.pointerId); } catch { /* pointer may already be released */ }
+  }
+
+  function selectHit(t: HitTarget) {
+    setSelectedSchedule(t.schedule);
+    setSelectedBerthName(t.berthName);
+    setSelectedConflictPartners(
+      conflictPairs
+        .filter((p) => p.scheduleAId === t.scheduleId || p.scheduleBId === t.scheduleId)
+        .map((p) => (p.scheduleAId === t.scheduleId ? p.bName : p.aName)),
+    );
   }
 
   function handleClick(e: React.MouseEvent<HTMLCanvasElement>) {
@@ -1302,12 +1326,7 @@ export function BerthPlannerCanvas({
 
     const t = findHit(e.clientX, e.clientY);
     if (t) {
-      setSelectedSchedule(t.schedule);
-      setSelectedBerthName(t.berthName);
-      const partners = conflictPairs
-        .filter((p) => p.scheduleAId === t.scheduleId || p.scheduleBId === t.scheduleId)
-        .map((p) => (p.scheduleAId === t.scheduleId ? p.bName : p.aName));
-      setSelectedConflictPartners(partners);
+      selectHit(t);
       return;
     }
 
@@ -1338,7 +1357,7 @@ export function BerthPlannerCanvas({
       weekEnd,
     });
 
-    if (onGridCreateRequest && createDraft && shouldHandleCreateClick(false, createDraft)) {
+    if (onGridCreateRequest && createDraft && shouldHandleCreateClick(false, createDraft) && canCreateFromPointer(lastPointerTypeRef.current, createMode)) {
       setSelectedSchedule(null);
       setSelectedBerthName("");
       setSelectedConflictPartners([]);
@@ -1399,7 +1418,7 @@ export function BerthPlannerCanvas({
           onClick={handleClick}
           onKeyDown={handleKeyDown}
           tabIndex={0}
-          aria-label="Berth planner canvas. Hover over vessels to see details. Drag inside a vessel to move it, or drag a time edge to resize its duration."
+          aria-label="Berth planner canvas. Select a vessel to open details. Drag inside a vessel to move it, or drag a time edge to resize its duration. Touch users can use Add schedule to create a schedule from the grid."
           className="block cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           style={{
             cursor: activeDrag
@@ -1407,7 +1426,7 @@ export function BerthPlannerCanvas({
               : activeResize || hoverResizeEdge
                 ? domain === "position" ? "ns-resize" : "ew-resize"
                 : "default",
-            touchAction: "none",
+            touchAction: activeDrag || activeResize ? "none" : "pan-y",
           }}
         />
 
@@ -1428,6 +1447,15 @@ export function BerthPlannerCanvas({
             headingReverse={tooltip.schedule.headingReverse}
           />
         )}
+      </div>
+
+      <div className="sr-only" aria-label="Planner schedule list">
+        <h2>Planner schedule details</h2>
+        {classifiedBerths.flatMap(({ berth, valid }) => valid.map((schedule) => ({ berthName: berth.name, schedule }))).map((target) => (
+          <button key={target.schedule.id} type="button" onClick={() => { setSelectedSchedule(target.schedule); setSelectedBerthName(target.berthName); }}>
+            {target.schedule.vesselName}, {target.berthName}, {formatTime(target.schedule.startTime, portTimezone)} to {formatTime(target.schedule.endTime, portTimezone)}
+          </button>
+        ))}
       </div>
 
       <ScheduleDetailsDrawer

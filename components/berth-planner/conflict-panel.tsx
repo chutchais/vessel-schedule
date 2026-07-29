@@ -67,7 +67,7 @@ export function ConflictPanel({
             <button
               type="button"
               onClick={handlePrev}
-              className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="min-h-11 rounded border border-slate-200 px-3 py-1 text-xs text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label="Previous conflict"
             >
               ‹ Prev
@@ -78,7 +78,7 @@ export function ConflictPanel({
             <button
               type="button"
               onClick={handleNext}
-              className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="min-h-11 rounded border border-slate-200 px-3 py-1 text-xs text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label="Next conflict"
             >
               Next ›

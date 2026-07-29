@@ -55,17 +55,17 @@ export function OperationalFilterBar({
           maxLength={100}
           onChange={(event) => onSearchInputChange(event.target.value)}
           placeholder="Vessel, voyage or schedule reference"
-          className="h-9 rounded-md border border-slate-300 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="h-11 rounded-md border border-slate-300 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         />
-        <select aria-label="Filter by service" value={filters.service} onChange={(event) => update("service", event.target.value)} className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm">
+        <select aria-label="Filter by service" value={filters.service} onChange={(event) => update("service", event.target.value)} className="h-11 rounded-md border border-slate-300 bg-white px-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500">
           <option value="">All services</option>
           {serviceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
-        <select aria-label="Filter by status" value={filters.status} onChange={(event) => update("status", event.target.value as OperationalFilters["status"])} className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm">
+        <select aria-label="Filter by status" value={filters.status} onChange={(event) => update("status", event.target.value as OperationalFilters["status"])} className="h-11 rounded-md border border-slate-300 bg-white px-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500">
           <option value="">All statuses</option>
           {SCHEDULE_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
         </select>
-        <select aria-label="Filter by berth" value={filters.berthId} onChange={(event) => update("berthId", event.target.value)} className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm">
+        <select aria-label="Filter by berth" value={filters.berthId} onChange={(event) => update("berthId", event.target.value)} className="h-11 rounded-md border border-slate-300 bg-white px-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500">
           <option value="">All berths</option>
           {berthOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>

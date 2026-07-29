@@ -122,6 +122,14 @@ Public registration remains disabled. `/invitations/register?token=…` is the o
 ### Berth Planner Realtime Changes — ✅ complete
 ### Berth Planner In-place Mutation Refresh — ✅ complete
 ### Berth Planner Weekly Print/PDF Export — ✅ complete
+### Berth Planner Tablet, Touch and Keyboard Usability — ✅ complete
+
+**Tablet interaction behavior:**
+- Verified layout targets: 768×1024, 1024×768, 820×1180 and 1366×768. The seven-day canvas stays visible while controls, filters and the Conflict/Recent Changes panels wrap into reachable columns.
+- Mouse, pen and touch use Pointer Events with capture. Drag/resize retains the existing activation threshold and safely releases capture on completion or cancellation; page scroll and text selection are not disabled outside an active canvas gesture.
+- Touch and pen use expanded vessel hit targets and 22 px resize edges without changing berth geometry. A touch grid tap creates only when the explicit **Add schedule** mode is active; vessel taps select and open details.
+- The canvas exposes a screen-reader schedule list/details alternative. Controls, filters, dialogs and panel actions have visible focus treatment and 44 px touch targets where applicable.
+- Remaining device testing: confirm physical iPad/Android browser pointer-capture behavior and safe-area appearance before production rollout.
 
 **Weekly export behavior:**
 - Print and Export PDF generate dedicated high-resolution landscape planner pages from filtered domain data, never a clipped screen capture.
