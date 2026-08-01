@@ -1,4 +1,13 @@
 2026-08-01
+- Berth Planner export vessel-details table (pre-E2E)
+  - Added configurable vessel-details table appended after grid pages in print/PDF export.
+  - Organization Owner/Admin configures via Planner Settings → Export Vessel Table: enable/disable, 10 predefined default columns (Vessel, Voyage, Service, Berth, Position, ETA, ETB, ETD, Status, Remarks), column visibility, order (Move Up/Down), custom headings, width mode (AUTO/COMPACT/NORMAL/WIDE), alignment (AUTO/LEFT/CENTER/RIGHT).
+  - Column values resolved using existing shared placeholder registry and token resolver; composite `{{position}}` column added.
+  - Table data uses only schedules visible after active filters, sorted by ETA asc → berth order → position, with port-timezone time formatting and `—` for missing values.
+  - Table renders as `2400×1500` canvas pages with repeated header, alternating row shading, row count, and filter summary; appended to existing grid pages in both browser Print and PDF.
+  - Personal on-screen label scale does not affect export.
+  - New `organizations.exportTableConfig JSONB` column with P2022 graceful fallback identical to `vesselLabelConfig`.
+  - Added `export-table-config.ts` with full validation, 30+ unit tests.
 - Berth Planner personal vessel-label scale controls (pre-E2E)
   - Added personal, local-only label-size controls in planner toolbar: A−, reset percentage, A+ with fixed bounded steps 80/90/100/110/125/140.
   - Added versioned local preference key `berth-planner-label-scale-v1` with allowlisted-value validation and safe fallback to 100%.

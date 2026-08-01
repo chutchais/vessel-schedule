@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import type { PlannerDataRaw } from "@/lib/berth-planner/types";
 import { buildPlannerScheduleScope } from "@/lib/berth-planner/planner-query";
 import { defaultVesselLabelConfig, normalizeStoredVesselLabelConfig } from "@/lib/berth-planner/vessel-label";
+import { defaultExportTableConfig, isMissingExportTableConfigColumn, normalizeStoredExportTableConfig } from "@/lib/berth-planner/export-table-config";
 
 function serializeDecimal(value: { toNumber(): number } | null): number | null {
   return value !== null ? value.toNumber() : null;
@@ -60,6 +61,7 @@ export async function GET(request: NextRequest) {
       port: { id: string; name: string; timezone: string };
     } | null = null;
     let vesselLabelConfig = defaultVesselLabelConfig();
+    let exportTableConfig = defaultExportTableConfig();
     try {
       const terminalWithLabelConfig = await prisma.terminal.findFirst({
         where: { id: terminalId, organizationId },
@@ -76,6 +78,7 @@ export async function GET(request: NextRequest) {
           organization: {
             select: {
               vesselLabelConfig: true,
+              exportTableConfig: true,
             },
           },
         },
@@ -85,9 +88,12 @@ export async function GET(request: NextRequest) {
         vesselLabelConfig = normalizeStoredVesselLabelConfig(
           terminalWithLabelConfig.organization.vesselLabelConfig,
         ).config;
+        exportTableConfig = normalizeStoredExportTableConfig(
+          terminalWithLabelConfig.organization.exportTableConfig,
+        );
       }
     } catch (error) {
-      if (!isMissingVesselLabelConfigColumn(error)) {
+      if (!isMissingVesselLabelConfigColumn(error) && !isMissingExportTableConfigColumn(error)) {
         throw error;
       }
       terminal = await prisma.terminal.findFirst({
@@ -186,6 +192,7 @@ export async function GET(request: NextRequest) {
       portName: terminal.port.name,
       portTimezone: terminal.port.timezone,
       vesselLabelConfig,
+      exportTableConfig,
       berths: berths.map((berth) => ({
         id: berth.id,
         name: berth.name,

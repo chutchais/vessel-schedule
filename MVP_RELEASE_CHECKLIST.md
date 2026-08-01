@@ -4,6 +4,16 @@ Audit date: 2026-07-29
 Scope: Step 1 of `prompts/prompt_mvp_production_plan`  
 Recommendation: **GO WITH TIME-LIMITED RB-4 EXCEPTION**
 
+## Pre-E2E feature addition (2026-08-01): export vessel-details table
+
+- Added configurable vessel-details table appended after grid pages in Berth Planner print/PDF export.
+- Organization Owner/Admin configures via **Planner Settings → Export Vessel Table**: toggle include/exclude, column visibility/order/heading/width/alignment for 10 predefined default columns.
+- Column values use the shared placeholder registry and resolver; composite `{{position}}` (`start–end m`) added.
+- Stored in `organizations.exportTableConfig JSONB`; P2022 fallback identical to `vesselLabelConfig`.
+- Table pages are `2400×1500` canvas with repeated header, alternating rows, row count and filter summary; appended to grid pages.
+- Personal on-screen label scale does not affect export.
+- No E2E tests yet; unit tests cover validation, resolver, table data building and column ordering.
+
 ## Pre-E2E feature addition (2026-08-01): personal vessel-label scale
 
 - Added local-only, user preference controls in Berth Planner toolbar: `Label size [A−] [100% reset] [A+]`.

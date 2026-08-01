@@ -590,11 +590,13 @@ export function BerthPlannerCanvas({
           const isBold = gm % 50 === 0;
           ctx.strokeStyle = isBold ? "#CBD5E1" : "#EEF2F7";
           ctx.lineWidth = isBold ? 0.75 : 0.5;
+          if (isBold) ctx.setLineDash([6, 4]);
           const x = toX(gm);
           ctx.beginPath();
           ctx.moveTo(x, TOP_HEADER_H);
           ctx.lineTo(x, TOP_HEADER_H + drawH);
           ctx.stroke();
+          if (isBold) ctx.setLineDash([]);
         }
       }
 
@@ -882,8 +884,8 @@ export function BerthPlannerCanvas({
         ctx.stroke();
       }
 
-      ctx.strokeStyle = "#64748B";
-      ctx.lineWidth = 1.25;
+      ctx.strokeStyle = "#94A3B8";
+      ctx.lineWidth = 1;
       for (const midnight of midnights) {
         const x = toX(midnight);
         if (x < LEFT_AXIS_W || x > canvasWidth) continue;
@@ -954,12 +956,14 @@ export function BerthPlannerCanvas({
             lane.laneHeight,
           );
           const isBold = m % 50 === 0;
-          ctx.strokeStyle = isBold ? "#94A3B8" : "#E2E8F0";
+          ctx.strokeStyle = isBold ? "#CBD5E1" : "#E2E8F0";
           ctx.lineWidth = isBold ? 1 : 0.5;
+          if (isBold) ctx.setLineDash([6, 4]);
           ctx.beginPath();
           ctx.moveTo(LEFT_AXIS_W, y);
           ctx.lineTo(canvasWidth, y);
           ctx.stroke();
+          if (isBold) ctx.setLineDash([]);
 
           if (isBold) {
             ctx.fillStyle = "#334155";

@@ -48,6 +48,7 @@ export type OrganizationCountAggregateOutputType = {
   slug: number
   isActive: number
   vesselLabelConfig: number
+  exportTableConfig: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -78,6 +79,7 @@ export type OrganizationCountAggregateInputType = {
   slug?: true
   isActive?: true
   vesselLabelConfig?: true
+  exportTableConfig?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -161,6 +163,7 @@ export type OrganizationGroupByOutputType = {
   slug: string
   isActive: boolean
   vesselLabelConfig: runtime.JsonValue | null
+  exportTableConfig: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: OrganizationCountAggregateOutputType | null
@@ -192,6 +195,7 @@ export type OrganizationWhereInput = {
   slug?: Prisma.StringFilter<"Organization"> | string
   isActive?: Prisma.BoolFilter<"Organization"> | boolean
   vesselLabelConfig?: Prisma.JsonNullableFilter<"Organization">
+  exportTableConfig?: Prisma.JsonNullableFilter<"Organization">
   createdAt?: Prisma.DateTimeFilter<"Organization"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Organization"> | Date | string
   members?: Prisma.OrganizationMemberListRelationFilter
@@ -214,6 +218,7 @@ export type OrganizationOrderByWithRelationInput = {
   slug?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   vesselLabelConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  exportTableConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   members?: Prisma.OrganizationMemberOrderByRelationAggregateInput
@@ -239,6 +244,7 @@ export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Organization"> | string
   isActive?: Prisma.BoolFilter<"Organization"> | boolean
   vesselLabelConfig?: Prisma.JsonNullableFilter<"Organization">
+  exportTableConfig?: Prisma.JsonNullableFilter<"Organization">
   createdAt?: Prisma.DateTimeFilter<"Organization"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Organization"> | Date | string
   members?: Prisma.OrganizationMemberListRelationFilter
@@ -261,6 +267,7 @@ export type OrganizationOrderByWithAggregationInput = {
   slug?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   vesselLabelConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  exportTableConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrganizationCountOrderByAggregateInput
@@ -277,6 +284,7 @@ export type OrganizationScalarWhereWithAggregatesInput = {
   slug?: Prisma.StringWithAggregatesFilter<"Organization"> | string
   isActive?: Prisma.BoolWithAggregatesFilter<"Organization"> | boolean
   vesselLabelConfig?: Prisma.JsonNullableWithAggregatesFilter<"Organization">
+  exportTableConfig?: Prisma.JsonNullableWithAggregatesFilter<"Organization">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Organization"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Organization"> | Date | string
 }
@@ -287,6 +295,7 @@ export type OrganizationCreateInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -309,6 +318,7 @@ export type OrganizationUncheckedCreateInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -331,6 +341,7 @@ export type OrganizationUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -353,6 +364,7 @@ export type OrganizationUncheckedUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -375,6 +387,7 @@ export type OrganizationCreateManyInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -385,6 +398,7 @@ export type OrganizationUpdateManyMutationInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -395,6 +409,7 @@ export type OrganizationUncheckedUpdateManyInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -405,6 +420,7 @@ export type OrganizationCountOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   vesselLabelConfig?: Prisma.SortOrder
+  exportTableConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -619,6 +635,7 @@ export type OrganizationCreateWithoutMembersInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
@@ -640,6 +657,7 @@ export type OrganizationUncheckedCreateWithoutMembersInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
@@ -677,6 +695,7 @@ export type OrganizationUpdateWithoutMembersInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
@@ -698,6 +717,7 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -719,6 +739,7 @@ export type OrganizationCreateWithoutRequestsForOrganizationInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -740,6 +761,7 @@ export type OrganizationUncheckedCreateWithoutRequestsForOrganizationInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -777,6 +799,7 @@ export type OrganizationUpdateWithoutRequestsForOrganizationInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -798,6 +821,7 @@ export type OrganizationUncheckedUpdateWithoutRequestsForOrganizationInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -819,6 +843,7 @@ export type OrganizationCreateWithoutInvitationsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -840,6 +865,7 @@ export type OrganizationUncheckedCreateWithoutInvitationsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -877,6 +903,7 @@ export type OrganizationUpdateWithoutInvitationsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -898,6 +925,7 @@ export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -919,6 +947,7 @@ export type OrganizationCreateWithoutCompaniesInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -940,6 +969,7 @@ export type OrganizationUncheckedCreateWithoutCompaniesInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -977,6 +1007,7 @@ export type OrganizationUpdateWithoutCompaniesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -998,6 +1029,7 @@ export type OrganizationUncheckedUpdateWithoutCompaniesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1019,6 +1051,7 @@ export type OrganizationCreateWithoutServicesInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -1040,6 +1073,7 @@ export type OrganizationUncheckedCreateWithoutServicesInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1077,6 +1111,7 @@ export type OrganizationUpdateWithoutServicesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -1098,6 +1133,7 @@ export type OrganizationUncheckedUpdateWithoutServicesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1119,6 +1155,7 @@ export type OrganizationCreateWithoutPortsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -1140,6 +1177,7 @@ export type OrganizationUncheckedCreateWithoutPortsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1177,6 +1215,7 @@ export type OrganizationUpdateWithoutPortsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -1198,6 +1237,7 @@ export type OrganizationUncheckedUpdateWithoutPortsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1219,6 +1259,7 @@ export type OrganizationCreateWithoutVesselsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -1240,6 +1281,7 @@ export type OrganizationUncheckedCreateWithoutVesselsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1277,6 +1319,7 @@ export type OrganizationUpdateWithoutVesselsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -1298,6 +1341,7 @@ export type OrganizationUncheckedUpdateWithoutVesselsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1319,6 +1363,7 @@ export type OrganizationCreateWithoutTerminalsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -1340,6 +1385,7 @@ export type OrganizationUncheckedCreateWithoutTerminalsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1377,6 +1423,7 @@ export type OrganizationUpdateWithoutTerminalsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -1398,6 +1445,7 @@ export type OrganizationUncheckedUpdateWithoutTerminalsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1419,6 +1467,7 @@ export type OrganizationCreateWithoutBerthsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -1440,6 +1489,7 @@ export type OrganizationUncheckedCreateWithoutBerthsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1477,6 +1527,7 @@ export type OrganizationUpdateWithoutBerthsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -1498,6 +1549,7 @@ export type OrganizationUncheckedUpdateWithoutBerthsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1519,6 +1571,7 @@ export type OrganizationCreateWithoutVesselSchedulesInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -1540,6 +1593,7 @@ export type OrganizationUncheckedCreateWithoutVesselSchedulesInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1577,6 +1631,7 @@ export type OrganizationUpdateWithoutVesselSchedulesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -1598,6 +1653,7 @@ export type OrganizationUncheckedUpdateWithoutVesselSchedulesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1619,6 +1675,7 @@ export type OrganizationCreateWithoutPlannerUndosInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -1640,6 +1697,7 @@ export type OrganizationUncheckedCreateWithoutPlannerUndosInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1677,6 +1735,7 @@ export type OrganizationUpdateWithoutPlannerUndosInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -1698,6 +1757,7 @@ export type OrganizationUncheckedUpdateWithoutPlannerUndosInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1719,6 +1779,7 @@ export type OrganizationCreateWithoutAuditLogsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
@@ -1740,6 +1801,7 @@ export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
   slug: string
   isActive?: boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
@@ -1777,6 +1839,7 @@ export type OrganizationUpdateWithoutAuditLogsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
@@ -1798,6 +1861,7 @@ export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -1949,6 +2013,7 @@ export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   slug?: boolean
   isActive?: boolean
   vesselLabelConfig?: boolean
+  exportTableConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   members?: boolean | Prisma.Organization$membersArgs<ExtArgs>
@@ -1972,6 +2037,7 @@ export type OrganizationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   slug?: boolean
   isActive?: boolean
   vesselLabelConfig?: boolean
+  exportTableConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["organization"]>
@@ -1982,6 +2048,7 @@ export type OrganizationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   slug?: boolean
   isActive?: boolean
   vesselLabelConfig?: boolean
+  exportTableConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["organization"]>
@@ -1992,11 +2059,12 @@ export type OrganizationSelectScalar = {
   slug?: boolean
   isActive?: boolean
   vesselLabelConfig?: boolean
+  exportTableConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OrganizationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "isActive" | "vesselLabelConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
+export type OrganizationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "isActive" | "vesselLabelConfig" | "exportTableConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
 export type OrganizationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | Prisma.Organization$membersArgs<ExtArgs>
   requestsForOrganization?: boolean | Prisma.Organization$requestsForOrganizationArgs<ExtArgs>
@@ -2037,6 +2105,7 @@ export type $OrganizationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     slug: string
     isActive: boolean
     vesselLabelConfig: runtime.JsonValue | null
+    exportTableConfig: runtime.JsonValue | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["organization"]>
@@ -2479,6 +2548,7 @@ export interface OrganizationFieldRefs {
   readonly slug: Prisma.FieldRef<"Organization", 'String'>
   readonly isActive: Prisma.FieldRef<"Organization", 'Boolean'>
   readonly vesselLabelConfig: Prisma.FieldRef<"Organization", 'Json'>
+  readonly exportTableConfig: Prisma.FieldRef<"Organization", 'Json'>
   readonly createdAt: Prisma.FieldRef<"Organization", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Organization", 'DateTime'>
 }

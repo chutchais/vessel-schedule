@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { OrganizationVesselLabelSettings } from "@/components/settings/organization-vessel-label-settings";
+import { OrganizationExportTableSettings } from "@/components/settings/organization-export-table-settings";
 
 async function getPageProps() {
   const currentUser = await requireCurrentUser();
@@ -23,5 +24,11 @@ export default async function OrganizationSettingsPage() {
     redirect("/");
   }
 
-  return <OrganizationVesselLabelSettings />;
+  return (
+    <div className="space-y-10">
+      <OrganizationVesselLabelSettings />
+      <hr className="border-slate-200" />
+      <OrganizationExportTableSettings />
+    </div>
+  );
 }

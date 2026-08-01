@@ -99,6 +99,7 @@ export const OrganizationScalarFieldEnum = {
   slug: 'slug',
   isActive: 'isActive',
   vesselLabelConfig: 'vesselLabelConfig',
+  exportTableConfig: 'exportTableConfig',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

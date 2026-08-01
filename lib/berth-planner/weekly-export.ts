@@ -4,6 +4,13 @@ import { classifySchedules } from "./layout";
 import { timeToPixel } from "./scales";
 import { formatDate, formatTime, formatTimezoneOffset, formatWeekLabel, get4HourMarks, getMidnightsBetween } from "./timezone";
 import { blendRgb, drawVesselLabelLines, type VesselLabelConfig } from "./vessel-label";
+import {
+  buildExportTableData,
+  columnWidthFraction,
+  columnTextAlign,
+  defaultExportTableConfig,
+  type ExportTableConfig,
+} from "./export-table-config";
 import type { PlannerBerth, PlannerDomain, ValidatedSchedule } from "./types";
 
 export type WeeklyExportPage = { berthIds: string[]; page: number; totalPages: number };
@@ -34,6 +41,7 @@ export type WeeklyExportInput = {
   filtersSummary: string;
   berths: PlannerBerth[];
   vesselLabelConfig: VesselLabelConfig;
+  exportTableConfig?: ExportTableConfig;
   generatedAt?: Date;
 };
 
@@ -64,7 +72,7 @@ export function renderWeeklyExport(input: WeeklyExportInput): HTMLCanvasElement[
   const marks = get4HourMarks(input.weekStart, input.weekEnd, input.timezone);
   const generatedAt = input.generatedAt ?? new Date();
 
-  return pages.map((page) => {
+  const gridCanvases = pages.map((page) => {
     const canvas = document.createElement("canvas");
     canvas.width = 2400; canvas.height = 1500;
     const ctx = canvas.getContext("2d")!;
@@ -148,12 +156,13 @@ export function renderWeeklyExport(input: WeeklyExportInput): HTMLCanvasElement[
       const total = pageBerths.reduce((sum, item) => sum + item.berth.berthLength, 0) || 1;
       const x = (metres: number) => left + metres / total * gw;
       const y = (date: Date) => top + timeToPixel(date, input.weekStart, input.weekEnd, gh);
-      for (const mark of marks) { const yy = y(mark); const midnight = midnights.some((d) => d.getTime() === mark.getTime()); ctx.strokeStyle = midnight ? "#475569" : "#cbd5e1"; ctx.lineWidth = midnight ? 3 : 1; ctx.beginPath(); ctx.moveTo(left, yy); ctx.lineTo(left + gw, yy); ctx.stroke(); }
+      for (const mark of marks) { const yy = y(mark); ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(left, yy); ctx.lineTo(left + gw, yy); ctx.stroke(); }
+      for (const midnight of midnights) { const yy = y(midnight); if (yy >= top && yy <= top + gh) { ctx.strokeStyle = "#64748b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(left, yy); ctx.lineTo(left + gw, yy); ctx.stroke(); } }
       let offset = 0;
       for (const { berth, valid } of pageBerths) {
         const a = x(offset), b = x(offset + berth.berthLength); ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(a, top); ctx.lineTo(a, top + gh); ctx.stroke();
         ctx.fillStyle = "#0f172a"; ctx.font = "bold 20px system-ui"; ctx.textAlign = "center"; ctx.fillText(`${berth.name} (${berth.berthLength}m)`, (a + b) / 2, top - 14, b - a - 8);
-        for (let m = 50; m < berth.berthLength; m += 50) { const xx = x(offset + m); ctx.strokeStyle = "#64748b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xx, top); ctx.lineTo(xx, top + gh); ctx.stroke(); }
+        for (let m = 50; m < berth.berthLength; m += 50) { const xx = x(offset + m); ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1; ctx.setLineDash([8, 5]); ctx.beginPath(); ctx.moveTo(xx, top); ctx.lineTo(xx, top + gh); ctx.stroke(); ctx.setLineDash([]); }
         for (const schedule of valid) { const l = berth.zeroOriginSide === "LEFT" ? x(offset + schedule.positionStart) : x(offset + berth.berthLength - schedule.positionEnd); const r = berth.zeroOriginSide === "LEFT" ? x(offset + schedule.positionEnd) : x(offset + berth.berthLength - schedule.positionStart); drawVessel(schedule, getVesselPolygon(schedule.headingReverse ? r : l, schedule.headingReverse ? l : r, y(schedule.startTime), y(schedule.endTime)), { name: berth.name, berthLength: berth.berthLength, zeroOriginSide: berth.zeroOriginSide }); }
         offset += berth.berthLength;
       }
@@ -163,12 +172,145 @@ export function renderWeeklyExport(input: WeeklyExportInput): HTMLCanvasElement[
     } else {
       const x = (date: Date) => left + timeToPixel(date, input.weekStart, input.weekEnd, gw);
       const lane = gh / Math.max(pageBerths.length, 1);
-      for (const mark of marks) { const xx = x(mark); const midnight = midnights.some((d) => d.getTime() === mark.getTime()); ctx.strokeStyle = midnight ? "#475569" : "#cbd5e1"; ctx.lineWidth = midnight ? 3 : 1; ctx.beginPath(); ctx.moveTo(xx, top); ctx.lineTo(xx, top + gh); ctx.stroke(); }
-      pageBerths.forEach(({ berth, valid }, i) => { const a = top + i * lane; ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 3; ctx.strokeRect(left, a, gw, lane); ctx.fillStyle = "#0f172a"; ctx.font = "bold 18px system-ui"; ctx.textAlign = "left"; ctx.fillText(`${berth.name} (${berth.berthLength}m)`, 8, a + 26); for (let m = 50; m < berth.berthLength; m += 50) { const yy = a + lane - m / berth.berthLength * lane; ctx.strokeStyle = "#64748b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(left, yy); ctx.lineTo(left + gw, yy); ctx.stroke(); } for (const schedule of valid) { const y1 = a + lane - schedule.positionStart / berth.berthLength * lane, y2 = a + lane - schedule.positionEnd / berth.berthLength * lane; const high = Math.min(y1, y2), low = Math.max(y1, y2); drawVessel(schedule, getVesselPolygonVertical(schedule.headingReverse ? high : low, schedule.headingReverse ? low : high, x(schedule.startTime), x(schedule.endTime)), { name: berth.name, berthLength: berth.berthLength, zeroOriginSide: berth.zeroOriginSide }); } });
+      for (const mark of marks) { const xx = x(mark); ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(xx, top); ctx.lineTo(xx, top + gh); ctx.stroke(); }
+      for (const midnight of midnights) { const xx = x(midnight); if (xx >= left && xx <= left + gw) { ctx.strokeStyle = "#64748b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xx, top); ctx.lineTo(xx, top + gh); ctx.stroke(); } }
+      pageBerths.forEach(({ berth, valid }, i) => { const a = top + i * lane; ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 3; ctx.strokeRect(left, a, gw, lane); ctx.fillStyle = "#0f172a"; ctx.font = "bold 18px system-ui"; ctx.textAlign = "left"; ctx.fillText(`${berth.name} (${berth.berthLength}m)`, 8, a + 26); for (let m = 50; m < berth.berthLength; m += 50) { const yy = a + lane - m / berth.berthLength * lane; ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1; ctx.setLineDash([8, 5]); ctx.beginPath(); ctx.moveTo(left, yy); ctx.lineTo(left + gw, yy); ctx.stroke(); ctx.setLineDash([]); } for (const schedule of valid) { const y1 = a + lane - schedule.positionStart / berth.berthLength * lane, y2 = a + lane - schedule.positionEnd / berth.berthLength * lane; const high = Math.min(y1, y2), low = Math.max(y1, y2); drawVessel(schedule, getVesselPolygonVertical(schedule.headingReverse ? high : low, schedule.headingReverse ? low : high, x(schedule.startTime), x(schedule.endTime)), { name: berth.name, berthLength: berth.berthLength, zeroOriginSide: berth.zeroOriginSide }); } });
       ctx.textAlign = "center"; ctx.fillStyle = "#0f172a"; ctx.font = "bold 17px system-ui"; for (const midnight of midnights) ctx.fillText(formatDate(midnight, input.timezone), x(midnight), top - 14);
       ctx.fillStyle = "#475569"; ctx.font = "14px system-ui"; for (const mark of marks) if (!midnights.some((d) => d.getTime() === mark.getTime())) ctx.fillText(formatTime(mark, input.timezone), x(mark), top - 34);
     }
-    ctx.textAlign = "left"; ctx.fillStyle = "#334155"; ctx.font = "18px system-ui"; ctx.fillText("Legend: vessel = scheduled call; red outline / ⚠ = berth-time-position conflict; dark lines = berth boundaries and daily grid; 50m grid lines shown per berth.", 70, H - 82);
+    ctx.textAlign = "left"; ctx.fillStyle = "#334155"; ctx.font = "18px system-ui"; ctx.fillText("Legend: vessel = scheduled call; red outline / ⚠ = berth-time-position conflict; emphasized lines = berth boundaries and daily grid; 50m grid lines shown per berth.", 70, H - 82);
     return canvas;
   });
+
+  // ── Vessel-details table pages ──────────────────────────────────────────────
+  const tableConfig = input.exportTableConfig ?? defaultExportTableConfig();
+  if (tableConfig.includeTable) {
+    const validatedBerthsForTable = allValid.map(({ berth, valid }) => ({
+      id: berth.id,
+      name: berth.name,
+      berthLength: berth.berthLength,
+      zeroOriginSide: berth.zeroOriginSide,
+      order: berth.order,
+      schedules: valid.map((s) => ({
+        id: s.id,
+        vesselName: s.vesselName,
+        vesselLoa: s.vesselLoa,
+        serviceName: s.serviceName,
+        serviceColor: s.serviceColor,
+        voyageNumber: s.voyageNumber,
+        status: s.status,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        etb: s.etb,
+        positionStart: s.positionStart,
+        positionEnd: s.positionEnd,
+        headingReverse: s.headingReverse,
+        remarks: s.remarks,
+        updatedAt: s.updatedAt,
+      })),
+    }));
+
+    const tableData = buildExportTableData(validatedBerthsForTable, tableConfig, input.timezone);
+
+    if (tableData.visibleColumns.length > 0) {
+      const TW = 2400, TH = 1500;
+      const TL = 70, TR = 70, TTop = 200;
+      const headerLabel = `${input.organizationName} · ${input.portName} · ${input.terminalName} · ${formatWeekLabel(input.weekStart, input.weekEnd, input.timezone)} · ${input.timezone}`;
+      const ROW_H = 52;
+      const HEAD_H = 44;
+      const FONT_BODY = "20px system-ui, sans-serif";
+      const FONT_HEAD = "bold 20px system-ui, sans-serif";
+      const FONT_TITLE = "bold 36px system-ui, sans-serif";
+      const FONT_SUBTITLE = "22px system-ui, sans-serif";
+      const availW = TW - TL - TR;
+
+      // Compute column pixel widths proportionally
+      const totalFraction = tableData.visibleColumns.reduce((sum, c) => sum + columnWidthFraction(c.width), 0);
+      const colWidths = tableData.visibleColumns.map((c) => Math.floor(availW * columnWidthFraction(c.width) / totalFraction));
+      // Distribute any rounding remainder to last column
+      const widthSum = colWidths.reduce((a, b) => a + b, 0);
+      if (colWidths.length > 0) colWidths[colWidths.length - 1]! += availW - widthSum;
+
+      const rowsPerPage = Math.floor((TH - TTop - 100 - HEAD_H) / ROW_H);
+      const safeRowsPerPage = Math.max(1, rowsPerPage);
+      const rowCount = tableData.rows.length;
+
+      if (rowCount === 0) {
+        // Empty state — single page
+        const canvas = document.createElement("canvas");
+        canvas.width = TW; canvas.height = TH;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, TW, TH);
+        ctx.fillStyle = "#0f172a"; ctx.font = FONT_TITLE; ctx.textAlign = "left"; ctx.fillText("Vessel Details", TL, 65);
+        ctx.font = FONT_SUBTITLE; ctx.fillStyle = "#475569"; ctx.fillText(headerLabel, TL, 108);
+        ctx.font = FONT_SUBTITLE; ctx.fillText(`Filters: ${input.filtersSummary || "None"} · 0 schedules`, TL, 148);
+        ctx.font = "24px system-ui"; ctx.fillStyle = "#64748b"; ctx.textAlign = "center";
+        ctx.fillText("No vessel schedules match this export.", TW / 2, TH / 2);
+        gridCanvases.push(canvas);
+      } else {
+        const totalTablePages = Math.ceil(rowCount / safeRowsPerPage);
+        for (let tp = 0; tp < totalTablePages; tp++) {
+          const canvas = document.createElement("canvas");
+          canvas.width = TW; canvas.height = TH;
+          const ctx = canvas.getContext("2d")!;
+          ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, TW, TH);
+
+          // Page header (repeated on every table page)
+          ctx.fillStyle = "#0f172a"; ctx.font = FONT_TITLE; ctx.textAlign = "left";
+          ctx.fillText("Vessel Details", TL, 65);
+          ctx.font = FONT_SUBTITLE; ctx.fillStyle = "#475569";
+          ctx.fillText(headerLabel, TL, 108);
+          ctx.fillText(`Filters: ${input.filtersSummary || "None"} · ${rowCount} schedule${rowCount !== 1 ? "s" : ""}`, TL, 148);
+          ctx.fillText(`Table page ${tp + 1} of ${totalTablePages} · Note: personal screen label scale does not apply to export.`, TL, TH - 50);
+
+          // Draw table header
+          let x = TL;
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(TL, TTop, availW, HEAD_H);
+          for (let ci = 0; ci < tableData.visibleColumns.length; ci++) {
+            const col = tableData.visibleColumns[ci]!;
+            const cw = colWidths[ci]!;
+            ctx.font = FONT_HEAD; ctx.fillStyle = "#f8fafc";
+            ctx.textAlign = columnTextAlign(col.align) === "right" ? "right" : columnTextAlign(col.align) === "center" ? "center" : "left";
+            const tx = columnTextAlign(col.align) === "right" ? x + cw - 8 : columnTextAlign(col.align) === "center" ? x + cw / 2 : x + 8;
+            ctx.fillText(col.heading, tx, TTop + HEAD_H / 2 + 7, cw - 16);
+            x += cw;
+          }
+
+          // Draw rows for this page
+          const pageStart = tp * safeRowsPerPage;
+          const pageEnd = Math.min(pageStart + safeRowsPerPage, rowCount);
+          for (let ri = pageStart; ri < pageEnd; ri++) {
+            const row = tableData.rows[ri]!;
+            const rowY = TTop + HEAD_H + (ri - pageStart) * ROW_H;
+            ctx.fillStyle = (ri - pageStart) % 2 === 0 ? "#fff" : "#f8fafc";
+            ctx.fillRect(TL, rowY, availW, ROW_H);
+            // Row bottom border
+            ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(TL, rowY + ROW_H); ctx.lineTo(TL + availW, rowY + ROW_H); ctx.stroke();
+
+            let cx = TL;
+            for (let ci = 0; ci < tableData.visibleColumns.length; ci++) {
+              const col = tableData.visibleColumns[ci]!;
+              const cw = colWidths[ci]!;
+              const cellValue = row.cells[ci] ?? "—";
+              ctx.font = FONT_BODY; ctx.fillStyle = "#1e293b";
+              ctx.textAlign = columnTextAlign(col.align) === "right" ? "right" : columnTextAlign(col.align) === "center" ? "center" : "left";
+              const tx = columnTextAlign(col.align) === "right" ? cx + cw - 8 : columnTextAlign(col.align) === "center" ? cx + cw / 2 : cx + 8;
+              ctx.fillText(cellValue, tx, rowY + ROW_H / 2 + 7, cw - 16);
+              cx += cw;
+            }
+          }
+
+          // Outer table border
+          ctx.strokeStyle = "#334155"; ctx.lineWidth = 2;
+          ctx.strokeRect(TL, TTop, availW, HEAD_H + (pageEnd - pageStart) * ROW_H);
+
+          gridCanvases.push(canvas);
+        }
+      }
+    }
+  }
+
+  return gridCanvases;
 }

@@ -10,7 +10,23 @@ The requested integrity checks found zero rows on the empty disposable database.
 
 No approved staging target was available. Therefore staging status/deploy, pre-migration staging backup, real-data integrity counts, lock observation, duration, role/pooling verification, and staging restore evidence remain blockers. Proposed constraint migrations are documented in `MVP_RELEASE_CHECKLIST.md` and require explicit approval before creation.
 
-## Berth Planner personal vessel-label scale (pre-E2E, 2026-08-01)
+## Export Vessel Table in Berth Planner (pre-E2E, 2026-08-01)
+
+A configurable vessel-details table is now appended to Berth Planner print and PDF exports.
+
+**Configuration** (Owner/Admin only): Planner Settings → Export Vessel Table — enables/disables the table, configures which of the predefined columns are visible, their order, custom headings, width mode (AUTO/COMPACT/NORMAL/WIDE), and alignment (AUTO/LEFT/CENTER/RIGHT). Settings are persisted in `organizations.exportTableConfig` (new `JSONB` column). A local-only fallback applies if the migration has not yet been run.
+
+**Default 10 columns** (in order): Vessel, Voyage, Service, Berth, Position (`start–end m` composite), ETA, ETB, ETD, Status, Remarks.
+
+**Placeholder reuse**: The export table uses the same `VESSEL_LABEL_PLACEHOLDER_GROUPS` catalog and `resolveVesselLabelLines` token resolver as vessel labels. No second field-resolver was created. The composite `{{position}}` column is the only addition.
+
+**Table data**: Includes only schedules visible after active filters (same berths passed to `renderWeeklyExport`). Sorted by ETA asc → berth order → positionStart. Uses port timezone for ETA/ETB/ETD formatting. Missing values render as `—`.
+
+**Rendering**: Each export-table page is a `2400×1500` canvas with alternating row shading, repeated table header, row count and filter summary. Table pages follow the grid pages. Browser Print and generated PDF receive the same pages. Personal on-screen label scale does not apply.
+
+**Prisma migration**: `20260801120000_add_organization_export_table_config` — adds `exportTableConfig JSONB` to `organizations`. Same P2022 fallback pattern as `vesselLabelConfig`.
+
+
 
 Personal vessel-label display scale is now available in the planner UI as local preference controls: `A−`, reset `%`, `A+`, using fixed steps 80%, 90%, 100%, 110%, 125% and 140%. The value is persisted in browser storage under `berth-planner-label-scale-v1`, validated against the allowlisted steps, and falls back safely to 100% for missing/malformed values.
 

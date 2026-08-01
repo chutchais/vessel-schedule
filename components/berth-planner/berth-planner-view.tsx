@@ -661,6 +661,7 @@ export function BerthPlannerView() {
         filtersSummary: activeFiltersSummary,
         berths: canvasBerths,
         vesselLabelConfig: plannerData.vesselLabelConfig,
+        exportTableConfig: plannerData.exportTableConfig,
       });
       // `noopener` makes some browsers return null even when the tab opens, which
       // leaves an export tab blank before its document can be written.

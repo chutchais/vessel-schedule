@@ -1,4 +1,5 @@
 import type { VesselLabelConfig } from "./vessel-label";
+import type { ExportTableConfig } from "./export-table-config";
 
 export type PlannerDomain = "position" | "datetime";
 
@@ -84,6 +85,7 @@ export type PlannerDataRaw = {
   portName: string;
   portTimezone: string;
   vesselLabelConfig: VesselLabelConfig;
+  exportTableConfig: ExportTableConfig;
   berths: PlannerBerthRaw[];
 };
 
