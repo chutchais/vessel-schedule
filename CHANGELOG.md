@@ -1,4 +1,11 @@
 2026-08-01
+- Fix start-edge duration resize: enforce ETA <= ETB invariant on canvas
+  - Added `etb_before_eta` invalid reason to `ResizeProposal` (`invalidReason?: ResizeInvalidReason`).
+  - `computeResizeProposal` now detects when a start-edge drag on a schedule with ETB would move ETB before ETA, and marks the proposal invalid with `invalidReason: "etb_before_eta"`.
+  - `drawResizePreview` shows a red preview with "ETB cannot be earlier than ETA." text for this case; other invalid states are unchanged (grey "Invalid").
+  - Invalid proposals are never passed to `onDurationResizeRequest` (existing guard in pointer-up handler).
+  - Server-side `validateTime()` already enforces `ETB >= ETA` for all mutations; no server changes required.
+  - Added 6 focused tests: ETB equal to ETA (valid), ETB before ETA (invalid/etb_before_eta), ETB after ETA (valid), ETB at/after ETD (invalid), null-ETB start-edge resizes ETA without triggering the ETB rule, and `applyResizeTimes` ETB-equals-ETA round-trip.
 - Berth Planner export vessel-details table (pre-E2E)
   - Added configurable vessel-details table appended after grid pages in print/PDF export.
   - Organization Owner/Admin configures via Planner Settings → Export Vessel Table: enable/disable, 10 predefined default columns (Vessel, Voyage, Service, Berth, Position, ETA, ETB, ETD, Status, Remarks), column visibility, order (Move Up/Down), custom headings, width mode (AUTO/COMPACT/NORMAL/WIDE), alignment (AUTO/LEFT/CENTER/RIGHT).

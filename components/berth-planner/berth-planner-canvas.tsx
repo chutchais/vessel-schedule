@@ -308,11 +308,24 @@ function drawResizePreview(params: {
   timezone: string;
 }) {
   const { ctx, polygon, bounds, proposal, timezone } = params;
-  const color = proposal.hasConflict ? "#EF4444" : proposal.isValid ? "#3B82F6" : "#64748B";
+  const isEtbBeforeEta = proposal.invalidReason === "etb_before_eta";
+  const color = proposal.hasConflict
+    ? "#EF4444"
+    : proposal.isValid
+      ? "#3B82F6"
+      : isEtbBeforeEta
+        ? "#EF4444"
+        : "#64748B";
   ctx.save();
   ctx.globalAlpha = 0.62;
   drawPath(ctx, polygon);
-  ctx.fillStyle = proposal.hasConflict ? "rgba(239,68,68,.35)" : proposal.isValid ? "rgba(59,130,246,.35)" : "rgba(100,116,139,.35)";
+  ctx.fillStyle = proposal.hasConflict
+    ? "rgba(239,68,68,.35)"
+    : proposal.isValid
+      ? "rgba(59,130,246,.35)"
+      : isEtbBeforeEta
+        ? "rgba(239,68,68,.35)"
+        : "rgba(100,116,139,.35)";
   ctx.strokeStyle = color;
   ctx.lineWidth = 2.5;
   ctx.setLineDash([5, 3]);
@@ -336,7 +349,13 @@ function drawResizePreview(params: {
     cy - 5,
   );
   ctx.fillText(
-    proposal.hasConflict ? `Conflict · ${duration}` : proposal.isValid ? duration : `Invalid · ${duration}`,
+    proposal.hasConflict
+      ? `Conflict · ${duration}`
+      : proposal.isValid
+        ? duration
+        : isEtbBeforeEta
+          ? "ETB cannot be earlier than ETA."
+          : `Invalid · ${duration}`,
     cx,
     cy + 6,
   );

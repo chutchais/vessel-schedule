@@ -8,12 +8,15 @@ export const MIN_RESIZE_DURATION_MS = TIME_SNAP_MINUTES * 60 * 1000;
 
 export type ResizeEdge = "start" | "end";
 
+export type ResizeInvalidReason = "etb_before_eta" | "too_short" | "out_of_week" | "start_at_or_after_etd";
+
 export type ResizeProposal = {
   edge: ResizeEdge;
   newStartTime: Date;
   newEndTime: Date;
   durationMs: number;
   isValid: boolean;
+  invalidReason?: ResizeInvalidReason;
   hasConflict: boolean;
 };
 
@@ -67,7 +70,25 @@ export function computeResizeProposal(input: {
   const newStartTime = edge === "start" ? snapped : schedule.startTime;
   const newEndTime = edge === "end" ? snapped : schedule.endTime;
   const durationMs = newEndTime.getTime() - newStartTime.getTime();
+
+  // When start-edge resizing a schedule that has ETB, the new start becomes the new ETB.
+  // ETB must not be before ETA (invariant: ETA <= ETB < ETD).
+  const etbBeforeEta =
+    edge === "start" &&
+    schedule.etb !== null &&
+    newStartTime < schedule.eta;
+
+  let invalidReason: ResizeInvalidReason | undefined;
+  if (etbBeforeEta) {
+    invalidReason = "etb_before_eta";
+  } else if (durationMs < MIN_RESIZE_DURATION_MS) {
+    invalidReason = "too_short";
+  } else if (newStartTime >= weekEnd || newEndTime <= weekStart) {
+    invalidReason = "out_of_week";
+  }
+
   const isValid =
+    !invalidReason &&
     durationMs >= MIN_RESIZE_DURATION_MS &&
     newStartTime < weekEnd &&
     newEndTime > weekStart;
@@ -85,7 +106,7 @@ export function computeResizeProposal(input: {
     );
   });
 
-  return { edge, newStartTime, newEndTime, durationMs, isValid, hasConflict };
+  return { edge, newStartTime, newEndTime, durationMs, isValid, invalidReason, hasConflict };
 }
 
 export function applyResizeTimes(input: {

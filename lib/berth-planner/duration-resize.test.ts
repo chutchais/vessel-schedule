@@ -116,3 +116,118 @@ test("stale resize versions are rejected", () => {
   assert.equal(isResizeVersionCurrent(updatedAt, "2026-07-28T09:59:59.000Z"), false);
   assert.equal(isResizeVersionCurrent(updatedAt, ""), false);
 });
+
+// --- ETB invariant tests: ETA <= ETB < ETD ---
+
+// schedule.eta = 07:00, schedule.etb = 08:00, schedule.etd = 12:00
+// start-edge drag scenarios
+
+test("start-edge resize: ETB equal to ETA is valid", () => {
+  // Drag ETB to exactly ETA (07:00) — should be valid
+  const eta = schedule.eta; // 07:00
+  const proposal = computeResizeProposal({
+    schedule,
+    edge: "start",
+    pointerX: 0,
+    pointerY: positionY(eta),
+    domain: "position",
+    frame,
+    weekStart,
+    weekEnd,
+    otherSchedules: [],
+  });
+  assert.equal(proposal.isValid, true, "ETB equal to ETA should be valid");
+  assert.equal(proposal.invalidReason, undefined);
+  assert.equal(proposal.newStartTime.toISOString(), eta.toISOString());
+});
+
+test("start-edge resize: ETB before ETA is invalid with etb_before_eta reason", () => {
+  // Drag ETB to 06:00, which is before ETA 07:00 — should be invalid
+  const beforeEta = new Date("2026-07-29T06:00:00.000Z");
+  const proposal = computeResizeProposal({
+    schedule,
+    edge: "start",
+    pointerX: 0,
+    pointerY: positionY(beforeEta),
+    domain: "position",
+    frame,
+    weekStart,
+    weekEnd,
+    otherSchedules: [],
+  });
+  assert.equal(proposal.isValid, false, "ETB before ETA should be invalid");
+  assert.equal(proposal.invalidReason, "etb_before_eta");
+  assert.equal(proposal.hasConflict, false);
+});
+
+test("start-edge resize: ETB after ETA is valid", () => {
+  // Drag ETB to 09:00, which is after ETA 07:00 — should be valid
+  const afterEta = new Date("2026-07-29T09:00:00.000Z");
+  const proposal = computeResizeProposal({
+    schedule,
+    edge: "start",
+    pointerX: 0,
+    pointerY: positionY(afterEta),
+    domain: "position",
+    frame,
+    weekStart,
+    weekEnd,
+    otherSchedules: [],
+  });
+  assert.equal(proposal.isValid, true, "ETB after ETA should be valid");
+  assert.equal(proposal.invalidReason, undefined);
+});
+
+test("start-edge resize: ETB at or after ETD is invalid (too_short)", () => {
+  // Drag ETB to 12:00, equal to ETD 12:00 — duration becomes 0
+  const atEtd = schedule.etd; // 12:00
+  const proposal = computeResizeProposal({
+    schedule,
+    edge: "start",
+    pointerX: 0,
+    pointerY: positionY(atEtd),
+    domain: "position",
+    frame,
+    weekStart,
+    weekEnd,
+    otherSchedules: [],
+  });
+  assert.equal(proposal.isValid, false, "ETB at ETD should be invalid");
+  assert.notEqual(proposal.invalidReason, undefined);
+});
+
+test("start-edge resize: null ETB resizes ETA and does not trigger etb_before_eta", () => {
+  // Schedule without ETB: start-edge drag should move ETA, never check ETB rule
+  const scheduleNoEtb: typeof schedule = { ...schedule, etb: null, startTime: schedule.eta };
+  const beforeOriginalEta = new Date("2026-07-29T06:00:00.000Z");
+  const proposal = computeResizeProposal({
+    schedule: scheduleNoEtb,
+    edge: "start",
+    pointerX: 0,
+    pointerY: positionY(beforeOriginalEta),
+    domain: "position",
+    frame,
+    weekStart,
+    weekEnd,
+    otherSchedules: [],
+  });
+  // Moving ETA earlier is valid — no ETB rule applies
+  assert.equal(proposal.isValid, true, "Null-ETB start-edge drag should be valid when moving ETA earlier");
+  assert.notEqual(proposal.invalidReason, "etb_before_eta");
+  assert.equal(proposal.newStartTime.toISOString(), beforeOriginalEta.toISOString());
+});
+
+test("applyResizeTimes: ETB equal to ETA produces valid ISO strings", () => {
+  const eta = schedule.eta;
+  const result = applyResizeTimes({
+    eta: eta.toISOString(),
+    etb: schedule.etb!.toISOString(),
+    etd: schedule.etd.toISOString(),
+    edge: "start",
+    newStartTime: eta, // ETB = ETA
+    newEndTime: schedule.endTime,
+  });
+  assert.equal(result.eta, eta.toISOString(), "ETA must not change");
+  assert.equal(result.etb, eta.toISOString(), "ETB should be set to ETA");
+  assert.equal(result.etd, schedule.etd.toISOString(), "ETD must not change");
+});

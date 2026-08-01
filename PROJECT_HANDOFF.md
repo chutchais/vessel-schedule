@@ -1,5 +1,18 @@
 # Vessel Schedule — Project Handoff
 
+## ETB Start-Edge Resize Invariant (2026-08-01)
+
+Start-edge drag resize now enforces **ETA ≤ ETB < ETD** on the client canvas and the server already enforces it.
+
+**Changes:**
+- `lib/berth-planner/duration-resize.ts`: Added `ResizeInvalidReason` union type and `invalidReason?` field to `ResizeProposal`. `computeResizeProposal` detects `edge === "start" && schedule.etb !== null && newStartTime < schedule.eta` and sets `invalidReason: "etb_before_eta"`, marking `isValid: false`.
+- `components/berth-planner/berth-planner-canvas.tsx`: `drawResizePreview` renders red fill/stroke and the label **"ETB cannot be earlier than ETA."** when `invalidReason === "etb_before_eta"`. Other invalid states remain grey.
+- Invalid proposals are blocked from saving by the existing `isValid` guard in the pointer-up handler.
+- Server-side `validateTime()` in `lib/schedules/schedule-mutations.ts` already rejects `ETB < ETA` for all mutations (create, edit, move, resize, undo) — no server changes needed.
+- No database migration required.
+
+**Tests added** (`lib/berth-planner/duration-resize.test.ts`): ETB equal to ETA (valid), ETB before ETA (invalid), ETB after ETA (valid), ETB at/after ETD (invalid), null-ETB resizes ETA without ETB rule, `applyResizeTimes` ETB=ETA round-trip. All 14 tests pass.
+
 ## MVP Step 2 database readiness (2026-07-30)
 
 Database readiness is **NO-GO pending an approved staging rehearsal**. No production database was accessed.
