@@ -1,4 +1,29 @@
 2026-08-01
+- **Berth Planner CSV Export**
+  - Added "Export CSV" button to the Berth Planner secondary controls bar (alongside Print / Export PDF).
+  - New API route `GET /api/berth-planner/export-csv` — org-scoped, server-side authorization.
+    - Accepts: `terminalId`, `startDate`, `endDate`, `q`, `service`, `status`, `berth`, `conflicts`, `invalid`.
+    - Validates terminal ownership, ISO date range (max 31 days), and berth-filter membership.
+    - Enforces a 5 000-record hard cap with an informative error.
+    - Returns `text/csv; charset=utf-8` with UTF-8 BOM and `Content-Disposition: attachment; filename=vessel-schedules_<terminal>_<weekStart>_<weekEnd>.csv`.
+    - `Cache-Control: no-store`.
+  - New domain library `lib/berth-planner/csv-export.ts`:
+    - 20 fixed columns (see contract table in file header).
+    - RFC 4180 escaping (commas, double-quotes, CR/LF, multiline remarks).
+    - Spreadsheet formula-injection prevention (`=`, `+`, `-`, `@`, `\t`, `\r` prefixes → `'` prefix).
+    - Timestamps as ISO 8601 with port UTC offset (DST-aware via `Intl`), e.g. `2026-07-28T14:30:00+07:00`.
+    - `berthPositionEndMeters = berthPositionMeters + vesselLoa` (empty when either is null).
+    - `hasConflict` derived from the existing `detectConflicts` engine per berth group.
+    - Missing values are empty string fields, never `null` or `undefined`.
+    - Deterministic sort: effective start time → berth order → position start.
+    - Safe ASCII filename: `vessel-schedules_<terminal>_<weekStart>_<weekEnd>.csv`.
+  - Client-side `exportCsv` callback in `berth-planner-view.tsx`:
+    - Builds URL from current terminal, week, and active filters — preserves all UI state.
+    - Fetches CSV via `fetch()` and triggers browser download via a temporary anchor (no page reload).
+    - Shows "Preparing CSV…" progress and clear error state.
+    - Disabled while planner data is loading or an interaction (drag/resize) is active.
+  - 52 unit tests (`lib/berth-planner/csv-export.test.ts`) covering all requirements.
+
 - Fix start-edge duration resize: enforce ETA <= ETB invariant on canvas
   - Added `etb_before_eta` invalid reason to `ResizeProposal` (`invalidReason?: ResizeInvalidReason`).
   - `computeResizeProposal` now detects when a start-edge drag on a schedule with ETB would move ETB before ETA, and marks the proposal invalid with `invalidReason: "etb_before_eta"`.

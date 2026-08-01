@@ -168,6 +168,17 @@ export function ScheduleDetailsDrawer({
               />
             </div>
           </section>
+
+          {schedule.remarks ? (
+            <section>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Remarks
+              </h3>
+              <p className="whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                {schedule.remarks}
+              </p>
+            </section>
+          ) : null}
         </div>
       ) : null}
     </Drawer>

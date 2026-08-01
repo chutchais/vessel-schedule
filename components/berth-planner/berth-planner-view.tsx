@@ -676,6 +676,50 @@ export function BerthPlannerView() {
     } catch (error) { setExportProgress(""); setExportError(error instanceof Error ? error.message : "Unable to prepare weekly export."); }
   }, [plannerData, isLoading, isInteractionActive, canvasInteractionActive, portTimezone, weekStart, weekEnd, domain, activeFiltersSummary, canvasBerths]);
 
+  const exportCsv = useCallback(async () => {
+    if (!plannerData || isLoading || isInteractionActive || canvasInteractionActive) return;
+    setExportError("");
+    setExportProgress("Preparing CSV…");
+    try {
+      const query = new URLSearchParams({
+        terminalId: plannerData.terminalId,
+        startDate: weekStart.toISOString(),
+        endDate: weekEnd.toISOString(),
+      });
+      if (filters.search) query.set("q", filters.search);
+      if (filters.service) query.set("service", filters.service);
+      if (filters.status) query.set("status", filters.status);
+      if (filters.berthId) query.set("berth", filters.berthId);
+      if (filters.conflictsOnly) query.set("conflicts", "1");
+      if (filters.invalidOnly) query.set("invalid", "1");
+
+      const response = await fetch(`/api/berth-planner/export-csv?${query.toString()}`);
+      if (!response.ok) {
+        const json = await response.json().catch(() => ({}));
+        throw new Error((json as { error?: string }).error ?? "CSV export failed");
+      }
+
+      // Extract filename from Content-Disposition header
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const match = /filename="([^"]+)"/.exec(disposition);
+      const filename = match?.[1] ?? "vessel-schedules.csv";
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "Unable to export CSV.");
+    } finally {
+      setExportProgress("");
+    }
+  }, [plannerData, isLoading, isInteractionActive, canvasInteractionActive, weekStart, weekEnd, filters]);
+
   const availableVessels = useMemo(
     () => createVessels.filter((vessel) => vessel.isActive),
     [createVessels],
@@ -1250,6 +1294,7 @@ export function BerthPlannerView() {
         exportProgress={exportProgress}
         onPrint={() => exportPlanner("print")}
         onExportPdf={() => exportPlanner("pdf")}
+        onExportCsv={exportCsv}
         createMode={createMode}
         onCreateModeChange={() => setCreateMode((current) => !current)}
         controlsCollapsed={controlsCollapsed}

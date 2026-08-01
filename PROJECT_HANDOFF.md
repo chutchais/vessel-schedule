@@ -1,6 +1,24 @@
 # Vessel Schedule — Project Handoff
 
-## ETB Start-Edge Resize Invariant (2026-08-01)
+## Berth Planner CSV Export (2026-08-01)
+
+Vessel schedules can now be exported as CSV directly from the Berth Planner.
+
+**Files changed:**
+- `lib/berth-planner/csv-export.ts` — Pure domain library: RFC 4180 escaping, formula-injection prevention, ISO 8601 timestamps with port UTC offset, position-end calculation, conflict detection, deterministic sort, filename builder, export limits (`CSV_MAX_RANGE_DAYS = 31`, `CSV_MAX_RECORDS = 5000`).
+- `lib/berth-planner/csv-export.test.ts` — 52 unit tests (all pass).
+- `app/api/berth-planner/export-csv/route.ts` — GET route: org-scoped terminal auth, date/berth validation, filter parsing (q/service/status/berth/conflicts/invalid), UTF-8 BOM + `text/csv` + `Content-Disposition` response, `Cache-Control: no-store`.
+- `components/berth-planner/berth-planner-controls.tsx` — Added `onExportCsv` prop and "Export CSV" button.
+- `components/berth-planner/berth-planner-view.tsx` — Added `exportCsv` async callback; wired to controls.
+
+**Column contract** (fixed, 20 columns — see `csv-export.ts` table header):
+`scheduleReference`, `vesselCode`, `vesselName`, `voyageNumber`, `serviceCode`, `serviceName`, `terminalName`, `berthName`, `portTimezone`, `eta`, `etb`, `etd`, `berthPositionMeters`, `berthPositionEndMeters`, `headingReverse`, `vesselLoa`, `status`, `hasConflict`, `remarks`, `updatedAt`.
+
+**Security:** No internal IDs, org IDs, audit payloads, user data, or credentials are exposed. Formula injection is prevented by prefixing dangerous leading characters with `'`. CSV is generated server-side from authoritative DB data, never from canvas pixels.
+
+**No database migration required.**
+
+
 
 Start-edge drag resize now enforces **ETA ≤ ETB < ETD** on the client canvas and the server already enforces it.
 

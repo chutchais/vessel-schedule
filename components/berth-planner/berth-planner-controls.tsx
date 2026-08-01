@@ -25,6 +25,7 @@ type BerthPlannerControlsProps = {
   exportProgress: string;
   onPrint: () => void;
   onExportPdf: () => void;
+  onExportCsv: () => void;
   createMode: boolean;
   onCreateModeChange: () => void;
   controlsCollapsed: boolean;
@@ -55,6 +56,7 @@ export function BerthPlannerControls({
   exportProgress,
   onPrint,
   onExportPdf,
+  onExportCsv,
   createMode,
   onCreateModeChange,
   controlsCollapsed,
@@ -197,6 +199,7 @@ export function BerthPlannerControls({
         <button type="button" onClick={onCreateModeChange} aria-pressed={createMode} className={`min-h-11 rounded-md border px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${createMode ? "border-blue-700 bg-blue-50 text-blue-800" : "border-slate-300 text-slate-700 hover:bg-slate-100"}`}>{createMode ? "Add schedule: on" : "Add schedule"}</button>
         <button type="button" onClick={onPrint} disabled={exportDisabled} className="min-h-11 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">{exportProgress === "Printing…" ? exportProgress : "Print"}</button>
         <button type="button" onClick={onExportPdf} disabled={exportDisabled} className="min-h-11 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{exportProgress === "Preparing PDF…" ? exportProgress : "Export PDF"}</button>
+        <button type="button" onClick={onExportCsv} disabled={exportDisabled} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">{exportProgress === "Preparing CSV…" ? exportProgress : "Export CSV"}</button>
       </div>
       )}
     </div>
