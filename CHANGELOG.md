@@ -1,3 +1,22 @@
+2026-08-01
+- Berth Planner personal vessel-label scale controls (pre-E2E)
+  - Added personal, local-only label-size controls in planner toolbar: A−, reset percentage, A+ with fixed bounded steps 80/90/100/110/125/140.
+  - Added versioned local preference key `berth-planner-label-scale-v1` with allowlisted-value validation and safe fallback to 100%.
+  - Applied personal scale only to on-screen vessel-shape labels in both Position and Datetime views; schedule geometry, hit-testing, grid, axes, tooltip/details text and other UI typography are unchanged.
+  - Preserved configured label-line priority; when space is constrained the renderer keeps earlier lines, ellipsizes long visible lines, clips to vessel polygons, and drops lower-priority lines when needed.
+  - Kept weekly print/PDF export deterministic and print-optimized by always rendering export labels at 100% (personal screen scale does not apply).
+  - Added label-scale preference unit tests and updated planner rendering path to avoid recomputing template substitutions on every pointer move.
+
+2026-07-30
+- Completed the local/disposable portion of MVP Step 2 database readiness
+  - Reviewed all 20 migrations chronologically and compared each migration to its introduction commit; no historical migration is edited.
+  - Prisma validation passed. All migrations deployed to an empty disposable PostgreSQL 17 database in about 4.2 seconds, final status was current, and Prisma schema diff was empty.
+  - Confirmed `pgcrypto` is an undeclared database prerequisite because `20260728193000_add_invitation_token_hash` calls `gen_random_bytes(32)`. It was explicitly enabled before the disposable rehearsal; historical migrations were not edited.
+  - The requested integrity audit returned zero findings on the empty disposable database. This does not substitute for staging data evidence.
+  - A custom-format backup restored into a different disposable database. Source and restore each had 20 successful migrations, the same ordered migration/checksum digest, matching row counts, and matching representative relationship counts.
+  - Documented proposed composite tenant foreign keys, organization-scoped vessel-code uniqueness, positive-dimension/placement checks, production migration operations, and compatibility risks. No schema migration was created.
+  - Step 2 is **NO-GO** because no explicitly approved staging database or staging backup destination was provided; no staging connection or production data was accessed.
+
 2026-07-30
 - Closed the RB-4 verification database connection incident and added fail-closed controls
   - Performed an explicitly approved read-only inspection of the sanitized production target. Migration `20260729213000_add_organization_approval_progress` exists exactly once, completed successfully, matches the repository checksum, has no later migration or stored failure log, and produced the expected enum, columns and index.

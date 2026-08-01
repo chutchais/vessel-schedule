@@ -44,6 +44,13 @@ import type { ChangeHighlight } from "@/lib/berth-planner/realtime";
 import { shouldClearHiddenSelection } from "@/lib/berth-planner/operational-filters";
 import { recordPlannerPerformance, startPlannerPerformance } from "@/lib/berth-planner/performance";
 import { canCreateFromPointer, hitSlopForPointer, resizeHitAreaForPointer } from "@/lib/berth-planner/pointer-interaction";
+import {
+  blendRgb,
+  drawVesselLabelLines,
+  resolveVesselLabelLines,
+  type VesselLabelConfig,
+  type ResolvedVesselLabelLine,
+} from "@/lib/berth-planner/vessel-label";
 import type {
   PlannerBerth,
   ValidatedSchedule,
@@ -123,6 +130,8 @@ type ConflictPairInfo = {
 
 export type BerthPlannerCanvasProps = {
   berths: PlannerBerth[];
+  vesselLabelConfig: VesselLabelConfig;
+  labelScalePercent: number;
   weekStart: Date;
   weekEnd: Date;
   portTimezone: string;
@@ -164,16 +173,44 @@ function drawVesselShape(params: {
   ctx: CanvasRenderingContext2D;
   polygon: [number, number][];
   schedule: ValidatedSchedule;
+  berthName: string;
+  berthLength: number;
+  berthZeroOriginSide: "LEFT" | "RIGHT";
+  vesselLabelConfig: VesselLabelConfig;
+  resolvedLabelLines: ResolvedVesselLabelLine[];
+  labelScalePercent: number;
+  timezone: string;
   isConflict: boolean;
   isSelected: boolean;
   recentHighlight?: ChangeHighlight;
   reducedMotion: boolean;
   bounds: { left: number; right: number; top: number; bottom: number };
 }) {
-  const { ctx, polygon, schedule, isConflict, isSelected, recentHighlight, reducedMotion, bounds } = params;
+  const {
+    ctx,
+    polygon,
+    schedule,
+    berthName,
+    berthLength,
+    berthZeroOriginSide,
+    vesselLabelConfig,
+    resolvedLabelLines,
+    labelScalePercent,
+    timezone,
+    isConflict,
+    isSelected,
+    recentHighlight,
+    reducedMotion,
+    bounds,
+  } = params;
   const width = bounds.right - bounds.left;
   const height = bounds.bottom - bounds.top;
   const [r, g, b] = hexToRgb(schedule.serviceColor ?? schedule.vesselColor);
+  const backgroundRgb: [number, number, number] = schedule.status === "CANCELLED"
+    ? [228, 232, 240]
+    : isConflict
+      ? blendRgb([r, g, b], 0.2)
+      : blendRgb([r, g, b], 0.35);
 
   drawPath(ctx, polygon);
   if (schedule.status === "CANCELLED") {
@@ -221,17 +258,45 @@ function drawVesselShape(params: {
   }
 
   if (height >= 14 && width >= 16) {
-    ctx.fillStyle = schedule.status === "CANCELLED" ? "#94A3B8" : "#1E293B";
-    const fontSize = Math.min(11, Math.max(8, Math.min(width / 6, height / 3)));
-    ctx.font = `${fontSize}px system-ui, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    ctx.save();
-    drawPath(ctx, polygon);
-    ctx.clip();
-    ctx.fillText(schedule.vesselName, bounds.left + width / 2, bounds.top + height / 2, width - 4);
-    ctx.restore();
+    drawVesselLabelLines({
+      ctx,
+      polygon,
+      bounds,
+      config: vesselLabelConfig,
+      resolvedLines: resolvedLabelLines,
+      context: {
+        vesselName: schedule.vesselName,
+        serviceName: schedule.serviceName,
+        serviceColor: schedule.serviceColor,
+        voyageNumber: schedule.voyageNumber,
+        berthName,
+        berthLength,
+        berthZeroOriginSide,
+        scheduleStatus: schedule.status,
+        berthPositionStart: schedule.positionStart,
+        berthPositionEnd: schedule.positionEnd,
+        headingReverse: schedule.headingReverse,
+        remarks: schedule.remarks,
+        eta: schedule.startTime,
+        etb: schedule.etb,
+        etd: schedule.endTime,
+        vesselLoa: schedule.vesselLoa,
+        updatedAt: schedule.updatedAt,
+        timezone,
+      },
+      backgroundRgb,
+      labelScalePercent,
+      minFontSize: 8,
+      maxFontSize: 13,
+      smallFontSize: 8.5,
+      normalFontSize: 10,
+      bigFontSize: 11,
+      biggerFontSize: 12,
+      lineGap: 1.5,
+      horizontalPadding: 3,
+      verticalPadding: 2,
+      topInset: isConflict && schedule.status !== "CANCELLED" ? 11 : 0,
+    });
   }
 }
 
@@ -307,6 +372,8 @@ function drawResizeHandles(
 
 export function BerthPlannerCanvas({
   berths,
+  vesselLabelConfig,
+  labelScalePercent,
   weekStart,
   weekEnd,
   portTimezone,
@@ -400,6 +467,38 @@ export function BerthPlannerCanvas({
     recordPlannerPerformance("planner-canvas-conflict-calculation", performanceStartedAt, { schedules: classifiedBerths.reduce((sum, item) => sum + item.valid.length, 0) });
     return [ids, pairs];
   }, [classifiedBerths]);
+
+  const resolvedLabelLinesByScheduleId = useMemo(() => {
+    const map = new Map<string, ResolvedVesselLabelLine[]>();
+    for (const { berth, valid } of classifiedBerths) {
+      for (const schedule of valid) {
+        map.set(
+          schedule.id,
+          resolveVesselLabelLines(vesselLabelConfig, {
+            vesselName: schedule.vesselName,
+            serviceName: schedule.serviceName,
+            serviceColor: schedule.serviceColor,
+            voyageNumber: schedule.voyageNumber,
+            berthName: berth.name,
+            berthLength: berth.berthLength,
+            berthZeroOriginSide: berth.zeroOriginSide,
+            scheduleStatus: schedule.status,
+            berthPositionStart: schedule.positionStart,
+            berthPositionEnd: schedule.positionEnd,
+            headingReverse: schedule.headingReverse,
+            remarks: schedule.remarks,
+            eta: schedule.startTime,
+            etb: schedule.etb,
+            etd: schedule.endTime,
+            vesselLoa: schedule.vesselLoa,
+            updatedAt: schedule.updatedAt,
+            timezone: portTimezone,
+          }),
+        );
+      }
+    }
+    return map;
+  }, [classifiedBerths, portTimezone, vesselLabelConfig]);
 
   useEffect(() => {
     const all = classifiedBerths.flatMap((x) => x.invalid);
@@ -647,6 +746,13 @@ export function BerthPlannerCanvas({
             ctx,
             polygon,
             schedule,
+            berthName: berth.name,
+            berthLength: berth.berthLength,
+            berthZeroOriginSide: berth.zeroOriginSide,
+            vesselLabelConfig,
+            resolvedLabelLines: resolvedLabelLinesByScheduleId.get(schedule.id) ?? [],
+            labelScalePercent,
+            timezone: portTimezone,
             isConflict,
             isSelected,
             recentHighlight: recentHighlights?.get(schedule.id),
@@ -939,6 +1045,13 @@ export function BerthPlannerCanvas({
             ctx,
             polygon,
             schedule,
+            berthName: berth.name,
+            berthLength: berth.berthLength,
+            berthZeroOriginSide: berth.zeroOriginSide,
+            vesselLabelConfig,
+            resolvedLabelLines: resolvedLabelLinesByScheduleId.get(schedule.id) ?? [],
+            labelScalePercent,
+            timezone: portTimezone,
             isConflict,
             isSelected,
             recentHighlight: recentHighlights?.get(schedule.id),
@@ -1062,6 +1175,9 @@ export function BerthPlannerCanvas({
     reducedMotion,
     conflictedIds,
     classifiedBerths,
+    labelScalePercent,
+    resolvedLabelLinesByScheduleId,
+    vesselLabelConfig,
     activeDrag,
     activeResize,
   ]);

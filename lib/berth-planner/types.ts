@@ -1,3 +1,5 @@
+import type { VesselLabelConfig } from "./vessel-label";
+
 export type PlannerDomain = "position" | "datetime";
 
 export type ScheduleStatus =
@@ -25,6 +27,7 @@ export type PlannerScheduleRaw = {
   etd: string;
   berthPositionMeters: number | null;
   headingReverse: boolean;
+  remarks?: string | null;
   berthId: string;
   voyageNumber: string | null;
   updatedAt: string;
@@ -44,6 +47,7 @@ export type PlannerSchedule = {
   etd: Date;
   berthPositionMeters: number | null;
   headingReverse: boolean;
+  remarks?: string | null;
   berthId: string;
   voyageNumber: string | null;
   updatedAt?: string;
@@ -79,6 +83,7 @@ export type PlannerDataRaw = {
   terminalName: string;
   portName: string;
   portTimezone: string;
+  vesselLabelConfig: VesselLabelConfig;
   berths: PlannerBerthRaw[];
 };
 

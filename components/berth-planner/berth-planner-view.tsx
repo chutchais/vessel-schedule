@@ -50,6 +50,15 @@ import { highlightForChange, type ChangeHighlight, type PlannerChangeEvent, type
 import { renderWeeklyExport } from "@/lib/berth-planner/weekly-export";
 import { recordPlannerPerformance, startPlannerPerformance } from "@/lib/berth-planner/performance";
 import { isCompactPlannerLandscape, readControlsCollapsed, writeControlsCollapsed } from "@/lib/berth-planner/planner-layout";
+import { defaultVesselLabelConfig } from "@/lib/berth-planner/vessel-label";
+import {
+  canDecreaseBerthPlannerLabelScale,
+  canIncreaseBerthPlannerLabelScale,
+  readBerthPlannerLabelScale,
+  shiftBerthPlannerLabelScale,
+  writeBerthPlannerLabelScale,
+  type BerthPlannerLabelScale,
+} from "@/lib/berth-planner/label-scale-preference";
 
 const DEFAULT_TIMEZONE = "UTC";
 
@@ -219,6 +228,9 @@ export function BerthPlannerView() {
   const [controlsCollapsed, setControlsCollapsed] = useState(() => readControlsCollapsed(typeof window === "undefined" ? null : window.localStorage));
   const [compactLandscape, setCompactLandscape] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [labelScalePercent, setLabelScalePercent] = useState<BerthPlannerLabelScale>(() =>
+    readBerthPlannerLabelScale(typeof window === "undefined" ? null : window.localStorage),
+  );
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const plannerRequestRef = useRef(0);
@@ -273,6 +285,10 @@ export function BerthPlannerView() {
   useEffect(() => {
     writeControlsCollapsed(window.localStorage, controlsCollapsed);
   }, [controlsCollapsed]);
+
+  useEffect(() => {
+    writeBerthPlannerLabelScale(window.localStorage, labelScalePercent);
+  }, [labelScalePercent]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("planner-focus-mode", { detail: focusMode }));
@@ -634,7 +650,18 @@ export function BerthPlannerView() {
     setExportError(""); setExportProgress(mode === "pdf" ? "Preparing PDF…" : "Printing…");
     const performanceStartedAt = startPlannerPerformance();
     try {
-      const pages = renderWeeklyExport({ organizationName: plannerData.organizationName, portName: plannerData.portName, terminalName: plannerData.terminalName, timezone: portTimezone, weekStart, weekEnd, domain, filtersSummary: activeFiltersSummary, berths: canvasBerths });
+      const pages = renderWeeklyExport({
+        organizationName: plannerData.organizationName,
+        portName: plannerData.portName,
+        terminalName: plannerData.terminalName,
+        timezone: portTimezone,
+        weekStart,
+        weekEnd,
+        domain,
+        filtersSummary: activeFiltersSummary,
+        berths: canvasBerths,
+        vesselLabelConfig: plannerData.vesselLabelConfig,
+      });
       // `noopener` makes some browsers return null even when the tab opens, which
       // leaves an export tab blank before its document can be written.
       const popup = window.open("", "_blank");
@@ -1232,6 +1259,12 @@ export function BerthPlannerView() {
           if (next) setControlsCollapsed(true);
           return next;
         })}
+        labelScalePercent={labelScalePercent}
+        canDecreaseLabelScale={canDecreaseBerthPlannerLabelScale(labelScalePercent)}
+        canIncreaseLabelScale={canIncreaseBerthPlannerLabelScale(labelScalePercent)}
+        onDecreaseLabelScale={() => setLabelScalePercent((current) => shiftBerthPlannerLabelScale(current, -1))}
+        onResetLabelScale={() => setLabelScalePercent(100)}
+        onIncreaseLabelScale={() => setLabelScalePercent((current) => shiftBerthPlannerLabelScale(current, 1))}
       />
 
       {!controlsCollapsed && <OperationalFilterBar
@@ -1303,6 +1336,8 @@ export function BerthPlannerView() {
 
             <BerthPlannerCanvas
               berths={canvasBerths}
+              vesselLabelConfig={plannerData?.vesselLabelConfig ?? defaultVesselLabelConfig()}
+              labelScalePercent={labelScalePercent}
               weekStart={weekStart}
               weekEnd={weekEnd}
               portTimezone={portTimezone}

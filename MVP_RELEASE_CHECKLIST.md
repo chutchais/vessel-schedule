@@ -4,6 +4,15 @@ Audit date: 2026-07-29
 Scope: Step 1 of `prompts/prompt_mvp_production_plan`  
 Recommendation: **GO WITH TIME-LIMITED RB-4 EXCEPTION**
 
+## Pre-E2E feature addition (2026-08-01): personal vessel-label scale
+
+- Added local-only, user preference controls in Berth Planner toolbar: `Label size [A−] [100% reset] [A+]`.
+- Bounded allowlisted steps: `80, 90, 100, 110, 125, 140` persisted in `berth-planner-label-scale-v1`.
+- Stored values are validated and unsupported/malformed values fall back to `100`.
+- Scope is intentionally display-only: on-screen vessel-shape labels in Position/Datetime canvases.
+- Out of scope by design: database persistence, cross-device sync, geometry/hit-test changes, tooltip/details typography, and organization label config writes.
+- Weekly print/PDF export remains deterministic and print-optimized at 100%; personal scale is not applied to export.
+
 The application builds and all 131 tests pass, and the reviewed operational APIs consistently derive the active organization from the authenticated server-side user context. RB-1 through RB-3 are technically resolved. RB-4's remaining Next.js/PostCSS vulnerabilities are not technically resolved; they are covered by an explicitly approved exception expiring 2026-08-28. Read-only verification of the database incident found consistent migration history and schema, so that incident no longer blocks release.
 
 RB-4 changed dependency manifests and generated Prisma Client only. It did not change product, authentication, authorization, schema, migration, or public behavior.
@@ -309,14 +318,100 @@ The URL variables above must come from the approved secret manager. Never paste 
 2. Add database-backed role/tenant/isolation tests beyond the completed RB-1, RB-2 and RB-3 suites.
 3. Add durable abuse controls and verify Supabase production settings.
 4. Add centralized environment validation and security headers.
-5. Complete Step 2 database readiness items below.
+5. Complete the approved-staging portions of Step 2 below.
 
-## Step 2 — Database readiness remaining
+## Step 2 — Database readiness result (2026-07-30)
 
-- Compare every migration checksum/history with the target non-production deployment environment; do not use production data for this audit.
-- Run `prisma migrate status` against an approved staging database.
-- Audit existing rows for cross-tenant foreign relationships, invalid berth geometry, overlapping schedules, duplicate owner states, contradictory invitation timestamps/statuses, and duplicate vessel codes.
-- Decide and migrate composite tenant foreign keys and organization-scoped vessel code uniqueness.
-- Add database constraints/checks for positive vessel/berth dimensions and valid schedule placement where feasible.
-- Define the transaction/locking strategy for conflict enforcement and approval idempotency.
-- Verify backup, restore, connection limits/pooling, migration rollback/roll-forward, least-privilege database credentials, and health-query timeouts.
+**Recommendation: NO-GO.** The disposable database rehearsal passed, but no explicitly approved staging target or backup destination was supplied. No staging or production database was accessed.
+
+### Migration history and empty-database rehearsal
+
+- Reviewed all 20 migration files in chronological order. Every current SHA-256 matches the file as introduced in Git; no historical migration is edited.
+- Missing dependency: `20260728193000_add_invitation_token_hash` calls `gen_random_bytes(32)`, so `pgcrypto` must exist before that migration. The disposable database used `CREATE EXTENSION IF NOT EXISTS pgcrypto`; the repository history does not declare this prerequisite.
+- Unsafe assumptions/compatibility risks:
+  - `20260727073100_add_organization_tenancy` assigns every legacy operational row to one default organization. This is only semantically safe if the pre-tenancy data genuinely belongs to one tenant.
+  - The same migration performs table rewrites/backfills, `SET NOT NULL`, foreign-key creation and unique-index replacement. On populated databases these can hold strong table locks and can fail on tenant/code conflicts.
+  - `ALTER TYPE ... ADD VALUE` and the following normalization migration encode recovery from a previously interrupted deployment. They work on a fresh database, but staging history and enum state must be inspected before deploy.
+  - Dimension fields remain nullable and relational foreign keys are ID-only, so the database does not currently enforce tenant agreement across related rows.
+- `npx prisma validate`: PASS.
+- Initial disposable `prisma migrate status`: 20 pending migrations.
+- `npm run db:migrate:deploy`: PASS; 20/20 applied in approximately 4.2 seconds, with no Prisma warnings.
+- Final `prisma migrate status`: current.
+- `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`: empty migration; resulting schema agrees with Prisma.
+
+### Staging rehearsal
+
+**BLOCKED / NOT RUN.** An approved non-production staging target and backup location were not provided. Required staging evidence remains:
+
+1. Confirm explicit `DATABASE_ENVIRONMENT=staging`, both URLs, exact sanitized target approval, and that both URLs identify the same approved database.
+2. Capture baseline sessions/locks and `npm run db:migrate:status`.
+3. Create and verify a pre-migration backup.
+4. Run only `npm run db:migrate:deploy`; do not use `migrate dev`, `db push`, `migrate reset`, or manual migration-table edits.
+5. Record wall-clock duration, per-migration duration, blocked/blocking sessions, warnings, final status, and post-deploy schema diff.
+
+### Data-integrity audit
+
+The read-only audit executed successfully against the empty disposable result. Counts were zero for cross-organization company/service, terminal/port, berth/terminal and schedule relations; berth/terminal mismatches; invalid placement; missing/non-positive vessel dimensions; non-positive berth dimensions; physical schedule conflicts; contradictory invitation states; duplicate active owners; incomplete approval states; organization-scoped duplicate vessel codes; and orphaned memberships, invitations and audit references. No identifiers were returned.
+
+These are empty-data counts and are **not staging findings**. Run the same audit on approved staging and report only counts plus UUID/CUID or organization/code pairs—never names, emails, tokens, remarks, audit JSON, or credentials.
+
+### Backup and restore
+
+- PASS on disposable PostgreSQL 17 using a custom-format backup.
+- The source `vessel_disposable` was never overwritten. Restore target was the distinct `vessel_restore_verify` database.
+- Source and restore each contained 20 completed/non-rolled-back migrations with identical ordered migration-name/checksum digest `939989d34ea837160b41fd1e904a0eb4`.
+- Row counts matched: organizations 1; users, memberships, ports, terminals, berths, vessels, schedules, invitations and audit logs 0. Representative terminal/port and schedule/vessel/terminal relationship counts also matched at 0.
+
+Credential-free command templates:
+
+```bash
+pg_dump --dbname="$DIRECT_URL" --format=custom --file="$BACKUP_FILE"
+createdb --host="$RESTORE_HOST" --port="$RESTORE_PORT" --username="$RESTORE_ROLE" "$RESTORE_DATABASE"
+pg_restore --dbname="$RESTORE_DIRECT_URL" --exit-on-error "$BACKUP_FILE"
+```
+
+The restore database must be new and disposable. Verify the backup file is non-empty, retain provider-side backup evidence for staging, and never restore over the source.
+
+### Proposed schema migrations — approval required
+
+Do not create these migrations until staging counts are clean and an owner explicitly approves:
+
+1. **Tenant-consistent foreign keys.** Add parent unique keys containing `organizationId` and composite foreign keys for service→company, terminal→port, berth→terminal, and schedule→vessel/terminal/service. Enforce schedule→berth with `(organizationId, terminalId, berthId)` referencing berth `(organizationId, terminalId, id)`.
+2. **Organization-scoped vessel codes.** Replace global `vessels.code` uniqueness with `UNIQUE (organizationId, code)`. Existing global uniqueness means this is backward-compatible and only permits the same code in different organizations.
+3. **Dimensions and simple placement.** Add `CHECK (berthLength > 0)`, nullable-positive vessel checks (`lengthOverall IS NULL OR lengthOverall > 0`, same for beam), `CHECK (berthPositionMeters IS NULL OR berthPositionMeters >= 0)`, and `CHECK (etd > COALESCE(etb, eta))`. Making vessel dimensions `NOT NULL` is a separate product/data decision because incomplete schedules are currently intentional.
+4. **Physical fit/conflicts.** A normal PostgreSQL `CHECK` cannot read vessel/berth rows. Keep the existing advisory-lock transaction enforcement unless approved to denormalize occupied time/metre ranges and add a GiST exclusion constraint (requiring `btree_gist`) or constraint triggers. Either alternative increases write complexity and needs concurrency/load rehearsal.
+
+Compatibility/locking plan: audit first; create supporting unique indexes, preferably concurrently where PostgreSQL permits; add checks and foreign keys `NOT VALID`; validate them separately; then attach/replace constraints in a short maintenance window. Prisma-generated migrations may need careful manual SQL review because concurrent index creation cannot run inside a transaction. Do not edit historical migrations.
+
+### Production migration procedure
+
+1. Freeze schema-changing deploys and record the reviewed artifact/migration checksums.
+2. Confirm provider point-in-time recovery and take a pre-migration logical/provider snapshot; verify timestamp, retention and restore permissions.
+3. Use a direct, non-pooler `DIRECT_URL` for migrations. Runtime `DATABASE_URL` should use the provider pooler; cap total application instances × pool size below the database connection limit and reserve connections for migrations, monitoring and recovery.
+4. Use separate roles: runtime gets only required DML/sequence access; migration role owns/has DDL on the application schema and extension prerequisites; neither is database superuser in normal operation. Provision `pgcrypto` through an approved privileged/bootstrap step if the migration role cannot create extensions.
+5. Set explicit target variables and exact sanitized production approval. Run `npm run db:migrate:status`, review the printed host/port/database, inspect active sessions/locks, and stop on any mismatch.
+6. Announce the maintenance window. Existing migrations can acquire `ACCESS EXCLUSIVE`/`SHARE ROW EXCLUSIVE` locks during table alteration, backfill, constraint and index work. Set bounded `lock_timeout` and `statement_timeout` at the role/session level and monitor `pg_stat_activity`/`pg_locks`; do not kill sessions automatically.
+7. Run `npm run db:migrate:deploy` once from a single migration job. Never run `migrate dev`, `db push`, or `migrate reset`.
+8. Roll forward by default with a reviewed corrective migration. Rollback is safe only before incompatible application writes and when the reverse DDL is proven data-preserving. After column drops, type changes, backfills, enum use, or new writes, restore/rollback can lose data; use a corrective migration instead.
+9. Verify final migration status/checksums, empty schema diff, application role access, representative tenant relationships/counts, critical CRUD/auth/planner paths, error/latency/connection metrics, and backup retention.
+10. Health checks should have a database/query deadline no greater than 3 seconds and an outer request deadline no greater than 5 seconds. The current `/api/health` runs `SELECT 1` without an explicit timeout, so timeout enforcement remains a production-readiness blocker.
+
+### Remaining Step 2 blockers
+
+- Approved staging target and verified pre-migration backup destination.
+- Staging migration status/deploy rehearsal with duration, locks, warnings and final status.
+- Staging data-integrity counts and safe identifiers.
+- Staging backup restore into a different disposable target with non-empty relationship verification.
+- Confirmed provider connection limits/pool settings and distinct least-privilege runtime/migration roles.
+- Explicit health-query/request timeout implementation and verification.
+- Owner decision on the four proposed schema migration groups.
+
+Hosted Supabase staging rehearsal deferred.
+
+Temporary decision:
+- Continue development and local end-to-end testing.
+- Do not run proposed constraint migrations.
+- Do not onboard real organizations or store critical customer data.
+- Do not treat database readiness as complete.
+- Before production release, complete staging migration, non-empty integrity,
+  backup and restore, pooling, role and health-timeout verification.

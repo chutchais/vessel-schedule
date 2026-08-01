@@ -267,6 +267,20 @@ export function SidebarNavigation({ className = "", onNavigate }: SidebarNavigat
             <ul className="mt-2 space-y-1">
               <li>
                 <Link
+                  href="/settings/organization"
+                  onClick={onNavigate}
+                  className={[
+                    "block rounded-md px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                    isActivePath(pathname, "/settings/organization")
+                      ? "bg-blue-50 font-medium text-blue-700"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                  ].join(" ")}
+                >
+                  Organization
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/settings/members"
                   onClick={onNavigate}
                   className={[

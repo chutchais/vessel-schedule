@@ -4,9 +4,18 @@ import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import type { PlannerDataRaw } from "@/lib/berth-planner/types";
 import { buildPlannerScheduleScope } from "@/lib/berth-planner/planner-query";
+import { defaultVesselLabelConfig, normalizeStoredVesselLabelConfig } from "@/lib/berth-planner/vessel-label";
 
 function serializeDecimal(value: { toNumber(): number } | null): number | null {
   return value !== null ? value.toNumber() : null;
+}
+
+function isMissingVesselLabelConfigColumn(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const maybe = error as { code?: unknown; message?: unknown };
+  return maybe.code === "P2022"
+    && typeof maybe.message === "string"
+    && maybe.message.includes("organizations.vesselLabelConfig");
 }
 
 export async function GET(request: NextRequest) {
@@ -45,20 +54,57 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify the terminal belongs to the authenticated user's active organization.
-    const terminal = await prisma.terminal.findFirst({
-      where: { id: terminalId, organizationId },
-      select: {
-        id: true,
-        name: true,
-        port: {
-          select: {
-            id: true,
-            name: true,
-            timezone: true,
+    let terminal: {
+      id: string;
+      name: string;
+      port: { id: string; name: string; timezone: string };
+    } | null = null;
+    let vesselLabelConfig = defaultVesselLabelConfig();
+    try {
+      const terminalWithLabelConfig = await prisma.terminal.findFirst({
+        where: { id: terminalId, organizationId },
+        select: {
+          id: true,
+          name: true,
+          port: {
+            select: {
+              id: true,
+              name: true,
+              timezone: true,
+            },
+          },
+          organization: {
+            select: {
+              vesselLabelConfig: true,
+            },
           },
         },
-      },
-    });
+      });
+      terminal = terminalWithLabelConfig;
+      if (terminalWithLabelConfig) {
+        vesselLabelConfig = normalizeStoredVesselLabelConfig(
+          terminalWithLabelConfig.organization.vesselLabelConfig,
+        ).config;
+      }
+    } catch (error) {
+      if (!isMissingVesselLabelConfigColumn(error)) {
+        throw error;
+      }
+      terminal = await prisma.terminal.findFirst({
+        where: { id: terminalId, organizationId },
+        select: {
+          id: true,
+          name: true,
+          port: {
+            select: {
+              id: true,
+              name: true,
+              timezone: true,
+            },
+          },
+        },
+      });
+    }
 
     if (!terminal) {
       return NextResponse.json({ error: "Terminal not found" }, { status: 404 });
@@ -102,6 +148,7 @@ export async function GET(request: NextRequest) {
         etd: true,
         berthPositionMeters: true,
         headingReverse: true,
+        remarks: true,
         voyageNumber: true,
         updatedAt: true,
         vessel: {
@@ -138,6 +185,7 @@ export async function GET(request: NextRequest) {
       terminalName: terminal.name,
       portName: terminal.port.name,
       portTimezone: terminal.port.timezone,
+      vesselLabelConfig,
       berths: berths.map((berth) => ({
         id: berth.id,
         name: berth.name,
@@ -153,6 +201,7 @@ export async function GET(request: NextRequest) {
           etd: s.etd.toISOString(),
           berthPositionMeters: s.berthPositionMeters,
           headingReverse: s.headingReverse,
+          remarks: s.remarks,
           voyageNumber: s.voyageNumber,
           vesselName: s.vessel.name,
           vesselLoa: serializeDecimal(s.vessel.lengthOverall),

@@ -94,6 +94,7 @@ model Organization {
   name     String  @db.VarChar(200)
   slug     String  @unique @db.VarChar(100)
   isActive Boolean @default(true)
+  vesselLabelConfig Json?
 
   members                 OrganizationMember[]
   requestsForOrganization OrganizationRequest[]    @relation("OrganizationForRequest")

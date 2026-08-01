@@ -1,5 +1,23 @@
 # Vessel Schedule — Project Handoff
 
+## MVP Step 2 database readiness (2026-07-30)
+
+Database readiness is **NO-GO pending an approved staging rehearsal**. No production database was accessed.
+
+The local/disposable evidence is complete: Prisma validation passed; all 20 migrations are unchanged from their introduction commits; `prisma migrate deploy` applied the full history to empty PostgreSQL 17 in about 4.2 seconds; final migration status was current; and `prisma migrate diff` reported an empty migration. The history requires `pgcrypto` before deployment because `20260728193000_add_invitation_token_hash` calls `gen_random_bytes(32)`, but no migration creates the extension.
+
+The requested integrity checks found zero rows on the empty disposable database. This proves the audit queries execute against the resulting schema, not that staging data is clean. A custom-format backup restored into a distinct disposable database; both databases contained 20 successful migrations with the same ordered migration/checksum digest, one default organization, zero application data rows, and matching representative relationship counts.
+
+No approved staging target was available. Therefore staging status/deploy, pre-migration staging backup, real-data integrity counts, lock observation, duration, role/pooling verification, and staging restore evidence remain blockers. Proposed constraint migrations are documented in `MVP_RELEASE_CHECKLIST.md` and require explicit approval before creation.
+
+## Berth Planner personal vessel-label scale (pre-E2E, 2026-08-01)
+
+Personal vessel-label display scale is now available in the planner UI as local preference controls: `A−`, reset `%`, `A+`, using fixed steps 80%, 90%, 100%, 110%, 125% and 140%. The value is persisted in browser storage under `berth-planner-label-scale-v1`, validated against the allowlisted steps, and falls back safely to 100% for missing/malformed values.
+
+The preference applies only to on-screen vessel-shape labels in Position and Datetime canvases. It does not alter berth/schedule geometry, grid/axes, hit testing, tooltip/details text, Recent Changes behavior, organization label templates, or audit/realtime events. Weekly print/PDF export remains deterministic and print-optimized at 100% by design.
+
+Rendering behavior under constrained space keeps higher-priority configured lines first, ellipsizes long visible lines, clips inside vessel polygons, and removes lower-priority lines when needed. Template substitution is pre-resolved for rendered schedules and reused during pointer interactions to keep drag/resize responsive.
+
 ## MVP production audit status (2026-07-29)
 
 Step 1 release-readiness/security audit is complete. RB-1 through RB-3 are technically resolved, and the production build, Prisma validation, TypeScript, lint, and all 131 tests pass. RB-4's PostCSS vulnerabilities remain technically open under an approved exception expiring 2026-08-28. The release recommendation is **GO WITH TIME-LIMITED RB-4 EXCEPTION**.
