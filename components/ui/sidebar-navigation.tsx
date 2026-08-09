@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FlowPortLogo } from "@/components/brand/flowport-logo";
 
 export type NavigationItem = {
   label: string;
@@ -171,7 +172,7 @@ export function SidebarNavigation({ className = "", onNavigate }: SidebarNavigat
   return (
     <nav className={["flex h-full flex-col", className].filter(Boolean).join(" ")}>
       <div className="border-b border-slate-200 px-4 py-4">
-        <p className="text-lg font-semibold text-slate-900">Vessel Schedule</p>
+        <Link href="/berth-planner" aria-label="FlowPort Berth Planner" onClick={onNavigate} className="inline-flex rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"><FlowPortLogo compact showDomain={false} /></Link>
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto px-3 py-4">

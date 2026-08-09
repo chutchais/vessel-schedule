@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vessel Schedule",
-  description: "Vessel schedule and berth planning system",
+  title: "FlowPort | Berth Planning",
+  description: "Visual berth planning for modern terminal operations.",
 };
 
 export default function RootLayout({

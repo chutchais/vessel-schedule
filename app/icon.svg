@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="FlowPort">
+  <rect width="32" height="32" rx="7" fill="#0b3b5c"/>
+  <path fill="#ffffff" d="M6 7h10v4h-6v3h5v4h-5v7H6z"/>
+  <path fill="#45b5d8" fill-rule="evenodd" d="M17 7h5.2C26.5 7 29 9.4 29 13.2c0 3.9-2.5 6.3-6.8 6.3H21V25h-4V7zm4 4v4.5h1.1c1.9 0 2.9-.7 2.9-2.3 0-1.5-1-2.2-2.9-2.2H21z"/>
+</svg>

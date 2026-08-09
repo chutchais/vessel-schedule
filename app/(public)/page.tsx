@@ -1,498 +1,88 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getOptionalCurrentUser } from "@/lib/auth/optional-current-user";
+import { connection } from "next/server";
+import { prisma } from "@/lib/db/prisma";
+import { getLandingActions } from "@/lib/landing/actions";
 import { LandingHeader } from "./_components/landing-header";
+import { FlowPortLogo } from "@/components/brand/flowport-logo";
 
 export const metadata: Metadata = {
-  title: "Vessel Schedule | Berth Planning and Maritime Operations",
-  description:
-    "Manage vessel calls, services, terminals, berths, and schedules in an organization-based maritime operations workspace.",
-  openGraph: {
-    title: "Vessel Schedule | Berth Planning and Maritime Operations",
-    description:
-      "Manage vessel calls, services, terminals, berths, and schedules in an organization-based maritime operations workspace.",
-    type: "website",
-  },
+  title: "FlowPort | Berth Planning",
+  description: "Visual berth planning for modern terminal operations.",
+  alternates: { canonical: "https://getflowport.com" },
+  openGraph: { title: "FlowPort | Berth Planning", description: "Visual berth planning for modern terminal operations.", url: "https://getflowport.com", type: "website" },
 };
 
-const FEATURES = [
-  {
-    title: "Vessel Schedules",
-    description:
-      "Coordinate vessel calls, voyage numbers, services, terminals, berths, and planned or actual times.",
-    icon: (
-      <svg aria-hidden="true" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
-  },
-  {
-    title: "Berth Management",
-    description:
-      "Maintain berth length, display order, color, zero-origin direction, and vessel position.",
-    icon: (
-      <svg aria-hidden="true" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-      </svg>
-    ),
-  },
-  {
-    title: "Master Data",
-    description:
-      "Manage companies, ports, terminals, vessels, and shipping services in one consistent interface.",
-    icon: (
-      <svg aria-hidden="true" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-      </svg>
-    ),
-  },
-  {
-    title: "Organization Workspaces",
-    description:
-      "Keep each organization's users and operational data separated.",
-    icon: (
-      <svg aria-hidden="true" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-    ),
-  },
-  {
-    title: "Roles & Permissions",
-    description:
-      "Control access for Owners, Admins, Planners, and Viewers.",
-    icon: (
-      <svg aria-hidden="true" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-      </svg>
-    ),
-  },
-  {
-    title: "Audit History",
-    description:
-      "Review important changes with organization-scoped activity history.",
-    icon: (
-      <svg aria-hidden="true" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
-  },
+const CAPABILITIES = [
+  ["Visual weekly Berth Planner", "Review terminal calls across a clear, timezone-aware weekly planning surface."],
+  ["Position and datetime views", "Switch between berth-position geometry and datetime lanes without losing planning context."],
+  ["Direct schedule adjustments", "Move vessel calls with drag-and-drop and resize their planned duration on the canvas."],
+  ["Overlap detection", "Identify berth and vessel occupancy conflicts across time and position."],
+  ["Operational filters and search", "Focus the plan by vessel, voyage, service, status, berth, conflicts, or incomplete placement."],
+  ["Recent changes and undo", "Highlight recent planner activity and safely undo eligible planning changes."],
+  ["Configurable vessel labels", "Choose structured, safe label content and personal on-screen label sizing."],
+  ["Print, PDF and schedule export", "Prepare weekly print/PDF output or export filtered schedule data as CSV."],
+  ["Users, roles and invitations", "Organize Owners, Admins, Planners, and Viewers through controlled invitations."],
+  ["Object-level audit history", "Open the recorded history for supported operational objects and review important changes."],
+  ["Secure read-only planner sharing", "Create expiring, revocable links to a fixed planner scope without exposing editing controls."],
 ] as const;
 
-const STEPS = [
-  {
-    step: "1",
-    title: "Request Access",
-    description: "Submit your organization or business name and contact details.",
-  },
-  {
-    step: "2",
-    title: "Platform Review",
-    description: "A platform administrator reviews and approves the organization request.",
-  },
-  {
-    step: "3",
-    title: "Invite Your Team",
-    description: "The Organization Owner invites Admins, Planners, and Viewers.",
-  },
-  {
-    step: "4",
-    title: "Plan Operations",
-    description: "Create master data and coordinate vessel schedules within your private workspace.",
-  },
+const WORKFLOW = [
+  "Set up organization",
+  "Add terminal, berth, vessel and service",
+  "Create schedules",
+  "Operate from the Berth Planner",
+  "Share or export the plan",
 ] as const;
 
-const SECURITY_ITEMS = [
-  "Organization-scoped data access on every server request",
-  "Server-side authentication verified before database operations",
-  "Role-based permissions: Owner, Admin, Planner, and Viewer",
-  "Verified invitation email matching for new team members",
-  "Protected platform administration with super-admin checks",
-  "Supabase Admin operations confined to server-only code paths",
+const SECURITY = [
+  ["Organization data isolation", "Operational reads and writes are scoped to the active organization on the server."],
+  ["Role-based permissions", "Owner, Admin, Planner, and Viewer roles separate administrative, planning, and viewing actions."],
+  ["Audit logs", "Organization and object-level histories record important changes without exposing secrets."],
+  ["Controlled public sharing", "Read-only planner links expire, can be revoked, and use hashed secrets with short-lived viewer sessions."],
 ] as const;
 
-/** Static berth timeline demonstration — no real data is fetched */
-function BerthPreview() {
-  return (
-    <div
-      aria-label="Example berth schedule preview"
-      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md"
-    >
-      {/* Header bar */}
-      <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
-        <div className="h-2.5 w-2.5 rounded-full bg-red-400" aria-hidden="true" />
-        <div className="h-2.5 w-2.5 rounded-full bg-amber-400" aria-hidden="true" />
-        <div className="h-2.5 w-2.5 rounded-full bg-green-400" aria-hidden="true" />
-        <span className="ml-2 text-xs font-medium text-slate-500">Berth Schedule — Demo</span>
-      </div>
+async function platformAdminExists() {
+  await connection();
+  try {
+    return await prisma.user.count({ where: { platformRole: "SUPER_ADMIN", isActive: true } }) > 0;
+  } catch {
+    // Never expose setup based on an uncertain database state.
+    return true;
+  }
+}
 
-      {/* Timeline content */}
-      <div className="p-4">
-        {/* Time axis */}
-        <div className="mb-2 flex items-center">
-          <div className="w-20 shrink-0" />
-          <div className="flex flex-1 text-xs text-slate-400">
-            {["08:00", "10:00", "12:00", "14:00", "16:00"].map((t) => (
-              <span key={t} className="flex-1 text-center first:text-left last:text-right">
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Berth rows */}
-        <div className="space-y-2">
-          {/* Berth A */}
-          <div className="flex items-center gap-2">
-            <span className="w-20 shrink-0 text-xs font-medium text-slate-600">Berth A</span>
-            <div className="relative flex-1 h-8 rounded bg-slate-50 border border-slate-200">
-              {/* Vessel 101 — 08:00 to 12:00 (50%) */}
-              <div
-                aria-label="Vessel 101, Service A1, 08:00–12:00"
-                className="absolute inset-y-1 left-0 right-[50%] rounded bg-blue-500 flex items-center px-2 overflow-hidden"
-                style={{ marginLeft: "1px" }}
-              >
-                <span className="truncate text-xs font-medium text-white">Vessel 101 · A1</span>
-              </div>
-              {/* Vessel 204 — 13:00 to 15:30 */}
-              <div
-                aria-label="Vessel 204, Service B2, 13:00–15:30"
-                className="absolute inset-y-1 rounded bg-cyan-500 flex items-center px-2 overflow-hidden"
-                style={{ left: "62.5%", right: "12.5%" }}
-              >
-                <span className="truncate text-xs font-medium text-white">V 204</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Berth B */}
-          <div className="flex items-center gap-2">
-            <span className="w-20 shrink-0 text-xs font-medium text-slate-600">Berth B</span>
-            <div className="relative flex-1 h-8 rounded bg-slate-50 border border-slate-200">
-              {/* Vessel 055 — 09:00 to 14:00 */}
-              <div
-                aria-label="Vessel 055, Service C3, 09:00–14:00"
-                className="absolute inset-y-1 rounded bg-violet-500 flex items-center px-2 overflow-hidden"
-                style={{ left: "12.5%", right: "25%" }}
-              >
-                <span className="truncate text-xs font-medium text-white">Vessel 055 · C3</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Berth C */}
-          <div className="flex items-center gap-2">
-            <span className="w-20 shrink-0 text-xs font-medium text-slate-600">Berth C</span>
-            <div className="relative flex-1 h-8 rounded bg-slate-50 border border-slate-200">
-              {/* Vessel 312 — 11:00 to 13:00 */}
-              <div
-                aria-label="Vessel 312, 11:00–13:00"
-                className="absolute inset-y-1 rounded bg-emerald-500 flex items-center px-2 overflow-hidden"
-                style={{ left: "37.5%", right: "37.5%" }}
-              >
-                <span className="truncate text-xs font-medium text-white">V 312</span>
-              </div>
-              {/* Vessel 089 — 14:30 to 16:00 */}
-              <div
-                aria-label="Vessel 089, 14:30–16:00"
-                className="absolute inset-y-1 rounded bg-amber-500 flex items-center px-2 overflow-hidden"
-                style={{ left: "81.25%", right: "0%" }}
-              >
-                <span className="truncate text-xs font-medium text-white">V 089</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ETA/ETD labels */}
-        <div className="mt-3 flex flex-wrap gap-3 border-t border-slate-100 pt-3">
-          <div className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-500" aria-hidden="true" />
-            <span className="text-xs text-slate-500">ETA 08:00 · ETD 12:00</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-violet-500" aria-hidden="true" />
-            <span className="text-xs text-slate-500">ETA 09:00 · ETD 14:00</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-cyan-500" aria-hidden="true" />
-            <span className="text-xs text-slate-500">ETA 13:00 · ETD 15:30</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+function PlannerPreview() {
+  const calls = [
+    { berth: "Berth 1", vessel: "MV Horizon", detail: "SEA-12 · 08:00–18:00", position: "left-[8%] right-[42%] bg-blue-500" },
+    { berth: "Berth 2", vessel: "Ocean Cedar", detail: "NORTH · 11:30–22:00", position: "left-[28%] right-[18%] bg-cyan-600" },
+    { berth: "Berth 3", vessel: "Pacific Dawn", detail: "Voyage 204", position: "left-[55%] right-[4%] bg-violet-500" },
+  ];
+  return <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl" aria-label="Illustrative weekly berth planner">
+    <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3"><span className="text-xs font-semibold text-slate-700">Weekly Berth Planner</span><span className="rounded bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700">Position view</span></div>
+    <div className="p-4 sm:p-5"><div className="mb-3 ml-24 grid grid-cols-4 text-center text-[10px] font-medium text-slate-400"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span></div><div className="space-y-3">{calls.map((call) => <div key={call.berth} className="flex items-center gap-3"><span className="w-20 shrink-0 text-xs font-medium text-slate-600">{call.berth}</span><div className="relative h-14 flex-1 overflow-hidden rounded-md border border-slate-200 bg-slate-50"><div className="absolute inset-y-1/2 border-t border-dashed border-slate-200 left-0 right-0"/><div className={`absolute inset-y-2 flex min-w-24 flex-col justify-center rounded-md px-2 text-white shadow-sm ${call.position}`}><span className="truncate text-xs font-semibold">{call.vessel}</span><span className="truncate text-[10px] text-white/85">{call.detail}</span></div></div></div>)}</div><div className="mt-4 flex flex-wrap gap-3 border-t border-slate-100 pt-3 text-[11px] text-slate-500"><span>Port timezone</span><span>•</span><span>Live schedule scope</span><span>•</span><span>Conflict aware</span></div></div>
+  </div>;
 }
 
 export default async function LandingPage() {
-  const user = await getOptionalCurrentUser();
+  const hasPlatformAdmin = await platformAdminExists();
+  const actions = getLandingActions(hasPlatformAdmin);
+  const primaryClass = "inline-flex min-h-11 items-center justify-center rounded-md bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
+  const secondaryClass = "inline-flex min-h-11 items-center justify-center rounded-md border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
+  return <>
+    <LandingHeader showPlatformSetup={!hasPlatformAdmin}/>
+    <main>
+      <section className="bg-white"><div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-24"><div><p className="mb-4 inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">Invite-only pilot for terminal operations teams</p><h1 className="text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">Plan Berth Operations with Confidence</h1><p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">FlowPort gives terminals a visual weekly berth plan for coordinating vessel calls, berth position, timing, conflicts, and operational handoffs in one controlled workspace.</p><div className="mt-8 flex flex-wrap gap-3"><Link href={actions.primary.href} className={primaryClass}>{actions.primary.label}</Link><Link href={actions.secondary.href} className={secondaryClass}>{actions.secondary.label}</Link>{actions.setup ? <Link href={actions.setup.href} className={secondaryClass}>{actions.setup.label}</Link> : null}</div></div><PlannerPreview/></div></section>
 
-  const showDashboard = user !== null && user.hasMembership;
-  const showInvitations = user !== null && !user.hasMembership;
-  const showAdmin = user !== null && user.platformRole === "SUPER_ADMIN";
+      <section id="capabilities" className="border-t border-slate-200 bg-slate-50"><div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18 lg:px-8"><div className="max-w-2xl"><p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Current MVP</p><h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Tools for the weekly operating plan</h2><p className="mt-3 text-slate-600">Plan, review, communicate, and trace berth activity without turning the pilot into a broader terminal operating system.</p></div><div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{CAPABILITIES.map(([title, description]) => <article key={title} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div aria-hidden="true" className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-lg font-bold text-blue-600">✓</div><h3 className="font-semibold text-slate-950">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p></article>)}</div></div></section>
 
-  return (
-    <>
-      {/* ── Announcement bar ── */}
-      {!showDashboard && !showInvitations && (
-        <div className="bg-blue-600 px-4 py-2.5 text-center text-sm font-medium text-white">
-          Ready to get started?{" "}
-          <Link
-            href="/request-access"
-            className="inline-flex items-center gap-1 underline underline-offset-2 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-1 focus-visible:ring-offset-blue-600 rounded-sm"
-          >
-            Request Access
-            <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 8h10M9 4l4 4-4 4" />
-            </svg>
-          </Link>
-        </div>
-      )}
+      <section id="workflow" className="border-t border-slate-200 bg-white"><div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18 lg:px-8"><div className="max-w-2xl"><p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Workflow</p><h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">From setup to an operational plan</h2></div><ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{WORKFLOW.map((step, index) => <li key={step} className="relative rounded-xl border border-slate-200 bg-slate-50 p-5"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">{index + 1}</span><p className="mt-4 text-sm font-semibold leading-6 text-slate-900">{step}</p>{index < WORKFLOW.length - 1 ? <span aria-hidden="true" className="absolute -right-3 top-7 z-10 hidden text-slate-300 lg:block">→</span> : null}</li>)}</ol></div></section>
 
-      <LandingHeader
-        showDashboard={showDashboard}
-        showInvitations={showInvitations}
-        showAdmin={showAdmin}
-      />
+      <section id="security" className="border-t border-slate-200 bg-slate-950 text-white"><div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:py-18 lg:grid-cols-[0.75fr_1.25fr] lg:px-8"><div><p className="text-sm font-semibold uppercase tracking-wider text-blue-300">Access and accountability</p><h2 className="mt-2 text-3xl font-bold tracking-tight">Security controls in the MVP</h2><p className="mt-4 leading-7 text-slate-300">The pilot applies server-side organization boundaries and permission checks to operational workflows and controlled external sharing.</p></div><div className="grid gap-4 sm:grid-cols-2">{SECURITY.map(([title, description]) => <article key={title} className="rounded-xl border border-slate-700 bg-slate-900 p-5"><h3 className="font-semibold text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-300">{description}</p></article>)}</div></div></section>
 
-      <main>
-        {/* ── Hero ── */}
-        <section className="bg-white">
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="grid items-center gap-12 lg:grid-cols-2">
-              <div>
-                <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-                  Plan vessel calls{" "}
-                  <span className="text-blue-600">with clarity</span>
-                </h1>
-                <p className="mt-5 text-lg leading-relaxed text-slate-600">
-                  Manage vessels, services, terminals, berths, and port-call schedules in one organized workspace.
-                </p>
-                <div className="mt-8 flex flex-wrap gap-4">
-                  {showDashboard ? (
-                    <>
-                      <Link
-                        href="/schedules"
-                        className="inline-flex h-11 items-center justify-center rounded-md bg-blue-600 px-6 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                      >
-                        Open Dashboard
-                      </Link>
-                      {showAdmin && (
-                        <Link
-                          href="/admin/organization-requests"
-                          className="inline-flex h-11 items-center justify-center rounded-md border border-slate-300 bg-white px-6 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                        >
-                          Platform Administration
-                        </Link>
-                      )}
-                    </>
-                  ) : showInvitations ? (
-                    <Link
-                      href="/invitations"
-                      className="inline-flex h-11 items-center justify-center rounded-md bg-blue-600 px-6 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                    >
-                      View Invitations
-                    </Link>
-                  ) : (
-                    <>
-                      <Link
-                        href="/request-access"
-                        className="inline-flex h-11 items-center justify-center rounded-md bg-blue-600 px-6 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                      >
-                        Request Access
-                      </Link>
-                      <Link
-                        href="/login"
-                        className="inline-flex h-11 items-center justify-center rounded-md border border-slate-300 bg-white px-6 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                      >
-                        Sign In
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div>
-                <BerthPreview />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Features ── */}
-        <section id="features" className="bg-slate-50 border-t border-slate-200">
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="mb-12 text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                Everything needed for vessel scheduling
-              </h2>
-              <p className="mt-3 text-base text-slate-600">
-                Purpose-built tools for maritime operations teams.
-              </p>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {FEATURES.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-                >
-                  <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-900">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── How It Works ── */}
-        <section id="how-it-works" className="bg-white border-t border-slate-200">
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="mb-12 text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                Start with a controlled organization workspace
-              </h2>
-              <p className="mt-3 text-base text-slate-600">
-                Access is granted by invitation through an approved organization.
-              </p>
-            </div>
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {STEPS.map((item, index) => (
-                <div key={item.step} className="relative">
-                  {/* Connector line (hidden on last item) */}
-                  {index < STEPS.length - 1 && (
-                    <div
-                      aria-hidden="true"
-                      className="absolute top-5 left-10 hidden h-px w-[calc(100%+2rem)] border-t border-dashed border-slate-300 lg:block"
-                    />
-                  )}
-                  <div className="flex flex-col items-start">
-                    <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-600 bg-white text-sm font-bold text-blue-600">
-                      {item.step}
-                    </div>
-                    <h3 className="mt-4 text-base font-semibold text-slate-900">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Security ── */}
-        <section id="security" className="bg-slate-50 border-t border-slate-200">
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                  Designed around organization boundaries
-                </h2>
-                <p className="mt-4 text-base leading-relaxed text-slate-600">
-                  Each request is evaluated using the authenticated user, active organization
-                  membership, and assigned role. Organization data is scoped on the server before
-                  database operations are performed.
-                </p>
-                <p className="mt-3 text-sm text-slate-500">
-                  Authentication is powered by Supabase. Platform administration
-                  uses server-only Admin API calls that are never exposed to the browser.
-                </p>
-              </div>
-              <ul className="space-y-4" aria-label="Security controls">
-                {SECURITY_ITEMS.map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <span
-                      aria-hidden="true"
-                      className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100"
-                    >
-                      <svg className="h-3 w-3 text-blue-600" viewBox="0 0 12 12" fill="currentColor">
-                        <path d="M3.5 6.5L5 8l3.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                      </svg>
-                    </span>
-                    <span className="text-sm leading-relaxed text-slate-700">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Final CTA ── */}
-        <section className="bg-white border-t border-slate-200">
-          <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-              Ready to organize your vessel schedules?
-            </h2>
-            <p className="mt-4 text-base text-slate-600">
-              Request access to get started, or sign in if you already have an account.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              {showDashboard ? (
-                <Link
-                  href="/schedules"
-                  className="inline-flex h-11 items-center justify-center rounded-md bg-blue-600 px-8 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                >
-                  Open Dashboard
-                </Link>
-              ) : showInvitations ? (
-                <Link
-                  href="/invitations"
-                  className="inline-flex h-11 items-center justify-center rounded-md bg-blue-600 px-8 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                >
-                  View Invitations
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    href="/request-access"
-                    className="inline-flex h-11 items-center justify-center rounded-md bg-blue-600 px-8 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                  >
-                    Request Access
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="inline-flex h-11 items-center justify-center rounded-md border border-slate-300 bg-white px-8 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
-                  >
-                    Sign In
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* ── Footer ── */}
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Vessel Schedule</p>
-              <p className="mt-1 text-xs text-slate-500 max-w-xs">
-                Berth planning and maritime operations workspace for shipping teams.
-              </p>
-            </div>
-            <nav aria-label="Footer links" className="flex flex-wrap items-center gap-5">
-              <Link
-                href="/login"
-                className="text-sm text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/request-access"
-                className="text-sm text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm transition-colors"
-              >
-                Request Access
-              </Link>
-            </nav>
-          </div>
-          <div className="mt-8 border-t border-slate-200 pt-6">
-            <p className="text-xs text-slate-400">
-              &copy; {new Date().getFullYear()} Vessel Schedule. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
-    </>
-  );
+      <section id="pilot" className="border-t border-slate-200 bg-white"><div className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6 sm:py-18"><p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Pilot status</p><h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Built for focused evaluation with invited teams</h2><p className="mt-4 leading-7 text-slate-600">FlowPort is an invite-only MVP pilot. It is intended for evaluating berth-planning workflows with selected port and terminal operators; it does not claim enterprise readiness, guaranteed uptime, or completed compliance certification.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><Link href="/request-access" className={primaryClass}>Request Access</Link><Link href="/login" className={secondaryClass}>Sign In</Link></div></div></section>
+      <section id="contact" className="border-t border-slate-200 bg-slate-50"><div className="mx-auto grid max-w-5xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-18 md:grid-cols-[1fr_auto]"><div><p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Contact Us</p><h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Talk with the FlowPort team</h2><p className="mt-4 max-w-2xl leading-7 text-slate-600">Contact us about pilot access, product support, or questions about using FlowPort for terminal berth planning.</p><p className="mt-3 select-text text-base font-semibold text-[#0b3b5c]">support@getflowport.com</p></div><a href="mailto:support@getflowport.com" className="inline-flex min-h-11 items-center justify-center rounded-md bg-[#0b3b5c] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#082f4a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d7a9b] focus-visible:ring-offset-2">Email Us</a></div></section>
+    </main>
+    <footer className="border-t border-slate-200 bg-slate-50"><div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8"><div><FlowPortLogo compact/><p className="mt-1 text-xs text-slate-500">Visual berth planning for modern terminal operations.</p></div><nav aria-label="Footer links" className="flex flex-wrap gap-5"><a href="https://getflowport.com" className="rounded-sm text-sm text-slate-600 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">getflowport.com</a><a href="mailto:support@getflowport.com" className="rounded-sm text-sm text-slate-600 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Contact Us</a><Link href="/request-access" className="rounded-sm text-sm text-slate-600 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Request Access</Link><Link href="/login" className="rounded-sm text-sm text-slate-600 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Sign In</Link></nav></div></footer>
+  </>;
 }

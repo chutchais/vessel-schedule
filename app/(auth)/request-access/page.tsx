@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RequestAccessForm } from "@/components/auth/request-access-form";
+import { FlowPortLogo } from "@/components/brand/flowport-logo";
 
 export default function RequestAccessPage() {
   return (
@@ -7,9 +8,9 @@ export default function RequestAccessPage() {
       {/* Top brand link */}
       <div className="mb-6 text-center">
         <Link href="/" className="inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm">
-          <span className="text-lg font-bold text-slate-900">Vessel Schedule</span>
+          <FlowPortLogo compact />
         </Link>
-        <p className="mt-0.5 text-xs text-slate-500">Berth Planning &amp; Operations</p>
+        <p className="mt-0.5 text-xs text-slate-500">Visual berth planning for modern terminal operations.</p>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">

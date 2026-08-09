@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { FlowPortLogo } from "@/components/brand/flowport-logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,10 +42,11 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-sm">
+      <Link href="/" aria-label="FlowPort home" className="mb-6 flex justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"><FlowPortLogo compact /></Link>
       <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
-          <p className="mt-1 text-sm text-slate-500">Vessel Schedule System</p>
+          <p className="mt-1 text-sm text-slate-500">Visual berth planning for modern terminal operations.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

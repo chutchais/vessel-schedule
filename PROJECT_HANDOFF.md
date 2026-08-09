@@ -1,5 +1,13 @@
 # Vessel Schedule — Project Handoff
 
+## Public landing page MVP alignment (2026-08-09)
+
+- Reframed the public page around the current visual weekly Berth Planner and its implemented planning, conflict, filter, audit, export, organization, and secure-sharing capabilities.
+- Added a concise operating workflow, security-control summary, and explicit invite-only pilot positioning without enterprise, uptime, real-time, or compliance claims.
+- Public actions remain `/request-access` and `/login`. When no active platform admin exists, the server-rendered page also shows `Set Up Platform`, preserving the request-access path with `?setup=platform`.
+- The public header no longer exposes authenticated dashboard, administration, invitation, or organization context.
+- No authenticated routes, database schema, or operational behavior changed.
+
 ## Authentication E2E Batch 1 rerun (2026-08-01)
 
 Batch 1 database prerequisites and suites are passing locally, but browser E2E remains **NO-GO (infrastructure)** until local Supabase Auth E2E configuration is provided.

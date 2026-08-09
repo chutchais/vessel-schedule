@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SidebarNavigation } from "@/components/ui/sidebar-navigation";
+import { FlowPortLogo } from "@/components/brand/flowport-logo";
 
 type MobileNavigationProps = {
   className?: string;
@@ -30,7 +31,7 @@ export function MobileNavigation({ className = "" }: MobileNavigationProps) {
   return (
     <header className={["border-b border-slate-200 bg-white", className].filter(Boolean).join(" ")}>
       <div className="flex h-14 items-center justify-between px-4">
-        <p className="text-base font-semibold text-slate-900">Vessel Schedule</p>
+        <FlowPortLogo compact showDomain={false} />
         <button
           type="button"
           onClick={() => setOpen(true)}
