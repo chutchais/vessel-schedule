@@ -31,6 +31,7 @@ Store server secrets in the hosting provider's encrypted secret manager. Set pro
 | `SMTP_USER` | Runtime, server only | Provider credential | **RESOLVED (repository): placeholder documented; live setting unverified** |
 | `SMTP_PASSWORD` | Runtime, server only | Provider credential | **RESOLVED (repository): placeholder documented; live setting unverified** |
 | `EMAIL_FROM` | Runtime | Verified FlowPort sender identity/domain | **RESOLVED (repository): FlowPort safe example documented; provider/domain verification pending** |
+| `EMAIL_DELIVERY_MODE` | Runtime | Explicit `disabled` validation mode or fully configured `smtp` mode | **RESOLVED (repository): fail-closed control implemented; production choice pending** |
 | `PUBLIC_PLANNER_SHARING_ENABLED` | Build/runtime | `true` only after the sharing migration, proxy trust, headers, rate limits, and manual security checks pass; otherwise `false` | Documented and disabled by default |
 | `PUBLIC_PLANNER_TRUSTED_PROXY_HOPS` | Runtime | Exact number of trusted hosting proxy hops; do not copy a value between providers | Documented as `0`; **must be validated before enabling sharing** |
 | `PORT` | Runtime, platform-dependent | Hosting-assigned port, if required | **RESOLVED (repository): optional safe example documented; hosting value pending** |
@@ -271,3 +272,141 @@ The full test suite was not run as part of this audit.
 Static SQL review cannot establish which migrations are pending. If `20260809120000_add_berth_planner_shares` is later reported pending, its SQL adds one enum value, three new tables, indexes, and foreign keys. It contains no table/column drop, data update/delete, table rebuild, or existing-column default/backfill. Expected risks are short catalog/enum locks and DDL locks; the indexes and child-table foreign keys are created against new empty tables. Re-review every migration actually reported by guarded status before approval.
 
 The only permitted Phase 2 command is `npm run db:migrate:deploy`, executed with production variables supplied by the approved secret manager after a successful guarded status check and confirmed restorable backup. Do not approve Phase 2 until the missing classification/approval, migration status, backup evidence, and rollback ownership are resolved.
+
+## Production application deployment preflight — 2026-08-09
+
+**Result: NO-GO; the application was not deployed and no production service or database was modified.**
+
+### Release identity
+
+- Branch: `main`
+- Commit: `c2d2fe7da6751cd96d2c2a5b686f87b1a256bdd3`
+- `origin/main`: exact match (`0` ahead, `0` behind) at preflight start
+- Initial working tree: clean
+- Node.js: `v24.18.0`
+- npm: `12.0.1`
+
+### Backup evidence
+
+- Provider: Supabase
+- Restorable: asserted `YES`
+- Timestamp: **MISSING — placeholder was supplied**
+- Backup type: **MISSING — placeholder was supplied**
+- Result: **UNVERIFIED / BLOCKING**. A restorable assertion without a verified timestamp, backup type, provider evidence, and responsible restore operator does not satisfy the backup gate.
+
+### Production environment review
+
+- `NEXT_PUBLIC_APP_URL`: confirmed equal to `https://getflowport.com`
+- `APP_URL`: present but does not equal `https://getflowport.com` or `NEXT_PUBLIC_APP_URL` — **BLOCKING**
+- Database URLs, Supabase URL/publishable key/server secret: present (values not printed)
+- Application SMTP host/port/secure/user/password/from: missing — **BLOCKING**
+- Public planner feature flag: explicitly set to `true` or `false` (value intentionally not recorded)
+- Public planner proxy-hop value: present; hosting topology remains externally unverified
+- Authentication link code uses the validated configured application origin; hosted Supabase Site URL and redirect allowlist remain externally unverified
+
+### Safe checks
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Prisma schema validation | PASS | Validated with isolated local build database placeholders; no production connection |
+| TypeScript | PASS | `npx tsc --noEmit` |
+| Lint | PASS | `npm run lint` |
+| Production build | PASS | `npm run build`; 51 static pages generated, including `/api/health` route in the production route manifest |
+| Production artifact smoke | PASS | Root, login, protected planner redirect, and bundled static asset passed against loopback using non-production placeholders |
+| RB4 runtime verification | **FAIL / BLOCKING** | Unexpected vulnerable runtime package `nanoid` |
+| Runtime dependency audit | **FAIL / BLOCKING** | 3 advisories: 1 moderate, 2 high |
+| E2E | NOT RUN | Explicitly blocked for this preflight |
+
+The first sandboxed build failed only because Google Fonts could not be downloaded; the same isolated build passed when network access was allowed. The first smoke attempt could not bind in the sandbox; the same artifact passed with loopback binding allowed.
+
+### Security exception failure
+
+- Unexpected high-severity `nanoid` advisory: `GHSA-2v37-7h3g-55p8`, affecting versions below 3.3.17. This package is outside the approved RB4 exception and causes `scripts/verify-rb4-runtime.mjs` to fail closed.
+- The audit also reports PostCSS advisory `GHSA-fxqj-rqcc-2cmp`, which is not in the RB4 exception's exact three-advisory allowlist. The existing Next/PostCSS exception therefore no longer matches the complete observed advisory set.
+- Existing approved advisories remain present: `GHSA-qx2v-qp2m-jg93`, `GHSA-6g55-p6wh-862q`, and `GHSA-r28c-9q8g-f849`.
+- Do not use `npm audit fix --force` or silently expand the exception. Resolve through a reviewed dependency update and rerun the full artifact procedure.
+
+### Deployment configuration review
+
+- Install command: `npm ci`
+- Build command: `npm run build`
+- Start command: `npm run start`
+- Required artifact process: build, `npm prune --omit=dev --omit=optional`, `npm run verify:rb4-runtime`, then `npm run smoke:production`
+- Health endpoint: `/api/health`; dynamic, no-store, generic `ok`/`error` response only
+- Production route logging: static event labels; dynamic exception content is not emitted by application routes
+- Centralized hosting logs, retention, alerting, and provider-side redaction: **UNVERIFIED / PENDING**
+- `getflowport.com`, `www.getflowport.com`, and the production health URL did not resolve through the preflight network paths. HTTPS certificate, DNS, canonical redirect, and live health behavior are therefore **UNVERIFIED / BLOCKING**.
+
+### Application deployment decision
+
+**NO-GO.** Before requesting deployment approval:
+
+1. Supply verified Supabase backup timestamp, backup type, restorable evidence, and restore ownership.
+2. Set `APP_URL=https://getflowport.com` and confirm it matches `NEXT_PUBLIC_APP_URL` in the actual production environment.
+3. Configure and verify all application SMTP variables and the sender domain.
+4. Resolve the unexpected `nanoid` advisory and the changed PostCSS advisory scope; rerun build, prune, RB4 verification, and smoke on the exact release commit.
+5. Verify Supabase Auth Site URL/redirect allowlist, hosted logging controls, DNS, HTTPS certificate, canonical redirects, and live health behavior with provider evidence.
+
+## Minimum private-validation blocker remediation — 2026-08-09
+
+### Repository fixes
+
+- Canonical URL: `NEXT_PUBLIC_APP_URL` is the shared application URL authority; `APP_URL` is its server-side mirror. Production requires both to equal `https://getflowport.com`. Invitation, share, recovery, registration, callback, and logout URLs continue to use the validated configuration rather than hard-coded request hosts.
+- Email validation mode: added mandatory `EMAIL_DELIVERY_MODE`. Missing/unknown values and `disabled` fail closed. Access Request clearly states when no confirmation email is sent. Invitation create/replace/retry/new-link actions return `503` and are disabled in the UI; no invitation record is created by a disabled email action.
+- Dependency remediation:
+  - Next.js: `16.2.12` → `16.3.0`
+  - Next-bundled PostCSS: `8.4.31` → deduplicated patched `8.5.23`
+  - nanoid: `3.3.16` → overridden patched `3.3.17`
+  - Before: `next@16.2.12 -> postcss@8.4.31 -> nanoid@3.3.16` and `@tailwindcss/postcss@4.3.3 -> postcss@8.5.23 -> nanoid@3.3.16`. This made `GHSA-2v37-7h3g-55p8` reachable through runtime Next/PostCSS, while `GHSA-fxqj-rqcc-2cmp` affected Next's runtime PostCSS.
+  - After: `next@16.3.0 -> postcss@8.5.23 -> nanoid@3.3.17`; Tailwind's PostCSS deduplicates to the same patched packages. The pruned production audit reports zero advisories.
+- RB4 controls remain fail closed: exact patched versions, forbidden runtime packages, source/runtime CSS processing checks, pruned-artifact audit, and smoke workflow remain enforced. The temporary PostCSS exception is resolved rather than expanded.
+
+### Manual Supabase values
+
+- Site URL: `https://getflowport.com`
+- Production redirect URLs:
+  - `https://getflowport.com/auth/callback`
+  - `https://getflowport.com/auth/callback?type=recovery`
+- Confirmation/invitation email redirect: `https://getflowport.com/auth/callback`
+- Password recovery redirect: `https://getflowport.com/auth/callback?type=recovery`
+- Optional private validation preview, only if a distinct provider hostname is used:
+  - `https://<private-validation-host>/auth/callback`
+  - `https://<private-validation-host>/auth/callback?type=recovery`
+- Preview redirects must be exact; wildcard production redirects remain prohibited.
+
+### Remaining manual blockers
+
+- Backup remains **NO-GO** until the placeholders are replaced with verified Supabase timestamp, backup type, restorability evidence, and restore ownership.
+- Hosting must receive matching `APP_URL` and `NEXT_PUBLIC_APP_URL` values.
+- Select `EMAIL_DELIVERY_MODE=disabled` for private validation or configure and verify full SMTP before selecting `smtp`.
+- Obtain DNS verification/apex/`www` records from the existing hosting provider; no provider-specific targets are guessed here.
+- DNS propagation, TLS certificate activation/renewal, canonical redirects, Supabase dashboard settings, and live health remain manual pending actions.
+
+### Remediation verification evidence
+
+All checks below used non-production placeholder service values. No migration, deployment, production connection, DNS change, or production-data operation was performed.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Reproducible development install | PASS | `npm ci --allow-remote=all` completed from the committed lockfile; the full development tree was restored again after runtime-artifact checks |
+| Prisma schema validation | PASS | `npx prisma validate` with guarded local placeholder database targets; schema valid |
+| TypeScript | PASS | `npx tsc --noEmit` |
+| Lint | PASS | `npm run lint` |
+| Focused email test | PASS | `npx tsx --test lib/email/invitation-email.test.ts`; 3 passed, including fail-closed mode |
+| Production build | PASS | Next.js `16.3.0`; optimized build and 51-page static generation completed |
+| Pruned runtime dependency gate | PASS | `npm prune --omit=dev --omit=optional`, then `npm run verify:rb4-runtime`; no production advisories |
+| Production artifact smoke | PASS | Root, login, protected planner redirect, and bundled static asset passed on loopback with non-production placeholders |
+| Full E2E | NOT RUN | Explicitly excluded from this task |
+
+The previously recorded RB4 failure is superseded by this evidence. The approved PostCSS temporary exception (which was due to expire on 2026-08-28) is no longer needed: the affected runtime packages are patched, the exception allowlist was removed, and the verifier now fails on any production advisory while retaining exact-version, forbidden-package, runtime-import, and CSS-route controls.
+
+### Private validation deployment decision
+
+**NO-GO.** Repository-controlled blockers are resolved, but execution remains blocked until:
+
+1. The backup placeholders are replaced by a real Supabase backup timestamp, backup type, provider evidence of restorability, and a named restore owner.
+2. Hosting variables are reviewed without exposing values; both URL variables must equal `https://getflowport.com`, email mode must be explicit, public sharing must have an explicit reviewed flag value, and all required database/Supabase secrets must be present.
+3. Supabase Site URL, exact callback allowlist, invite-only policy, and the separate Supabase Auth email channel are verified manually.
+4. The hosting provider supplies its exact DNS targets; DNS propagation, HTTPS certificate issuance/renewal, canonical redirect behavior, hosted logging/redaction, and live health are verified manually.
+
+For validation without application SMTP, set `EMAIL_DELIVERY_MODE=disabled`; email-dependent invitation actions will remain unavailable and the UI will say so. This does not remove the backup or external configuration gates and is not approval for a public pilot.

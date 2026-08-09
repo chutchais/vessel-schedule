@@ -26,6 +26,7 @@ Use the hosting provider's encrypted environment/secret manager. The examples be
 | `SMTP_USER` | Secret, server | Application SMTP username | `replace-with-smtp-user` |
 | `SMTP_PASSWORD` | Secret, server | Application SMTP password | `replace-with-a-secret` |
 | `EMAIL_FROM` | Server | Verified sender identity for organization invitations | `FlowPort <no-reply@getflowport.com>` |
+| `EMAIL_DELIVERY_MODE` | Server | Explicitly enables SMTP delivery or fail-closed validation mode | `disabled` for private validation; `smtp` only with verified SMTP |
 | `PUBLIC_PLANNER_SHARING_ENABLED` | Server | Fail-closed feature flag for all share management and public share routes | `false` |
 | `PUBLIC_PLANNER_TRUSTED_PROXY_HOPS` | Server | Number of trusted reverse-proxy hops used to derive public rate-limit identity | `0` until hosting topology is verified |
 | `PORT` | Server, optional | Port consumed by `next start`; hosting platforms commonly inject it | `3000` |
@@ -43,6 +44,8 @@ The one-time bootstrap variables below are not normal deployment variables and m
 
 `APP_URL` and `NEXT_PUBLIC_APP_URL` are both required and must resolve to the same origin. Production permits HTTPS; plain HTTP is accepted only for localhost development. Values with credentials, paths, query parameters, or fragments are rejected.
 
+`NEXT_PUBLIC_APP_URL` is the canonical application URL used by shared browser/server URL construction. `APP_URL` is its required server-side mirror and is rejected when it differs. For production, set both to `https://getflowport.com`; do not replace configured URL construction with a hard-coded hostname.
+
 FlowPort uses the validated configured origin—not the incoming Host header or `window.location.origin`—for:
 
 - Supabase invitation and registration callbacks
@@ -57,8 +60,16 @@ The authentication callback exchanges a Supabase code before continuing, routes 
 
 Repository variables do not configure the hosted Supabase dashboard. Before release, manually verify:
 
-- Auth Site URL is exactly `https://getflowport.com`.
-- Exact allowed redirect URLs include `https://getflowport.com/auth/callback` and the provider-required recovery variant.
+- Auth Site URL: `https://getflowport.com`.
+- Production allowed redirect URLs:
+  - `https://getflowport.com/auth/callback`
+  - `https://getflowport.com/auth/callback?type=recovery`
+- Authentication confirmation/invitation callback: `https://getflowport.com/auth/callback`.
+- Password-recovery callback: `https://getflowport.com/auth/callback?type=recovery`.
+- If private validation uses a separate preview origin, add only these exact URLs after replacing `<private-validation-host>` with the hosting-provider-assigned hostname:
+  - `https://<private-validation-host>/auth/callback`
+  - `https://<private-validation-host>/auth/callback?type=recovery`
+- Do not add a wildcard preview redirect. Do not add preview URLs when validation uses `getflowport.com` itself.
 - Wildcard and preview redirects are absent from the production project.
 - Public signup behavior enforces the invite-only policy.
 - Password, email confirmation, refresh-token/session, CAPTCHA, and auth rate-limit policies are approved.
@@ -76,6 +87,29 @@ FlowPort has two possible email paths and both must be configured and tested:
 2. Supabase Auth sends provider-managed confirmation, invitation, and password-recovery messages. Configure its production SMTP/templates separately in the Supabase dashboard.
 
 Verify the `getflowport.com` sending identity with the provider and publish provider-supplied SPF, DKIM, and DMARC records. Test delivery, spam placement, expiry, revocation, and trusted callback domains. Do not log message bodies or URLs containing invitation tokens.
+
+`EMAIL_DELIVERY_MODE` is mandatory and fail-closed:
+
+- `disabled`: safe private-validation mode. Access requests remain recordable and explicitly say that no confirmation email was sent. Creating, replacing, retrying, and copying newly generated invitation links are disabled in both the API and invitation UI. Existing invitations may still be revoked.
+- `smtp`: enables invitation email actions only when every SMTP variable above is present and verified. A transport failure is recorded and shown as failed; FlowPort never reports it as sent.
+- Missing or unrecognized values behave as `disabled`.
+
+Supabase Auth email remains a separate provider-controlled channel. `EMAIL_DELIVERY_MODE=disabled` does not claim to configure or disable Supabase Auth mail; verify that channel manually before exercising password recovery or email confirmation.
+
+## DNS and HTTPS manual checklist
+
+Do not infer DNS targets from the framework or repository. Obtain the exact values from the selected hosting project's custom-domain screen.
+
+- [ ] Add the provider-issued domain verification TXT record, if requested.
+- [ ] Add the exact provider-issued apex record type and value (A/AAAA, ALIAS, or ANAME as instructed).
+- [ ] Add the exact provider-issued `www` CNAME target if `www.getflowport.com` will be served or redirected.
+- [ ] Remove only records the provider explicitly identifies as conflicting; preserve unrelated mail and verification records.
+- [ ] Verify public DNS resolution from multiple resolvers.
+- [ ] Wait for the provider-issued TLS certificate to become active and confirm automatic renewal.
+- [ ] Force HTTP to HTTPS and choose one canonical host; redirect `www` to `https://getflowport.com` if the apex is canonical.
+- [ ] Verify `/api/health` over HTTPS after deployment without exposing internal details.
+
+DNS changes and HTTPS activation remain manual pending actions.
 
 ## Safe database migration workflow
 

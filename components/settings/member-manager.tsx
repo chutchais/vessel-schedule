@@ -56,11 +56,12 @@ const STATUS_BADGE: Record<string, string> = {
 type Props = {
   currentUserId: string;
   currentRole: string;
+  emailDeliveryEnabled: boolean;
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function MemberManager({ currentUserId, currentRole }: Props) {
+export function MemberManager({ currentUserId, currentRole, emailDeliveryEnabled }: Props) {
   const [tab, setTab] = useState<"members" | "invitations">("members");
 
   return (
@@ -92,7 +93,7 @@ export function MemberManager({ currentUserId, currentRole }: Props) {
       {tab === "members" ? (
         <MembersTab currentUserId={currentUserId} currentRole={currentRole} />
       ) : (
-        <InvitationsTab currentRole={currentRole} />
+        <InvitationsTab currentRole={currentRole} emailDeliveryEnabled={emailDeliveryEnabled} />
       )}
     </div>
   );
@@ -100,7 +101,13 @@ export function MemberManager({ currentUserId, currentRole }: Props) {
 
 // ─── Members Tab ──────────────────────────────────────────────────────────────
 
-function MembersTab({ currentUserId, currentRole }: Props) {
+function MembersTab({
+  currentUserId,
+  currentRole,
+}: {
+  currentUserId: string;
+  currentRole: string;
+}) {
   const [members, setMembers] = useState<Member[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
@@ -463,7 +470,7 @@ function MembersTab({ currentUserId, currentRole }: Props) {
 
 // ─── Invitations Tab ──────────────────────────────────────────────────────────
 
-function InvitationsTab({ currentRole }: { currentRole: string }) {
+function InvitationsTab({ currentRole, emailDeliveryEnabled }: { currentRole: string; emailDeliveryEnabled: boolean }) {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
@@ -603,6 +610,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
 
   return (
     <div className="space-y-4">
+      {!emailDeliveryEnabled && <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Email delivery is unavailable. Creating and resending invitations is disabled until SMTP delivery is enabled.</div>}
       <div className="flex flex-wrap items-center gap-3">
         <input
           type="text"
@@ -624,7 +632,7 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
         <button onClick={() => { setHistoryVisible((visible) => !visible); setPage(1); }} className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
           {historyVisible ? "Show active" : "View history"}
         </button>
-        {assignableRoles.length > 0 && (
+        {assignableRoles.length > 0 && emailDeliveryEnabled && (
           <button
             onClick={() => { setShowInviteForm((v) => !v); setInviteError(null); setInviteSuccess(null); }}
             className="ml-auto rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
@@ -740,26 +748,26 @@ function InvitationsTab({ currentRole }: { currentRole: string }) {
                   <td className="px-4 py-3">
                     {inv.status === "ACTIVE" && (
                       <div className="flex gap-2">
-                        <button
+                        {emailDeliveryEnabled && <button
                           onClick={() => void handleResend(inv.id)}
                           disabled={processing}
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-60"
                         >
                           Resend invitation
-                        </button>
-                        {inv.deliveryStatus === "FAILED" && (
+                        </button>}
+                        {emailDeliveryEnabled && inv.deliveryStatus === "FAILED" && (
                           <button onClick={() => void handleResend(inv.id)} disabled={processing} className="rounded-md border border-amber-300 px-2 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-60">
                             Retry delivery
                           </button>
                         )}
-                        <button
+                        {emailDeliveryEnabled && <button
                           onClick={() => void handleResend(inv.id, true)}
                           disabled={processing}
                           title="Creates and copies a replacement link; the previous link is invalidated."
                           className="rounded-md border border-blue-300 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-60"
                         >
                           Copy link
-                        </button>
+                        </button>}
                         <button
                           onClick={() => void handleRevoke(inv.id)}
                           disabled={processing}

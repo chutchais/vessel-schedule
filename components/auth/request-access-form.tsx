@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-export function RequestAccessForm() {
+export function RequestAccessForm({ emailAvailable }: { emailAvailable: boolean }) {
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,10 +62,7 @@ export function RequestAccessForm() {
       <div className="space-y-4">
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <p className="text-green-800 font-medium">Request Submitted Successfully</p>
-          <p className="text-green-700 text-sm mt-1">
-            Your organization request has been received. Our team will review it and
-            contact you within 2-3 business days.
-          </p>
+          <p className="text-green-700 text-sm mt-1">{emailAvailable ? "Your organization request has been received. Our team will review it and contact you by email." : "Your organization request has been recorded. Automated email delivery is unavailable, so no confirmation email was sent. Contact support@getflowport.com for follow-up."}</p>
         </div>
         <div>
           <Link

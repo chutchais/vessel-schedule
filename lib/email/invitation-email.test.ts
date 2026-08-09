@@ -29,3 +29,18 @@ test("reports a fake provider failure", async () => {
     assert.deepEqual(await deliverInvitationEmail(invitation), { ok: false, category: "transport", message: "The email provider could not deliver this invitation" });
   } finally { setEmailTransportForTests(null); }
 });
+
+test("fails closed without explicit smtp mode", async () => {
+  const previous = process.env.EMAIL_DELIVERY_MODE;
+  delete process.env.EMAIL_DELIVERY_MODE;
+  try {
+    assert.deepEqual(await deliverInvitationEmail(invitation), {
+      ok: false,
+      category: "configuration",
+      message: "Email delivery is unavailable. Invitation email actions are disabled.",
+    });
+  } finally {
+    if (previous === undefined) delete process.env.EMAIL_DELIVERY_MODE;
+    else process.env.EMAIL_DELIVERY_MODE = previous;
+  }
+});

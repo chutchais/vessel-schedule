@@ -9,6 +9,7 @@ import { createAuditLog } from "@/lib/audit/create-audit-log";
 import { prisma } from "@/lib/db/prisma";
 import { getInvitationState } from "@/lib/auth/invitation-status";
 import { deliverInvitation } from "@/lib/email/deliver-invitation";
+import { EMAIL_DELIVERY_UNAVAILABLE_MESSAGE, emailDeliveryEnabled } from "@/lib/email/delivery-mode";
 
 const VALID_ROLES = ["ADMIN", "PLANNER", "VIEWER"] as const;
 type InviteRole = (typeof VALID_ROLES)[number];
@@ -27,6 +28,9 @@ export async function POST(request: NextRequest) {
     const { activeOrganization, membership } = currentUser;
     if (!canInviteRole(membership.role, "VIEWER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (!emailDeliveryEnabled()) {
+      return NextResponse.json({ error: EMAIL_DELIVERY_UNAVAILABLE_MESSAGE, code: "EMAIL_DELIVERY_DISABLED" }, { status: 503 });
     }
 
     const limit = checkInvitationRateLimit(`create:${currentUser.id}`, 20, 60 * 60 * 1000);

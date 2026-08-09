@@ -2,13 +2,6 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
-const EXPIRES_AT = new Date("2026-08-28T23:59:59.999Z");
-const ALLOWED_ADVISORIES = new Set([
-  "GHSA-qx2v-qp2m-jg93",
-  "GHSA-6g55-p6wh-862q",
-  "GHSA-r28c-9q8g-f849",
-]);
-
 function fail(message) {
   throw new Error(`[rb4-runtime] ${message}`);
 }
@@ -36,9 +29,9 @@ function sourceFiles(root) {
   return files;
 }
 
-if (Date.now() > EXPIRES_AT.getTime()) fail("approved PostCSS exception expired on 2026-08-28");
-if (packageVersion("node_modules/next/package.json") !== "16.2.12") fail("Next.js version moved outside approved 16.2.12 scope");
-if (packageVersion("node_modules/next/node_modules/postcss/package.json") !== "8.4.31") fail("PostCSS version moved outside approved 8.4.31 scope");
+if (packageVersion("node_modules/next/package.json") !== "16.3.0") fail("Next.js version moved outside verified 16.3.0 scope");
+if (packageVersion("node_modules/postcss/package.json") !== "8.5.23") fail("PostCSS version moved outside patched 8.5.23 scope");
+if (packageVersion("node_modules/nanoid/package.json") !== "3.3.17") fail("nanoid version moved outside patched 3.3.17 scope");
 
 const ls = spawnSync("npm", ["ls", "--omit=dev", "--all", "--json", "sharp", "prisma", "eslint"], { encoding: "utf8" });
 const runtimeDependencies = dependencyNames(JSON.parse(ls.stdout || "{}"));
@@ -63,23 +56,11 @@ try {
   fail(`npm audit did not return valid JSON: ${audit.stderr.trim() || "unknown error"}`);
 }
 const vulnerabilities = report.vulnerabilities ?? {};
-const unexpectedPackages = Object.keys(vulnerabilities).filter((name) => name !== "postcss" && name !== "next");
-if (unexpectedPackages.length) fail(`unexpected vulnerable runtime packages: ${unexpectedPackages.join(", ")}`);
-
-const observedAdvisories = new Set();
-for (const item of vulnerabilities.postcss?.via ?? []) {
-  if (typeof item === "object" && item.url) {
-    const match = item.url.match(/GHSA-[a-z0-9-]+/i);
-    if (match) observedAdvisories.add(match[0]);
-  }
-}
-if (observedAdvisories.size !== ALLOWED_ADVISORIES.size ||
-    [...observedAdvisories].some((id) => !ALLOWED_ADVISORIES.has(id))) {
-  fail(`audit advisory scope changed; observed ${[...observedAdvisories].sort().join(", ") || "none"}`);
-}
+const vulnerablePackages = Object.keys(vulnerabilities);
+if (vulnerablePackages.length) fail(`vulnerable runtime packages: ${vulnerablePackages.join(", ")}`);
 
 console.log("[rb4-runtime] PASS");
-console.log("[rb4-runtime] Next.js 16.2.12 / PostCSS 8.4.31 matches the approved exception");
-console.log(`[rb4-runtime] exact advisories: ${[...ALLOWED_ADVISORIES].sort().join(", ")}`);
+console.log("[rb4-runtime] Next.js 16.3.0 / PostCSS 8.5.23 / nanoid 3.3.17 are pinned to patched versions");
+console.log("[rb4-runtime] no production dependency advisories detected");
 console.log("[rb4-runtime] Sharp, Prisma CLI, ESLint, runtime PostCSS imports, and CSS processing routes are absent");
-console.log("[rb4-runtime] exception expires 2026-08-28");
+console.log("[rb4-runtime] the temporary PostCSS exception is resolved; fail-closed controls remain active");

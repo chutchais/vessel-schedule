@@ -2,6 +2,7 @@ import { requireCurrentUser } from "@/lib/auth/current-user";
 import { AuthError } from "@/lib/auth/auth-errors";
 import { redirect } from "next/navigation";
 import { MemberManager } from "@/components/settings/member-manager";
+import { emailDeliveryEnabled } from "@/lib/email/delivery-mode";
 
 async function getPageProps() {
   const currentUser = await requireCurrentUser();
@@ -23,5 +24,5 @@ export default async function MembersPage() {
     redirect("/");
   }
 
-  return <MemberManager currentUserId={props.id} currentRole={props.role} />;
+  return <MemberManager currentUserId={props.id} currentRole={props.role} emailDeliveryEnabled={emailDeliveryEnabled()} />;
 }

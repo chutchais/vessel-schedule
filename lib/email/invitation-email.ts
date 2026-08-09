@@ -1,4 +1,5 @@
 import "node:net";
+import { EMAIL_DELIVERY_UNAVAILABLE_MESSAGE, emailDeliveryEnabled } from "@/lib/email/delivery-mode";
 
 export type InvitationEmail = {
   to: string;
@@ -46,12 +47,12 @@ function invitationMessage(invitation: InvitationEmail): EmailMessage {
 
 function getTransport(): EmailTransport | EmailDeliveryResult {
   if (testTransport) return testTransport;
+  if (!emailDeliveryEnabled()) {
+    return { ok: false, category: "configuration", message: EMAIL_DELIVERY_UNAVAILABLE_MESSAGE };
+  }
   const host = process.env.SMTP_HOST;
   const from = process.env.EMAIL_FROM;
   if (!host || !from) {
-    if (process.env.NODE_ENV !== "production") {
-      return { send: async (message) => console.info("Email delivery (development)", { recipient: message.to, subject: message.subject, type: message.type }) };
-    }
     return { ok: false, category: "configuration", message: "Email delivery is not configured" };
   }
   const port = Number(process.env.SMTP_PORT ?? "587");
