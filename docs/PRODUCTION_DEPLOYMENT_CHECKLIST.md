@@ -248,3 +248,26 @@ The full test suite was not run as part of this audit.
 - Public sharing is enabled with an unknown proxy-hop setting, missing migration, cache leakage, or failed expiry/revocation test.
 
 **Current repository-only recommendation: READY FOR MANUAL CONFIGURATION AND STAGING REHEARSAL; NOT READY TO EXECUTE THE PRODUCTION DEPLOYMENT.** Repository-controlled environment, canonical-link, callback, logging, health, Git-ignore, migration-instruction, and share-feature-flag blockers are resolved. Production remains NO-GO until external Supabase/hosting/DNS/email configuration, secret review, backup/restore proof, migration rehearsal/status approval, observability, and the remaining gates above are completed with evidence.
+
+## Production migration Phase 1 evidence — 2026-08-09
+
+**Result: NO-GO; no migration deployment was run and no database connection was made.**
+
+- Branch: `main`
+- Commit: `92751840843cf9182acd2e99fc7515587c624ada`
+- Initial working tree: clean
+- Tracked environment/secret files: placeholder-only `.env.example`; no tracked local `.env`, private-key, certificate-container, credentials, or secrets file
+- Sanitized application target: `aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres`
+- Sanitized direct target: `aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres`
+- Target classification: remote PostgreSQL/Supabase candidate; both URLs have the same remote host/database identity and are not local
+- Required exact approval: `production@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres`
+- Configuration result: `DATABASE_ENVIRONMENT` and `DATABASE_TARGET_APPROVAL` are missing; the candidate cannot be treated as an approved production target
+- Prisma validation: blocked by the target guard before connection because `DATABASE_ENVIRONMENT` is not explicitly configured
+- Guarded migration status: blocked by the same guard before connection
+- Pending migrations: unknown; status could not safely query `_prisma_migrations`
+- Backup: unverified; no authenticated Supabase management context or backup timestamp/evidence was available
+- Rollback authority: incident commander/database operator and rollback decision deadline remain unassigned
+
+Static SQL review cannot establish which migrations are pending. If `20260809120000_add_berth_planner_shares` is later reported pending, its SQL adds one enum value, three new tables, indexes, and foreign keys. It contains no table/column drop, data update/delete, table rebuild, or existing-column default/backfill. Expected risks are short catalog/enum locks and DDL locks; the indexes and child-table foreign keys are created against new empty tables. Re-review every migration actually reported by guarded status before approval.
+
+The only permitted Phase 2 command is `npm run db:migrate:deploy`, executed with production variables supplied by the approved secret manager after a successful guarded status check and confirmed restorable backup. Do not approve Phase 2 until the missing classification/approval, migration status, backup evidence, and rollback ownership are resolved.
