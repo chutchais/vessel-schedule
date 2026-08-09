@@ -65,6 +65,9 @@ export const ModelName = {
   Berth: 'Berth',
   VesselSchedule: 'VesselSchedule',
   PlannerUndo: 'PlannerUndo',
+  BerthPlannerShare: 'BerthPlannerShare',
+  BerthPlannerShareSession: 'BerthPlannerShareSession',
+  PublicRateLimitBucket: 'PublicRateLimitBucket',
   AuditLog: 'AuditLog'
 } as const
 
@@ -328,6 +331,51 @@ export const PlannerUndoScalarFieldEnum = {
 } as const
 
 export type PlannerUndoScalarFieldEnum = (typeof PlannerUndoScalarFieldEnum)[keyof typeof PlannerUndoScalarFieldEnum]
+
+
+export const BerthPlannerShareScalarFieldEnum = {
+  id: 'id',
+  publicId: 'publicId',
+  secretHash: 'secretHash',
+  organizationId: 'organizationId',
+  terminalId: 'terminalId',
+  createdById: 'createdById',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  rangeStart: 'rangeStart',
+  rangeEnd: 'rangeEnd',
+  filters: 'filters',
+  initialView: 'initialView',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  lastAccessedAt: 'lastAccessedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type BerthPlannerShareScalarFieldEnum = (typeof BerthPlannerShareScalarFieldEnum)[keyof typeof BerthPlannerShareScalarFieldEnum]
+
+
+export const BerthPlannerShareSessionScalarFieldEnum = {
+  id: 'id',
+  shareId: 'shareId',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  lastAccessedAt: 'lastAccessedAt'
+} as const
+
+export type BerthPlannerShareSessionScalarFieldEnum = (typeof BerthPlannerShareSessionScalarFieldEnum)[keyof typeof BerthPlannerShareSessionScalarFieldEnum]
+
+
+export const PublicRateLimitBucketScalarFieldEnum = {
+  id: 'id',
+  count: 'count',
+  resetAt: 'resetAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PublicRateLimitBucketScalarFieldEnum = (typeof PublicRateLimitBucketScalarFieldEnum)[keyof typeof PublicRateLimitBucketScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {

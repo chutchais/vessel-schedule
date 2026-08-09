@@ -3,6 +3,7 @@ import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { OrganizationVesselLabelSettings } from "@/components/settings/organization-vessel-label-settings";
 import { OrganizationExportTableSettings } from "@/components/settings/organization-export-table-settings";
+import { BerthPlannerShareSettings } from "@/components/settings/berth-planner-share-settings";
 
 async function getPageProps() {
   const currentUser = await requireCurrentUser();
@@ -29,6 +30,8 @@ export default async function OrganizationSettingsPage() {
       <OrganizationVesselLabelSettings />
       <hr className="border-slate-200" />
       <OrganizationExportTableSettings />
+      <hr className="border-slate-200" />
+      <BerthPlannerShareSettings />
     </div>
   );
 }

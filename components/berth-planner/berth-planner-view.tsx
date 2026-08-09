@@ -6,6 +6,7 @@ import { AlertMessage } from "@/components/ui/alert-message";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { BerthPlannerControls } from "./berth-planner-controls";
+import { ShareViewDialog, type ShareViewSnapshot } from "./share-view-dialog";
 import { BerthPlannerCanvas, type DragDropRequest, type DurationResizeRequest } from "./berth-planner-canvas";
 import { DragConfirmDialog } from "./drag-confirm-dialog";
 import { ResizeConfirmDialog } from "./resize-confirm-dialog";
@@ -150,6 +151,10 @@ function parsePlannerBerths(raw: PlannerDataRaw): PlannerBerth[] {
   }));
 }
 
+function dateOnlyInTimezone(date: Date, timezone: string) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+}
+
 export function BerthPlannerView() {
   const [initialUrlState] = useState(() =>
     parsePlannerUrlState(
@@ -231,6 +236,8 @@ export function BerthPlannerView() {
   const [labelScalePercent, setLabelScalePercent] = useState<BerthPlannerLabelScale>(() =>
     readBerthPlannerLabelScale(typeof window === "undefined" ? null : window.localStorage),
   );
+  const [canSharePlanner, setCanSharePlanner] = useState(false);
+  const [shareSnapshot, setShareSnapshot] = useState<ShareViewSnapshot | null>(null);
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const plannerRequestRef = useRef(0);
@@ -259,6 +266,20 @@ export function BerthPlannerView() {
 
   useEffect(() => () => {
     if (undoExpiryTimerRef.current !== null) window.clearTimeout(undoExpiryTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    async function checkSharingPermission() {
+      try {
+        const response = await fetch("/api/organization/berth-planner-shares", { cache: "no-store" });
+        if (active) setCanSharePlanner(response.ok);
+      } catch {
+        if (active) setCanSharePlanner(false);
+      }
+    }
+    void checkSharingPermission();
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -1311,6 +1332,20 @@ export function BerthPlannerView() {
         onDecreaseLabelScale={() => setLabelScalePercent((current) => shiftBerthPlannerLabelScale(current, -1))}
         onResetLabelScale={() => setLabelScalePercent(100)}
         onIncreaseLabelScale={() => setLabelScalePercent((current) => shiftBerthPlannerLabelScale(current, 1))}
+        onShareView={canSharePlanner && plannerData && selectedTerminalId && !isLoading ? () => {
+          const effectiveFilters = { ...filters, conflictsOnly: filters.conflictsOnly || onlyConflicts };
+          const selectedBerths = effectiveFilters.berthId ? berths.filter((berth) => berth.id === effectiveFilters.berthId) : berths;
+          setShareSnapshot({
+            terminalId: selectedTerminalId,
+            terminalName: plannerData.terminalName,
+            portName: plannerData.portName,
+            startDate: dateOnlyInTimezone(weekStart, portTimezone),
+            endDate: dateOnlyInTimezone(new Date(weekEnd.getTime() - 1), portTimezone),
+            domain,
+            filters: effectiveFilters,
+            berthNames: selectedBerths.map((berth) => berth.name),
+          });
+        } : undefined}
       />
 
       {!controlsCollapsed && <OperationalFilterBar
@@ -1433,6 +1468,7 @@ export function BerthPlannerView() {
           </ul>
         </section>
       )}
+      {shareSnapshot ? <ShareViewDialog snapshot={shareSnapshot} onClose={() => setShareSnapshot(null)} /> : null}
 
       <Drawer
         isOpen={isCreateDrawerOpen}

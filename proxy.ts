@@ -14,6 +14,8 @@ const PUBLIC_PATHS = [
   "/api/invitations/accept",
   "/api/health",
   "/api/organization-requests",
+  "/shared/berth-planner",
+  "/api/public/berth-planner",
 ] as const;
 
 // Paths that require auth but NOT org membership — pages use createClient() directly

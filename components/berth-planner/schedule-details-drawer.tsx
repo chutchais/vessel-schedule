@@ -15,6 +15,7 @@ type ScheduleDetailsDrawerProps = {
   timezone: string;
   onClose: () => void;
   onEdit?: () => void;
+  showAuditHistory?: boolean;
 };
 
 function formatLocalDateTime(date: Date, timezone: string): string {
@@ -75,8 +76,9 @@ export function ScheduleDetailsDrawer({
   timezone,
   onClose,
   onEdit,
+  showAuditHistory = true,
 }: ScheduleDetailsDrawerProps) {
-  const canViewAuditLogs = useCanViewAuditLogs();
+  const canViewAuditLogs = useCanViewAuditLogs(showAuditHistory);
   const statusLabel = schedule ? (STATUS_LABELS[schedule.status] ?? schedule.status) : "";
   const statusBadge = schedule ? (STATUS_BADGE[schedule.status] ?? STATUS_BADGE.PLANNED!) : "";
 
@@ -89,7 +91,7 @@ export function ScheduleDetailsDrawer({
       footer={schedule ? (
         <div className="flex items-center justify-between gap-3">
           <div>
-            {canViewAuditLogs ? (
+            {showAuditHistory && canViewAuditLogs ? (
               <HistoryLink
                 entityType={AUDIT_ENTITY_TYPES.VESSEL_SCHEDULE}
                 entityId={schedule.id}

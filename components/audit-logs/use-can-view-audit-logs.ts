@@ -14,10 +14,11 @@ function isAuditLogRole(role: string | undefined): boolean {
   return role === "OWNER" || role === "ADMIN";
 }
 
-export function useCanViewAuditLogs() {
+export function useCanViewAuditLogs(enabled = true) {
   const [canViewAuditLogs, setCanViewAuditLogs] = useState(false);
 
   useEffect(() => {
+    if (!enabled) return;
     let active = true;
 
     async function loadRole() {
@@ -41,7 +42,7 @@ export function useCanViewAuditLogs() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [enabled]);
 
   return canViewAuditLogs;
 }

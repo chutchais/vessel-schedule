@@ -60,7 +60,7 @@ export function formatTimezoneOffset(date: Date, timezone: string): string {
  * Uses noon UTC to determine the timezone offset, which avoids DST ambiguity
  * since DST transitions never occur at noon in any real-world timezone.
  */
-function toLocalMidnight(year: number, month: number, day: number, timezone: string): Date {
+export function toLocalMidnight(year: number, month: number, day: number, timezone: string): Date {
   // Use noon UTC on the target date to find the UTC offset
   const noonUTC = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
 

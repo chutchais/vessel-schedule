@@ -203,6 +203,7 @@ export type UserWhereInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationListRelationFilter
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -218,6 +219,7 @@ export type UserOrderByWithRelationInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationOrderByRelationAggregateInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -236,6 +238,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   sentOrganizationInvitations?: Prisma.OrganizationInvitationListRelationFilter
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -277,6 +280,7 @@ export type UserCreateInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutInvitedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutAcceptedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -292,6 +296,7 @@ export type UserUncheckedCreateInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutInvitedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutAcceptedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUpdateInput = {
@@ -307,6 +312,7 @@ export type UserUpdateInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutInvitedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -322,6 +328,7 @@ export type UserUncheckedUpdateInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutInvitedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -458,6 +465,20 @@ export type UserUpdateOneWithoutAcceptedOrganizationInvitationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAcceptedOrganizationInvitationsInput, Prisma.UserUpdateWithoutAcceptedOrganizationInvitationsInput>, Prisma.UserUncheckedUpdateWithoutAcceptedOrganizationInvitationsInput>
 }
 
+export type UserCreateNestedOneWithoutCreatedBerthPlannerSharesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreatedBerthPlannerSharesInput, Prisma.UserUncheckedCreateWithoutCreatedBerthPlannerSharesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedBerthPlannerSharesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCreatedBerthPlannerSharesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCreatedBerthPlannerSharesInput, Prisma.UserUncheckedCreateWithoutCreatedBerthPlannerSharesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCreatedBerthPlannerSharesInput
+  upsert?: Prisma.UserUpsertWithoutCreatedBerthPlannerSharesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCreatedBerthPlannerSharesInput, Prisma.UserUpdateWithoutCreatedBerthPlannerSharesInput>, Prisma.UserUncheckedUpdateWithoutCreatedBerthPlannerSharesInput>
+}
+
 export type UserCreateNestedOneWithoutAuditLogsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutAuditLogsInput, Prisma.UserUncheckedCreateWithoutAuditLogsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutAuditLogsInput
@@ -486,6 +507,7 @@ export type UserCreateWithoutMembershipsInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutInvitedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutAcceptedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -500,6 +522,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutInvitedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutAcceptedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -530,6 +553,7 @@ export type UserUpdateWithoutMembershipsInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutInvitedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -544,6 +568,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutInvitedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutApprovalsGivenInput = {
@@ -558,6 +583,7 @@ export type UserCreateWithoutApprovalsGivenInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutInvitedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutAcceptedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutApprovalsGivenInput = {
@@ -572,6 +598,7 @@ export type UserUncheckedCreateWithoutApprovalsGivenInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutInvitedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutAcceptedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutApprovalsGivenInput = {
@@ -602,6 +629,7 @@ export type UserUpdateWithoutApprovalsGivenInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutInvitedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutApprovalsGivenInput = {
@@ -616,6 +644,7 @@ export type UserUncheckedUpdateWithoutApprovalsGivenInput = {
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutInvitedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutSentOrganizationInvitationsInput = {
@@ -630,6 +659,7 @@ export type UserCreateWithoutSentOrganizationInvitationsInput = {
   approvalsGiven?: Prisma.OrganizationRequestCreateNestedManyWithoutReviewedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutAcceptedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutSentOrganizationInvitationsInput = {
@@ -644,6 +674,7 @@ export type UserUncheckedCreateWithoutSentOrganizationInvitationsInput = {
   approvalsGiven?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutReviewedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutAcceptedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutSentOrganizationInvitationsInput = {
@@ -663,6 +694,7 @@ export type UserCreateWithoutAcceptedOrganizationInvitationsInput = {
   approvalsGiven?: Prisma.OrganizationRequestCreateNestedManyWithoutReviewedByInput
   sentOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutInvitedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutAcceptedOrganizationInvitationsInput = {
@@ -677,6 +709,7 @@ export type UserUncheckedCreateWithoutAcceptedOrganizationInvitationsInput = {
   approvalsGiven?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutReviewedByInput
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutInvitedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorUserInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutAcceptedOrganizationInvitationsInput = {
@@ -707,6 +740,7 @@ export type UserUpdateWithoutSentOrganizationInvitationsInput = {
   approvalsGiven?: Prisma.OrganizationRequestUpdateManyWithoutReviewedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSentOrganizationInvitationsInput = {
@@ -721,6 +755,7 @@ export type UserUncheckedUpdateWithoutSentOrganizationInvitationsInput = {
   approvalsGiven?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutReviewedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUpsertWithoutAcceptedOrganizationInvitationsInput = {
@@ -746,6 +781,7 @@ export type UserUpdateWithoutAcceptedOrganizationInvitationsInput = {
   approvalsGiven?: Prisma.OrganizationRequestUpdateManyWithoutReviewedByNestedInput
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutInvitedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAcceptedOrganizationInvitationsInput = {
@@ -759,6 +795,83 @@ export type UserUncheckedUpdateWithoutAcceptedOrganizationInvitationsInput = {
   memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
   approvalsGiven?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutReviewedByNestedInput
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutInvitedByNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorUserNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserCreateWithoutCreatedBerthPlannerSharesInput = {
+  id: string
+  email: string
+  displayName: string
+  platformRole?: $Enums.PlatformRole
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  memberships?: Prisma.OrganizationMemberCreateNestedManyWithoutUserInput
+  approvalsGiven?: Prisma.OrganizationRequestCreateNestedManyWithoutReviewedByInput
+  sentOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutInvitedByInput
+  acceptedOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutAcceptedByInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorUserInput
+}
+
+export type UserUncheckedCreateWithoutCreatedBerthPlannerSharesInput = {
+  id: string
+  email: string
+  displayName: string
+  platformRole?: $Enums.PlatformRole
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  memberships?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutUserInput
+  approvalsGiven?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutReviewedByInput
+  sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutInvitedByInput
+  acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutAcceptedByInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorUserInput
+}
+
+export type UserCreateOrConnectWithoutCreatedBerthPlannerSharesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreatedBerthPlannerSharesInput, Prisma.UserUncheckedCreateWithoutCreatedBerthPlannerSharesInput>
+}
+
+export type UserUpsertWithoutCreatedBerthPlannerSharesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCreatedBerthPlannerSharesInput, Prisma.UserUncheckedUpdateWithoutCreatedBerthPlannerSharesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCreatedBerthPlannerSharesInput, Prisma.UserUncheckedCreateWithoutCreatedBerthPlannerSharesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCreatedBerthPlannerSharesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCreatedBerthPlannerSharesInput, Prisma.UserUncheckedUpdateWithoutCreatedBerthPlannerSharesInput>
+}
+
+export type UserUpdateWithoutCreatedBerthPlannerSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  platformRole?: Prisma.EnumPlatformRoleFieldUpdateOperationsInput | $Enums.PlatformRole
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  memberships?: Prisma.OrganizationMemberUpdateManyWithoutUserNestedInput
+  approvalsGiven?: Prisma.OrganizationRequestUpdateManyWithoutReviewedByNestedInput
+  sentOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutInvitedByNestedInput
+  acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutAcceptedByNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutActorUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCreatedBerthPlannerSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  platformRole?: Prisma.EnumPlatformRoleFieldUpdateOperationsInput | $Enums.PlatformRole
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  memberships?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutUserNestedInput
+  approvalsGiven?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutReviewedByNestedInput
+  sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutInvitedByNestedInput
+  acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorUserNestedInput
 }
 
@@ -774,6 +887,7 @@ export type UserCreateWithoutAuditLogsInput = {
   approvalsGiven?: Prisma.OrganizationRequestCreateNestedManyWithoutReviewedByInput
   sentOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutInvitedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutAcceptedByInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -788,6 +902,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   approvalsGiven?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutReviewedByInput
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutInvitedByInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutAcceptedByInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -818,6 +933,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   approvalsGiven?: Prisma.OrganizationRequestUpdateManyWithoutReviewedByNestedInput
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutInvitedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUpdateManyWithoutAcceptedByNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -832,6 +948,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   approvalsGiven?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutReviewedByNestedInput
   sentOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutInvitedByNestedInput
   acceptedOrganizationInvitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutAcceptedByNestedInput
+  createdBerthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 
@@ -845,6 +962,7 @@ export type UserCountOutputType = {
   sentOrganizationInvitations: number
   acceptedOrganizationInvitations: number
   auditLogs: number
+  createdBerthPlannerShares: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -853,6 +971,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   sentOrganizationInvitations?: boolean | UserCountOutputTypeCountSentOrganizationInvitationsArgs
   acceptedOrganizationInvitations?: boolean | UserCountOutputTypeCountAcceptedOrganizationInvitationsArgs
   auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
+  createdBerthPlannerShares?: boolean | UserCountOutputTypeCountCreatedBerthPlannerSharesArgs
 }
 
 /**
@@ -900,6 +1019,13 @@ export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.
   where?: Prisma.AuditLogWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCreatedBerthPlannerSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BerthPlannerShareWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -914,6 +1040,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   sentOrganizationInvitations?: boolean | Prisma.User$sentOrganizationInvitationsArgs<ExtArgs>
   acceptedOrganizationInvitations?: boolean | Prisma.User$acceptedOrganizationInvitationsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
+  createdBerthPlannerShares?: boolean | Prisma.User$createdBerthPlannerSharesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -954,6 +1081,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sentOrganizationInvitations?: boolean | Prisma.User$sentOrganizationInvitationsArgs<ExtArgs>
   acceptedOrganizationInvitations?: boolean | Prisma.User$acceptedOrganizationInvitationsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
+  createdBerthPlannerShares?: boolean | Prisma.User$createdBerthPlannerSharesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -967,6 +1095,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     sentOrganizationInvitations: Prisma.$OrganizationInvitationPayload<ExtArgs>[]
     acceptedOrganizationInvitations: Prisma.$OrganizationInvitationPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
+    createdBerthPlannerShares: Prisma.$BerthPlannerSharePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1375,6 +1504,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   sentOrganizationInvitations<T extends Prisma.User$sentOrganizationInvitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sentOrganizationInvitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationInvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   acceptedOrganizationInvitations<T extends Prisma.User$acceptedOrganizationInvitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$acceptedOrganizationInvitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrganizationInvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.User$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdBerthPlannerShares<T extends Prisma.User$createdBerthPlannerSharesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdBerthPlannerSharesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BerthPlannerSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1921,6 +2051,30 @@ export type User$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[]
+}
+
+/**
+ * User.createdBerthPlannerShares
+ */
+export type User$createdBerthPlannerSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BerthPlannerShare
+   */
+  select?: Prisma.BerthPlannerShareSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BerthPlannerShare
+   */
+  omit?: Prisma.BerthPlannerShareOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BerthPlannerShareInclude<ExtArgs> | null
+  where?: Prisma.BerthPlannerShareWhereInput
+  orderBy?: Prisma.BerthPlannerShareOrderByWithRelationInput | Prisma.BerthPlannerShareOrderByWithRelationInput[]
+  cursor?: Prisma.BerthPlannerShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BerthPlannerShareScalarFieldEnum | Prisma.BerthPlannerShareScalarFieldEnum[]
 }
 
 /**

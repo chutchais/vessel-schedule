@@ -76,6 +76,7 @@ enum AuditAction {
   RESEND_INVITATION
   INVITATION_DELIVERY_FAILED
   REVOKE_INVITATION
+  REVOKE_SHARE
   ACCEPT_INVITATION
   DECLINE_INVITATION
   CHANGE_ROLE
@@ -91,25 +92,26 @@ enum AuditAction {
 model Organization {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  name     String  @db.VarChar(200)
-  slug     String  @unique @db.VarChar(100)
-  isActive Boolean @default(true)
-  vesselLabelConfig   Json?
-  exportTableConfig   Json?
+  name              String  @db.VarChar(200)
+  slug              String  @unique @db.VarChar(100)
+  isActive          Boolean @default(true)
+  vesselLabelConfig Json?
+  exportTableConfig Json?
 
   members                 OrganizationMember[]
   requestsForOrganization OrganizationRequest[]    @relation("OrganizationForRequest")
   invitations             OrganizationInvitation[]
 
-  companies       Company[]
-  ports           Port[]
-  terminals       Terminal[]
-  berths          Berth[]
-  vessels         Vessel[]
-  services        Service[]
-  vesselSchedules VesselSchedule[]
-  auditLogs       AuditLog[]
-  plannerUndos    PlannerUndo[]
+  companies          Company[]
+  ports              Port[]
+  terminals          Terminal[]
+  berths             Berth[]
+  vessels            Vessel[]
+  services           Service[]
+  vesselSchedules    VesselSchedule[]
+  auditLogs          AuditLog[]
+  plannerUndos       PlannerUndo[]
+  berthPlannerShares BerthPlannerShare[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,6 +136,7 @@ model User {
   sentOrganizationInvitations     OrganizationInvitation[] @relation("OrganizationInvitationInviter")
   acceptedOrganizationInvitations OrganizationInvitation[] @relation("OrganizationInvitationAcceptor")
   auditLogs                       AuditLog[]               @relation("AuditLogActor")
+  createdBerthPlannerShares       BerthPlannerShare[]      @relation("BerthPlannerShareCreator")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -410,8 +413,9 @@ model Terminal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  berths    Berth[]
-  schedules VesselSchedule[]
+  berths             Berth[]
+  schedules          VesselSchedule[]
+  berthPlannerShares BerthPlannerShare[]
 
   @@unique([organizationId, portId, code])
   @@index([portId])
@@ -538,6 +542,62 @@ model PlannerUndo {
   @@index([scheduleId])
   @@index([expiresAt])
   @@map("planner_undos")
+}
+
+model BerthPlannerShare {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  publicId   String @unique @db.VarChar(32)
+  secretHash String @db.Char(64)
+
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  terminalId     String       @db.Uuid
+  terminal       Terminal     @relation(fields: [terminalId], references: [id], onDelete: Cascade)
+  createdById    String       @db.Uuid
+  createdBy      User         @relation("BerthPlannerShareCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  startDate      String    @db.Char(10)
+  endDate        String    @db.Char(10)
+  rangeStart     DateTime
+  rangeEnd       DateTime
+  filters        Json?
+  initialView    String    @db.VarChar(16)
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  lastAccessedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  sessions BerthPlannerShareSession[]
+
+  @@index([organizationId, createdAt])
+  @@index([terminalId])
+  @@index([expiresAt])
+  @@map("berth_planner_shares")
+}
+
+model BerthPlannerShareSession {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shareId        String            @db.Uuid
+  share          BerthPlannerShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  tokenHash      String            @unique @db.Char(64)
+  expiresAt      DateTime
+  createdAt      DateTime          @default(now())
+  lastAccessedAt DateTime?
+
+  @@index([shareId, expiresAt])
+  @@index([expiresAt])
+  @@map("berth_planner_share_sessions")
+}
+
+model PublicRateLimitBucket {
+  id        String   @id @db.Char(64)
+  count     Int      @default(1)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+  @@map("public_rate_limit_buckets")
 }
 
 model AuditLog {

@@ -38,6 +38,7 @@ type BerthPlannerControlsProps = {
   onDecreaseLabelScale: () => void;
   onResetLabelScale: () => void;
   onIncreaseLabelScale: () => void;
+  onShareView?: () => void;
 };
 
 export function BerthPlannerControls({
@@ -69,6 +70,7 @@ export function BerthPlannerControls({
   onDecreaseLabelScale,
   onResetLabelScale,
   onIncreaseLabelScale,
+  onShareView,
 }: BerthPlannerControlsProps) {
   const weekLabel = portTimezone
     ? formatWeekLabel(weekStart, weekEnd, portTimezone)
@@ -190,6 +192,7 @@ export function BerthPlannerControls({
       </div>
       <div className="hidden xl:flex">{renderLabelSizeControls()}</div>
       <div className="ml-auto flex items-center gap-2">
+        {onShareView ? <button type="button" onClick={onShareView} className="min-h-11 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">Share view</button> : null}
         <button type="button" onClick={onToggleControls} aria-expanded={!controlsCollapsed} aria-controls="planner-secondary-controls" className="min-h-11 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">{controlsCollapsed ? "Show controls" : "Hide controls"}</button>
         <button data-focus-exit={focusMode ? "true" : undefined} type="button" onClick={onToggleFocusMode} aria-pressed={focusMode} className="min-h-11 rounded-md border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">{focusMode ? "Exit Focus" : "Focus Mode"}</button>
       </div>

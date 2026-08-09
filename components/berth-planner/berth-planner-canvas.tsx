@@ -153,6 +153,7 @@ export type BerthPlannerCanvasProps = {
   onDurationResizeRequest?: (request: DurationResizeRequest) => void;
   onInteractionChange?: (active: boolean) => void;
   createMode?: boolean;
+  showAuditHistory?: boolean;
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -405,6 +406,7 @@ export function BerthPlannerCanvas({
   onInvalidRecords,
   onGridCreateRequest,
   onEditRequest,
+  showAuditHistory = true,
   onDragDropRequest,
   onDurationResizeRequest,
   onInteractionChange,
@@ -1603,6 +1605,7 @@ export function BerthPlannerCanvas({
         isConflict={selectedSchedule ? conflictedIds.has(selectedSchedule.id) : false}
         conflictingVessels={selectedConflictPartners}
         timezone={portTimezone}
+        showAuditHistory={showAuditHistory}
         onClose={() => {
           setSelectedSchedule(null);
           setSelectedBerthName("");

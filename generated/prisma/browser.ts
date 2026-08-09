@@ -88,6 +88,21 @@ export type VesselSchedule = Prisma.VesselScheduleModel
  */
 export type PlannerUndo = Prisma.PlannerUndoModel
 /**
+ * Model BerthPlannerShare
+ * 
+ */
+export type BerthPlannerShare = Prisma.BerthPlannerShareModel
+/**
+ * Model BerthPlannerShareSession
+ * 
+ */
+export type BerthPlannerShareSession = Prisma.BerthPlannerShareSessionModel
+/**
+ * Model PublicRateLimitBucket
+ * 
+ */
+export type PublicRateLimitBucket = Prisma.PublicRateLimitBucketModel
+/**
  * Model AuditLog
  * 
  */

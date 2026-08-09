@@ -411,6 +411,9 @@ export const ModelName = {
   Berth: 'Berth',
   VesselSchedule: 'VesselSchedule',
   PlannerUndo: 'PlannerUndo',
+  BerthPlannerShare: 'BerthPlannerShare',
+  BerthPlannerShareSession: 'BerthPlannerShareSession',
+  PublicRateLimitBucket: 'PublicRateLimitBucket',
   AuditLog: 'AuditLog'
 } as const
 
@@ -427,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "healthCheck" | "organization" | "user" | "organizationMember" | "organizationRequest" | "organizationInvitation" | "company" | "service" | "port" | "vessel" | "terminal" | "berth" | "vesselSchedule" | "plannerUndo" | "auditLog"
+    modelProps: "healthCheck" | "organization" | "user" | "organizationMember" | "organizationRequest" | "organizationInvitation" | "company" | "service" | "port" | "vessel" | "terminal" | "berth" | "vesselSchedule" | "plannerUndo" | "berthPlannerShare" | "berthPlannerShareSession" | "publicRateLimitBucket" | "auditLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1467,6 +1470,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    BerthPlannerShare: {
+      payload: Prisma.$BerthPlannerSharePayload<ExtArgs>
+      fields: Prisma.BerthPlannerShareFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BerthPlannerShareFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BerthPlannerShareFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>
+        }
+        findFirst: {
+          args: Prisma.BerthPlannerShareFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BerthPlannerShareFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>
+        }
+        findMany: {
+          args: Prisma.BerthPlannerShareFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>[]
+        }
+        create: {
+          args: Prisma.BerthPlannerShareCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>
+        }
+        createMany: {
+          args: Prisma.BerthPlannerShareCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BerthPlannerShareCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>[]
+        }
+        delete: {
+          args: Prisma.BerthPlannerShareDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>
+        }
+        update: {
+          args: Prisma.BerthPlannerShareUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>
+        }
+        deleteMany: {
+          args: Prisma.BerthPlannerShareDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BerthPlannerShareUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BerthPlannerShareUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>[]
+        }
+        upsert: {
+          args: Prisma.BerthPlannerShareUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerSharePayload>
+        }
+        aggregate: {
+          args: Prisma.BerthPlannerShareAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBerthPlannerShare>
+        }
+        groupBy: {
+          args: Prisma.BerthPlannerShareGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BerthPlannerShareGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BerthPlannerShareCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BerthPlannerShareCountAggregateOutputType> | number
+        }
+      }
+    }
+    BerthPlannerShareSession: {
+      payload: Prisma.$BerthPlannerShareSessionPayload<ExtArgs>
+      fields: Prisma.BerthPlannerShareSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BerthPlannerShareSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BerthPlannerShareSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.BerthPlannerShareSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BerthPlannerShareSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>
+        }
+        findMany: {
+          args: Prisma.BerthPlannerShareSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>[]
+        }
+        create: {
+          args: Prisma.BerthPlannerShareSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>
+        }
+        createMany: {
+          args: Prisma.BerthPlannerShareSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BerthPlannerShareSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.BerthPlannerShareSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>
+        }
+        update: {
+          args: Prisma.BerthPlannerShareSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.BerthPlannerShareSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BerthPlannerShareSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BerthPlannerShareSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.BerthPlannerShareSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BerthPlannerShareSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.BerthPlannerShareSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBerthPlannerShareSession>
+        }
+        groupBy: {
+          args: Prisma.BerthPlannerShareSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BerthPlannerShareSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BerthPlannerShareSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BerthPlannerShareSessionCountAggregateOutputType> | number
+        }
+      }
+    }
+    PublicRateLimitBucket: {
+      payload: Prisma.$PublicRateLimitBucketPayload<ExtArgs>
+      fields: Prisma.PublicRateLimitBucketFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PublicRateLimitBucketFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PublicRateLimitBucketFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>
+        }
+        findFirst: {
+          args: Prisma.PublicRateLimitBucketFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PublicRateLimitBucketFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>
+        }
+        findMany: {
+          args: Prisma.PublicRateLimitBucketFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>[]
+        }
+        create: {
+          args: Prisma.PublicRateLimitBucketCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>
+        }
+        createMany: {
+          args: Prisma.PublicRateLimitBucketCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PublicRateLimitBucketCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>[]
+        }
+        delete: {
+          args: Prisma.PublicRateLimitBucketDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>
+        }
+        update: {
+          args: Prisma.PublicRateLimitBucketUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>
+        }
+        deleteMany: {
+          args: Prisma.PublicRateLimitBucketDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PublicRateLimitBucketUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PublicRateLimitBucketUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>[]
+        }
+        upsert: {
+          args: Prisma.PublicRateLimitBucketUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PublicRateLimitBucketPayload>
+        }
+        aggregate: {
+          args: Prisma.PublicRateLimitBucketAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePublicRateLimitBucket>
+        }
+        groupBy: {
+          args: Prisma.PublicRateLimitBucketGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PublicRateLimitBucketGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PublicRateLimitBucketCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PublicRateLimitBucketCountAggregateOutputType> | number
+        }
+      }
+    }
     AuditLog: {
       payload: Prisma.$AuditLogPayload<ExtArgs>
       fields: Prisma.AuditLogFieldRefs
@@ -1824,6 +2049,51 @@ export const PlannerUndoScalarFieldEnum = {
 } as const
 
 export type PlannerUndoScalarFieldEnum = (typeof PlannerUndoScalarFieldEnum)[keyof typeof PlannerUndoScalarFieldEnum]
+
+
+export const BerthPlannerShareScalarFieldEnum = {
+  id: 'id',
+  publicId: 'publicId',
+  secretHash: 'secretHash',
+  organizationId: 'organizationId',
+  terminalId: 'terminalId',
+  createdById: 'createdById',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  rangeStart: 'rangeStart',
+  rangeEnd: 'rangeEnd',
+  filters: 'filters',
+  initialView: 'initialView',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  lastAccessedAt: 'lastAccessedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type BerthPlannerShareScalarFieldEnum = (typeof BerthPlannerShareScalarFieldEnum)[keyof typeof BerthPlannerShareScalarFieldEnum]
+
+
+export const BerthPlannerShareSessionScalarFieldEnum = {
+  id: 'id',
+  shareId: 'shareId',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  lastAccessedAt: 'lastAccessedAt'
+} as const
+
+export type BerthPlannerShareSessionScalarFieldEnum = (typeof BerthPlannerShareSessionScalarFieldEnum)[keyof typeof BerthPlannerShareSessionScalarFieldEnum]
+
+
+export const PublicRateLimitBucketScalarFieldEnum = {
+  id: 'id',
+  count: 'count',
+  resetAt: 'resetAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PublicRateLimitBucketScalarFieldEnum = (typeof PublicRateLimitBucketScalarFieldEnum)[keyof typeof PublicRateLimitBucketScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {
@@ -2323,6 +2593,9 @@ export type GlobalOmitConfig = {
   berth?: Prisma.BerthOmit
   vesselSchedule?: Prisma.VesselScheduleOmit
   plannerUndo?: Prisma.PlannerUndoOmit
+  berthPlannerShare?: Prisma.BerthPlannerShareOmit
+  berthPlannerShareSession?: Prisma.BerthPlannerShareSessionOmit
+  publicRateLimitBucket?: Prisma.PublicRateLimitBucketOmit
   auditLog?: Prisma.AuditLogOmit
 }
 

@@ -210,6 +210,7 @@ export type OrganizationWhereInput = {
   vesselSchedules?: Prisma.VesselScheduleListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   plannerUndos?: Prisma.PlannerUndoListRelationFilter
+  berthPlannerShares?: Prisma.BerthPlannerShareListRelationFilter
 }
 
 export type OrganizationOrderByWithRelationInput = {
@@ -233,6 +234,7 @@ export type OrganizationOrderByWithRelationInput = {
   vesselSchedules?: Prisma.VesselScheduleOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
   plannerUndos?: Prisma.PlannerUndoOrderByRelationAggregateInput
+  berthPlannerShares?: Prisma.BerthPlannerShareOrderByRelationAggregateInput
 }
 
 export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -259,6 +261,7 @@ export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
   vesselSchedules?: Prisma.VesselScheduleListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   plannerUndos?: Prisma.PlannerUndoListRelationFilter
+  berthPlannerShares?: Prisma.BerthPlannerShareListRelationFilter
 }, "id" | "slug">
 
 export type OrganizationOrderByWithAggregationInput = {
@@ -310,6 +313,7 @@ export type OrganizationCreateInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateInput = {
@@ -333,6 +337,7 @@ export type OrganizationUncheckedCreateInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUpdateInput = {
@@ -356,6 +361,7 @@ export type OrganizationUpdateInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateInput = {
@@ -379,6 +385,7 @@ export type OrganizationUncheckedUpdateInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateManyInput = {
@@ -613,6 +620,20 @@ export type OrganizationUpdateOneRequiredWithoutPlannerUndosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutPlannerUndosInput, Prisma.OrganizationUpdateWithoutPlannerUndosInput>, Prisma.OrganizationUncheckedUpdateWithoutPlannerUndosInput>
 }
 
+export type OrganizationCreateNestedOneWithoutBerthPlannerSharesInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutBerthPlannerSharesInput, Prisma.OrganizationUncheckedCreateWithoutBerthPlannerSharesInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutBerthPlannerSharesInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+}
+
+export type OrganizationUpdateOneRequiredWithoutBerthPlannerSharesNestedInput = {
+  create?: Prisma.XOR<Prisma.OrganizationCreateWithoutBerthPlannerSharesInput, Prisma.OrganizationUncheckedCreateWithoutBerthPlannerSharesInput>
+  connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutBerthPlannerSharesInput
+  upsert?: Prisma.OrganizationUpsertWithoutBerthPlannerSharesInput
+  connect?: Prisma.OrganizationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrganizationUpdateToOneWithWhereWithoutBerthPlannerSharesInput, Prisma.OrganizationUpdateWithoutBerthPlannerSharesInput>, Prisma.OrganizationUncheckedUpdateWithoutBerthPlannerSharesInput>
+}
+
 export type OrganizationCreateNestedOneWithoutAuditLogsInput = {
   create?: Prisma.XOR<Prisma.OrganizationCreateWithoutAuditLogsInput, Prisma.OrganizationUncheckedCreateWithoutAuditLogsInput>
   connectOrCreate?: Prisma.OrganizationCreateOrConnectWithoutAuditLogsInput
@@ -649,6 +670,7 @@ export type OrganizationCreateWithoutMembersInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutMembersInput = {
@@ -671,6 +693,7 @@ export type OrganizationUncheckedCreateWithoutMembersInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutMembersInput = {
@@ -709,6 +732,7 @@ export type OrganizationUpdateWithoutMembersInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutMembersInput = {
@@ -731,6 +755,7 @@ export type OrganizationUncheckedUpdateWithoutMembersInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutRequestsForOrganizationInput = {
@@ -753,6 +778,7 @@ export type OrganizationCreateWithoutRequestsForOrganizationInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutRequestsForOrganizationInput = {
@@ -775,6 +801,7 @@ export type OrganizationUncheckedCreateWithoutRequestsForOrganizationInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutRequestsForOrganizationInput = {
@@ -813,6 +840,7 @@ export type OrganizationUpdateWithoutRequestsForOrganizationInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutRequestsForOrganizationInput = {
@@ -835,6 +863,7 @@ export type OrganizationUncheckedUpdateWithoutRequestsForOrganizationInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutInvitationsInput = {
@@ -857,6 +886,7 @@ export type OrganizationCreateWithoutInvitationsInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutInvitationsInput = {
@@ -879,6 +909,7 @@ export type OrganizationUncheckedCreateWithoutInvitationsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutInvitationsInput = {
@@ -917,6 +948,7 @@ export type OrganizationUpdateWithoutInvitationsInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
@@ -939,6 +971,7 @@ export type OrganizationUncheckedUpdateWithoutInvitationsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutCompaniesInput = {
@@ -961,6 +994,7 @@ export type OrganizationCreateWithoutCompaniesInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutCompaniesInput = {
@@ -983,6 +1017,7 @@ export type OrganizationUncheckedCreateWithoutCompaniesInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutCompaniesInput = {
@@ -1021,6 +1056,7 @@ export type OrganizationUpdateWithoutCompaniesInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutCompaniesInput = {
@@ -1043,6 +1079,7 @@ export type OrganizationUncheckedUpdateWithoutCompaniesInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutServicesInput = {
@@ -1065,6 +1102,7 @@ export type OrganizationCreateWithoutServicesInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutServicesInput = {
@@ -1087,6 +1125,7 @@ export type OrganizationUncheckedCreateWithoutServicesInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutServicesInput = {
@@ -1125,6 +1164,7 @@ export type OrganizationUpdateWithoutServicesInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutServicesInput = {
@@ -1147,6 +1187,7 @@ export type OrganizationUncheckedUpdateWithoutServicesInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutPortsInput = {
@@ -1169,6 +1210,7 @@ export type OrganizationCreateWithoutPortsInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutPortsInput = {
@@ -1191,6 +1233,7 @@ export type OrganizationUncheckedCreateWithoutPortsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutPortsInput = {
@@ -1229,6 +1272,7 @@ export type OrganizationUpdateWithoutPortsInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutPortsInput = {
@@ -1251,6 +1295,7 @@ export type OrganizationUncheckedUpdateWithoutPortsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutVesselsInput = {
@@ -1273,6 +1318,7 @@ export type OrganizationCreateWithoutVesselsInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutVesselsInput = {
@@ -1295,6 +1341,7 @@ export type OrganizationUncheckedCreateWithoutVesselsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutVesselsInput = {
@@ -1333,6 +1380,7 @@ export type OrganizationUpdateWithoutVesselsInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutVesselsInput = {
@@ -1355,6 +1403,7 @@ export type OrganizationUncheckedUpdateWithoutVesselsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutTerminalsInput = {
@@ -1377,6 +1426,7 @@ export type OrganizationCreateWithoutTerminalsInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutTerminalsInput = {
@@ -1399,6 +1449,7 @@ export type OrganizationUncheckedCreateWithoutTerminalsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutTerminalsInput = {
@@ -1437,6 +1488,7 @@ export type OrganizationUpdateWithoutTerminalsInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutTerminalsInput = {
@@ -1459,6 +1511,7 @@ export type OrganizationUncheckedUpdateWithoutTerminalsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutBerthsInput = {
@@ -1481,6 +1534,7 @@ export type OrganizationCreateWithoutBerthsInput = {
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutBerthsInput = {
@@ -1503,6 +1557,7 @@ export type OrganizationUncheckedCreateWithoutBerthsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutBerthsInput = {
@@ -1541,6 +1596,7 @@ export type OrganizationUpdateWithoutBerthsInput = {
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutBerthsInput = {
@@ -1563,6 +1619,7 @@ export type OrganizationUncheckedUpdateWithoutBerthsInput = {
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutVesselSchedulesInput = {
@@ -1585,6 +1642,7 @@ export type OrganizationCreateWithoutVesselSchedulesInput = {
   services?: Prisma.ServiceCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutVesselSchedulesInput = {
@@ -1607,6 +1665,7 @@ export type OrganizationUncheckedCreateWithoutVesselSchedulesInput = {
   services?: Prisma.ServiceUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutVesselSchedulesInput = {
@@ -1645,6 +1704,7 @@ export type OrganizationUpdateWithoutVesselSchedulesInput = {
   services?: Prisma.ServiceUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutVesselSchedulesInput = {
@@ -1667,6 +1727,7 @@ export type OrganizationUncheckedUpdateWithoutVesselSchedulesInput = {
   services?: Prisma.ServiceUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutPlannerUndosInput = {
@@ -1689,6 +1750,7 @@ export type OrganizationCreateWithoutPlannerUndosInput = {
   services?: Prisma.ServiceCreateNestedManyWithoutOrganizationInput
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutPlannerUndosInput = {
@@ -1711,6 +1773,7 @@ export type OrganizationUncheckedCreateWithoutPlannerUndosInput = {
   services?: Prisma.ServiceUncheckedCreateNestedManyWithoutOrganizationInput
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutPlannerUndosInput = {
@@ -1749,6 +1812,7 @@ export type OrganizationUpdateWithoutPlannerUndosInput = {
   services?: Prisma.ServiceUpdateManyWithoutOrganizationNestedInput
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutPlannerUndosInput = {
@@ -1771,6 +1835,115 @@ export type OrganizationUncheckedUpdateWithoutPlannerUndosInput = {
   services?: Prisma.ServiceUncheckedUpdateManyWithoutOrganizationNestedInput
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationCreateWithoutBerthPlannerSharesInput = {
+  id?: string
+  name: string
+  slug: string
+  isActive?: boolean
+  vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.OrganizationMemberCreateNestedManyWithoutOrganizationInput
+  requestsForOrganization?: Prisma.OrganizationRequestCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationCreateNestedManyWithoutOrganizationInput
+  companies?: Prisma.CompanyCreateNestedManyWithoutOrganizationInput
+  ports?: Prisma.PortCreateNestedManyWithoutOrganizationInput
+  terminals?: Prisma.TerminalCreateNestedManyWithoutOrganizationInput
+  berths?: Prisma.BerthCreateNestedManyWithoutOrganizationInput
+  vessels?: Prisma.VesselCreateNestedManyWithoutOrganizationInput
+  services?: Prisma.ServiceCreateNestedManyWithoutOrganizationInput
+  vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutOrganizationInput
+  plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationUncheckedCreateWithoutBerthPlannerSharesInput = {
+  id?: string
+  name: string
+  slug: string
+  isActive?: boolean
+  vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.OrganizationMemberUncheckedCreateNestedManyWithoutOrganizationInput
+  requestsForOrganization?: Prisma.OrganizationRequestUncheckedCreateNestedManyWithoutOrganizationInput
+  invitations?: Prisma.OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
+  companies?: Prisma.CompanyUncheckedCreateNestedManyWithoutOrganizationInput
+  ports?: Prisma.PortUncheckedCreateNestedManyWithoutOrganizationInput
+  terminals?: Prisma.TerminalUncheckedCreateNestedManyWithoutOrganizationInput
+  berths?: Prisma.BerthUncheckedCreateNestedManyWithoutOrganizationInput
+  vessels?: Prisma.VesselUncheckedCreateNestedManyWithoutOrganizationInput
+  services?: Prisma.ServiceUncheckedCreateNestedManyWithoutOrganizationInput
+  vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+  plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+}
+
+export type OrganizationCreateOrConnectWithoutBerthPlannerSharesInput = {
+  where: Prisma.OrganizationWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutBerthPlannerSharesInput, Prisma.OrganizationUncheckedCreateWithoutBerthPlannerSharesInput>
+}
+
+export type OrganizationUpsertWithoutBerthPlannerSharesInput = {
+  update: Prisma.XOR<Prisma.OrganizationUpdateWithoutBerthPlannerSharesInput, Prisma.OrganizationUncheckedUpdateWithoutBerthPlannerSharesInput>
+  create: Prisma.XOR<Prisma.OrganizationCreateWithoutBerthPlannerSharesInput, Prisma.OrganizationUncheckedCreateWithoutBerthPlannerSharesInput>
+  where?: Prisma.OrganizationWhereInput
+}
+
+export type OrganizationUpdateToOneWithWhereWithoutBerthPlannerSharesInput = {
+  where?: Prisma.OrganizationWhereInput
+  data: Prisma.XOR<Prisma.OrganizationUpdateWithoutBerthPlannerSharesInput, Prisma.OrganizationUncheckedUpdateWithoutBerthPlannerSharesInput>
+}
+
+export type OrganizationUpdateWithoutBerthPlannerSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.OrganizationMemberUpdateManyWithoutOrganizationNestedInput
+  requestsForOrganization?: Prisma.OrganizationRequestUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
+  companies?: Prisma.CompanyUpdateManyWithoutOrganizationNestedInput
+  ports?: Prisma.PortUpdateManyWithoutOrganizationNestedInput
+  terminals?: Prisma.TerminalUpdateManyWithoutOrganizationNestedInput
+  berths?: Prisma.BerthUpdateManyWithoutOrganizationNestedInput
+  vessels?: Prisma.VesselUpdateManyWithoutOrganizationNestedInput
+  services?: Prisma.ServiceUpdateManyWithoutOrganizationNestedInput
+  vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutOrganizationNestedInput
+  plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+}
+
+export type OrganizationUncheckedUpdateWithoutBerthPlannerSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  vesselLabelConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  exportTableConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.OrganizationMemberUncheckedUpdateManyWithoutOrganizationNestedInput
+  requestsForOrganization?: Prisma.OrganizationRequestUncheckedUpdateManyWithoutOrganizationNestedInput
+  invitations?: Prisma.OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
+  companies?: Prisma.CompanyUncheckedUpdateManyWithoutOrganizationNestedInput
+  ports?: Prisma.PortUncheckedUpdateManyWithoutOrganizationNestedInput
+  terminals?: Prisma.TerminalUncheckedUpdateManyWithoutOrganizationNestedInput
+  berths?: Prisma.BerthUncheckedUpdateManyWithoutOrganizationNestedInput
+  vessels?: Prisma.VesselUncheckedUpdateManyWithoutOrganizationNestedInput
+  services?: Prisma.ServiceUncheckedUpdateManyWithoutOrganizationNestedInput
+  vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationCreateWithoutAuditLogsInput = {
@@ -1793,6 +1966,7 @@ export type OrganizationCreateWithoutAuditLogsInput = {
   services?: Prisma.ServiceCreateNestedManyWithoutOrganizationInput
   vesselSchedules?: Prisma.VesselScheduleCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
@@ -1815,6 +1989,7 @@ export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
   services?: Prisma.ServiceUncheckedCreateNestedManyWithoutOrganizationInput
   vesselSchedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutOrganizationInput
   plannerUndos?: Prisma.PlannerUndoUncheckedCreateNestedManyWithoutOrganizationInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutOrganizationInput
 }
 
 export type OrganizationCreateOrConnectWithoutAuditLogsInput = {
@@ -1853,6 +2028,7 @@ export type OrganizationUpdateWithoutAuditLogsInput = {
   services?: Prisma.ServiceUpdateManyWithoutOrganizationNestedInput
   vesselSchedules?: Prisma.VesselScheduleUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutOrganizationNestedInput
 }
 
 export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
@@ -1875,6 +2051,7 @@ export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
   services?: Prisma.ServiceUncheckedUpdateManyWithoutOrganizationNestedInput
   vesselSchedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutOrganizationNestedInput
   plannerUndos?: Prisma.PlannerUndoUncheckedUpdateManyWithoutOrganizationNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutOrganizationNestedInput
 }
 
 
@@ -1895,6 +2072,7 @@ export type OrganizationCountOutputType = {
   vesselSchedules: number
   auditLogs: number
   plannerUndos: number
+  berthPlannerShares: number
 }
 
 export type OrganizationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1910,6 +2088,7 @@ export type OrganizationCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   vesselSchedules?: boolean | OrganizationCountOutputTypeCountVesselSchedulesArgs
   auditLogs?: boolean | OrganizationCountOutputTypeCountAuditLogsArgs
   plannerUndos?: boolean | OrganizationCountOutputTypeCountPlannerUndosArgs
+  berthPlannerShares?: boolean | OrganizationCountOutputTypeCountBerthPlannerSharesArgs
 }
 
 /**
@@ -2006,6 +2185,13 @@ export type OrganizationCountOutputTypeCountPlannerUndosArgs<ExtArgs extends run
   where?: Prisma.PlannerUndoWhereInput
 }
 
+/**
+ * OrganizationCountOutputType without action
+ */
+export type OrganizationCountOutputTypeCountBerthPlannerSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BerthPlannerShareWhereInput
+}
+
 
 export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2028,6 +2214,7 @@ export type OrganizationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   vesselSchedules?: boolean | Prisma.Organization$vesselSchedulesArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Organization$auditLogsArgs<ExtArgs>
   plannerUndos?: boolean | Prisma.Organization$plannerUndosArgs<ExtArgs>
+  berthPlannerShares?: boolean | Prisma.Organization$berthPlannerSharesArgs<ExtArgs>
   _count?: boolean | Prisma.OrganizationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["organization"]>
 
@@ -2078,6 +2265,7 @@ export type OrganizationInclude<ExtArgs extends runtime.Types.Extensions.Interna
   vesselSchedules?: boolean | Prisma.Organization$vesselSchedulesArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Organization$auditLogsArgs<ExtArgs>
   plannerUndos?: boolean | Prisma.Organization$plannerUndosArgs<ExtArgs>
+  berthPlannerShares?: boolean | Prisma.Organization$berthPlannerSharesArgs<ExtArgs>
   _count?: boolean | Prisma.OrganizationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -2098,6 +2286,7 @@ export type $OrganizationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     vesselSchedules: Prisma.$VesselSchedulePayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
     plannerUndos: Prisma.$PlannerUndoPayload<ExtArgs>[]
+    berthPlannerShares: Prisma.$BerthPlannerSharePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2514,6 +2703,7 @@ export interface Prisma__OrganizationClient<T, Null = never, ExtArgs extends run
   vesselSchedules<T extends Prisma.Organization$vesselSchedulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$vesselSchedulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VesselSchedulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.Organization$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   plannerUndos<T extends Prisma.Organization$plannerUndosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$plannerUndosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlannerUndoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  berthPlannerShares<T extends Prisma.Organization$berthPlannerSharesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Organization$berthPlannerSharesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BerthPlannerSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3229,6 +3419,30 @@ export type Organization$plannerUndosArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.PlannerUndoScalarFieldEnum | Prisma.PlannerUndoScalarFieldEnum[]
+}
+
+/**
+ * Organization.berthPlannerShares
+ */
+export type Organization$berthPlannerSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BerthPlannerShare
+   */
+  select?: Prisma.BerthPlannerShareSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BerthPlannerShare
+   */
+  omit?: Prisma.BerthPlannerShareOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BerthPlannerShareInclude<ExtArgs> | null
+  where?: Prisma.BerthPlannerShareWhereInput
+  orderBy?: Prisma.BerthPlannerShareOrderByWithRelationInput | Prisma.BerthPlannerShareOrderByWithRelationInput[]
+  cursor?: Prisma.BerthPlannerShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BerthPlannerShareScalarFieldEnum | Prisma.BerthPlannerShareScalarFieldEnum[]
 }
 
 /**

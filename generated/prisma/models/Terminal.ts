@@ -210,6 +210,7 @@ export type TerminalWhereInput = {
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   berths?: Prisma.BerthListRelationFilter
   schedules?: Prisma.VesselScheduleListRelationFilter
+  berthPlannerShares?: Prisma.BerthPlannerShareListRelationFilter
 }
 
 export type TerminalOrderByWithRelationInput = {
@@ -225,6 +226,7 @@ export type TerminalOrderByWithRelationInput = {
   organization?: Prisma.OrganizationOrderByWithRelationInput
   berths?: Prisma.BerthOrderByRelationAggregateInput
   schedules?: Prisma.VesselScheduleOrderByRelationAggregateInput
+  berthPlannerShares?: Prisma.BerthPlannerShareOrderByRelationAggregateInput
 }
 
 export type TerminalWhereUniqueInput = Prisma.AtLeast<{
@@ -244,6 +246,7 @@ export type TerminalWhereUniqueInput = Prisma.AtLeast<{
   organization?: Prisma.XOR<Prisma.OrganizationScalarRelationFilter, Prisma.OrganizationWhereInput>
   berths?: Prisma.BerthListRelationFilter
   schedules?: Prisma.VesselScheduleListRelationFilter
+  berthPlannerShares?: Prisma.BerthPlannerShareListRelationFilter
 }, "id" | "organizationId_portId_code">
 
 export type TerminalOrderByWithAggregationInput = {
@@ -285,6 +288,7 @@ export type TerminalCreateInput = {
   organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
   berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalUncheckedCreateInput = {
@@ -298,6 +302,7 @@ export type TerminalUncheckedCreateInput = {
   updatedAt?: Date | string
   berths?: Prisma.BerthUncheckedCreateNestedManyWithoutTerminalInput
   schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalUpdateInput = {
@@ -311,6 +316,7 @@ export type TerminalUpdateInput = {
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
   berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalUncheckedUpdateInput = {
@@ -324,6 +330,7 @@ export type TerminalUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   berths?: Prisma.BerthUncheckedUpdateManyWithoutTerminalNestedInput
   schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalCreateManyInput = {
@@ -523,6 +530,20 @@ export type TerminalUpdateOneRequiredWithoutSchedulesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TerminalUpdateToOneWithWhereWithoutSchedulesInput, Prisma.TerminalUpdateWithoutSchedulesInput>, Prisma.TerminalUncheckedUpdateWithoutSchedulesInput>
 }
 
+export type TerminalCreateNestedOneWithoutBerthPlannerSharesInput = {
+  create?: Prisma.XOR<Prisma.TerminalCreateWithoutBerthPlannerSharesInput, Prisma.TerminalUncheckedCreateWithoutBerthPlannerSharesInput>
+  connectOrCreate?: Prisma.TerminalCreateOrConnectWithoutBerthPlannerSharesInput
+  connect?: Prisma.TerminalWhereUniqueInput
+}
+
+export type TerminalUpdateOneRequiredWithoutBerthPlannerSharesNestedInput = {
+  create?: Prisma.XOR<Prisma.TerminalCreateWithoutBerthPlannerSharesInput, Prisma.TerminalUncheckedCreateWithoutBerthPlannerSharesInput>
+  connectOrCreate?: Prisma.TerminalCreateOrConnectWithoutBerthPlannerSharesInput
+  upsert?: Prisma.TerminalUpsertWithoutBerthPlannerSharesInput
+  connect?: Prisma.TerminalWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TerminalUpdateToOneWithWhereWithoutBerthPlannerSharesInput, Prisma.TerminalUpdateWithoutBerthPlannerSharesInput>, Prisma.TerminalUncheckedUpdateWithoutBerthPlannerSharesInput>
+}
+
 export type TerminalCreateWithoutOrganizationInput = {
   id?: string
   code: string
@@ -533,6 +554,7 @@ export type TerminalCreateWithoutOrganizationInput = {
   port: Prisma.PortCreateNestedOneWithoutTerminalsInput
   berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalUncheckedCreateWithoutOrganizationInput = {
@@ -545,6 +567,7 @@ export type TerminalUncheckedCreateWithoutOrganizationInput = {
   updatedAt?: Date | string
   berths?: Prisma.BerthUncheckedCreateNestedManyWithoutTerminalInput
   schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalCreateOrConnectWithoutOrganizationInput = {
@@ -597,6 +620,7 @@ export type TerminalCreateWithoutPortInput = {
   organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
   berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalUncheckedCreateWithoutPortInput = {
@@ -609,6 +633,7 @@ export type TerminalUncheckedCreateWithoutPortInput = {
   updatedAt?: Date | string
   berths?: Prisma.BerthUncheckedCreateNestedManyWithoutTerminalInput
   schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalCreateOrConnectWithoutPortInput = {
@@ -647,6 +672,7 @@ export type TerminalCreateWithoutBerthsInput = {
   port: Prisma.PortCreateNestedOneWithoutTerminalsInput
   organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
   schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalUncheckedCreateWithoutBerthsInput = {
@@ -659,6 +685,7 @@ export type TerminalUncheckedCreateWithoutBerthsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalCreateOrConnectWithoutBerthsInput = {
@@ -687,6 +714,7 @@ export type TerminalUpdateWithoutBerthsInput = {
   port?: Prisma.PortUpdateOneRequiredWithoutTerminalsNestedInput
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalUncheckedUpdateWithoutBerthsInput = {
@@ -699,6 +727,7 @@ export type TerminalUncheckedUpdateWithoutBerthsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalCreateWithoutSchedulesInput = {
@@ -711,6 +740,7 @@ export type TerminalCreateWithoutSchedulesInput = {
   port: Prisma.PortCreateNestedOneWithoutTerminalsInput
   organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
   berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalUncheckedCreateWithoutSchedulesInput = {
@@ -723,6 +753,7 @@ export type TerminalUncheckedCreateWithoutSchedulesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   berths?: Prisma.BerthUncheckedCreateNestedManyWithoutTerminalInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedCreateNestedManyWithoutTerminalInput
 }
 
 export type TerminalCreateOrConnectWithoutSchedulesInput = {
@@ -751,6 +782,7 @@ export type TerminalUpdateWithoutSchedulesInput = {
   port?: Prisma.PortUpdateOneRequiredWithoutTerminalsNestedInput
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
   berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalUncheckedUpdateWithoutSchedulesInput = {
@@ -763,6 +795,75 @@ export type TerminalUncheckedUpdateWithoutSchedulesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   berths?: Prisma.BerthUncheckedUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutTerminalNestedInput
+}
+
+export type TerminalCreateWithoutBerthPlannerSharesInput = {
+  id?: string
+  code: string
+  name: string
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  port: Prisma.PortCreateNestedOneWithoutTerminalsInput
+  organization: Prisma.OrganizationCreateNestedOneWithoutTerminalsInput
+  berths?: Prisma.BerthCreateNestedManyWithoutTerminalInput
+  schedules?: Prisma.VesselScheduleCreateNestedManyWithoutTerminalInput
+}
+
+export type TerminalUncheckedCreateWithoutBerthPlannerSharesInput = {
+  id?: string
+  code: string
+  name: string
+  portId: string
+  organizationId: string
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  berths?: Prisma.BerthUncheckedCreateNestedManyWithoutTerminalInput
+  schedules?: Prisma.VesselScheduleUncheckedCreateNestedManyWithoutTerminalInput
+}
+
+export type TerminalCreateOrConnectWithoutBerthPlannerSharesInput = {
+  where: Prisma.TerminalWhereUniqueInput
+  create: Prisma.XOR<Prisma.TerminalCreateWithoutBerthPlannerSharesInput, Prisma.TerminalUncheckedCreateWithoutBerthPlannerSharesInput>
+}
+
+export type TerminalUpsertWithoutBerthPlannerSharesInput = {
+  update: Prisma.XOR<Prisma.TerminalUpdateWithoutBerthPlannerSharesInput, Prisma.TerminalUncheckedUpdateWithoutBerthPlannerSharesInput>
+  create: Prisma.XOR<Prisma.TerminalCreateWithoutBerthPlannerSharesInput, Prisma.TerminalUncheckedCreateWithoutBerthPlannerSharesInput>
+  where?: Prisma.TerminalWhereInput
+}
+
+export type TerminalUpdateToOneWithWhereWithoutBerthPlannerSharesInput = {
+  where?: Prisma.TerminalWhereInput
+  data: Prisma.XOR<Prisma.TerminalUpdateWithoutBerthPlannerSharesInput, Prisma.TerminalUncheckedUpdateWithoutBerthPlannerSharesInput>
+}
+
+export type TerminalUpdateWithoutBerthPlannerSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  port?: Prisma.PortUpdateOneRequiredWithoutTerminalsNestedInput
+  organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
+  berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
+  schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
+}
+
+export type TerminalUncheckedUpdateWithoutBerthPlannerSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  portId?: Prisma.StringFieldUpdateOperationsInput | string
+  organizationId?: Prisma.StringFieldUpdateOperationsInput | string
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  berths?: Prisma.BerthUncheckedUpdateManyWithoutTerminalNestedInput
+  schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalCreateManyOrganizationInput = {
@@ -785,6 +886,7 @@ export type TerminalUpdateWithoutOrganizationInput = {
   port?: Prisma.PortUpdateOneRequiredWithoutTerminalsNestedInput
   berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalUncheckedUpdateWithoutOrganizationInput = {
@@ -797,6 +899,7 @@ export type TerminalUncheckedUpdateWithoutOrganizationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   berths?: Prisma.BerthUncheckedUpdateManyWithoutTerminalNestedInput
   schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalUncheckedUpdateManyWithoutOrganizationInput = {
@@ -829,6 +932,7 @@ export type TerminalUpdateWithoutPortInput = {
   organization?: Prisma.OrganizationUpdateOneRequiredWithoutTerminalsNestedInput
   berths?: Prisma.BerthUpdateManyWithoutTerminalNestedInput
   schedules?: Prisma.VesselScheduleUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalUncheckedUpdateWithoutPortInput = {
@@ -841,6 +945,7 @@ export type TerminalUncheckedUpdateWithoutPortInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   berths?: Prisma.BerthUncheckedUpdateManyWithoutTerminalNestedInput
   schedules?: Prisma.VesselScheduleUncheckedUpdateManyWithoutTerminalNestedInput
+  berthPlannerShares?: Prisma.BerthPlannerShareUncheckedUpdateManyWithoutTerminalNestedInput
 }
 
 export type TerminalUncheckedUpdateManyWithoutPortInput = {
@@ -861,11 +966,13 @@ export type TerminalUncheckedUpdateManyWithoutPortInput = {
 export type TerminalCountOutputType = {
   berths: number
   schedules: number
+  berthPlannerShares: number
 }
 
 export type TerminalCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   berths?: boolean | TerminalCountOutputTypeCountBerthsArgs
   schedules?: boolean | TerminalCountOutputTypeCountSchedulesArgs
+  berthPlannerShares?: boolean | TerminalCountOutputTypeCountBerthPlannerSharesArgs
 }
 
 /**
@@ -892,6 +999,13 @@ export type TerminalCountOutputTypeCountSchedulesArgs<ExtArgs extends runtime.Ty
   where?: Prisma.VesselScheduleWhereInput
 }
 
+/**
+ * TerminalCountOutputType without action
+ */
+export type TerminalCountOutputTypeCountBerthPlannerSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BerthPlannerShareWhereInput
+}
+
 
 export type TerminalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -906,6 +1020,7 @@ export type TerminalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   berths?: boolean | Prisma.Terminal$berthsArgs<ExtArgs>
   schedules?: boolean | Prisma.Terminal$schedulesArgs<ExtArgs>
+  berthPlannerShares?: boolean | Prisma.Terminal$berthPlannerSharesArgs<ExtArgs>
   _count?: boolean | Prisma.TerminalCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["terminal"]>
 
@@ -952,6 +1067,7 @@ export type TerminalInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
   berths?: boolean | Prisma.Terminal$berthsArgs<ExtArgs>
   schedules?: boolean | Prisma.Terminal$schedulesArgs<ExtArgs>
+  berthPlannerShares?: boolean | Prisma.Terminal$berthPlannerSharesArgs<ExtArgs>
   _count?: boolean | Prisma.TerminalCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TerminalIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -970,6 +1086,7 @@ export type $TerminalPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     organization: Prisma.$OrganizationPayload<ExtArgs>
     berths: Prisma.$BerthPayload<ExtArgs>[]
     schedules: Prisma.$VesselSchedulePayload<ExtArgs>[]
+    berthPlannerShares: Prisma.$BerthPlannerSharePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1378,6 +1495,7 @@ export interface Prisma__TerminalClient<T, Null = never, ExtArgs extends runtime
   organization<T extends Prisma.OrganizationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrganizationDefaultArgs<ExtArgs>>): Prisma.Prisma__OrganizationClient<runtime.Types.Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   berths<T extends Prisma.Terminal$berthsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Terminal$berthsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BerthPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   schedules<T extends Prisma.Terminal$schedulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Terminal$schedulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VesselSchedulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  berthPlannerShares<T extends Prisma.Terminal$berthPlannerSharesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Terminal$berthPlannerSharesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BerthPlannerSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1861,6 +1979,30 @@ export type Terminal$schedulesArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.VesselScheduleScalarFieldEnum | Prisma.VesselScheduleScalarFieldEnum[]
+}
+
+/**
+ * Terminal.berthPlannerShares
+ */
+export type Terminal$berthPlannerSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BerthPlannerShare
+   */
+  select?: Prisma.BerthPlannerShareSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BerthPlannerShare
+   */
+  omit?: Prisma.BerthPlannerShareOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BerthPlannerShareInclude<ExtArgs> | null
+  where?: Prisma.BerthPlannerShareWhereInput
+  orderBy?: Prisma.BerthPlannerShareOrderByWithRelationInput | Prisma.BerthPlannerShareOrderByWithRelationInput[]
+  cursor?: Prisma.BerthPlannerShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BerthPlannerShareScalarFieldEnum | Prisma.BerthPlannerShareScalarFieldEnum[]
 }
 
 /**
