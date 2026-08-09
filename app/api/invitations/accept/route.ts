@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({ success: true, organizationSlug: result.organizationSlug });
     response.cookies.set("active_organization_id", result.organizationId, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 7 });
     return response;
-  } catch (error) {
-    console.error("Invitation acceptance failed:", error);
+  } catch {
+    console.error("Invitation acceptance failed:");
     return NextResponse.json({ error: "Unable to accept invitation" }, { status: 500 });
   }
 }

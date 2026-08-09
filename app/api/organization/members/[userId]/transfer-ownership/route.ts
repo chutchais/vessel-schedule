@@ -121,7 +121,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to transfer ownership:", error);
+    console.error("Failed to transfer ownership:");
     return NextResponse.json({ error: "Failed to transfer ownership" }, { status: 500 });
   }
 }

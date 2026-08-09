@@ -42,7 +42,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.statusCode });
     if (error instanceof InvitationReplacementConflict) return NextResponse.json({ error: "This invitation is no longer active." }, { status: 409 });
-    console.error("Invitation replacement failed:", error);
+    console.error("Invitation replacement failed:");
     return NextResponse.json({ error: "Unable to replace invitation" }, { status: 500 });
   }
 }

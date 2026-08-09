@@ -182,7 +182,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to update berth:", error);
+    console.error("Failed to update berth:");
     return NextResponse.json({ error: "Failed to update berth" }, { status: 500 });
   }
 }

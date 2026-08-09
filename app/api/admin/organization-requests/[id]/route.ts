@@ -61,7 +61,7 @@ export async function GET(
       const statusCode = error.statusCode === 403 ? 403 : 401;
       return NextResponse.json({ error: error.message }, { status: statusCode });
     }
-    console.error("Failed to fetch organization request:", error);
+    console.error("Failed to fetch organization request:");
     return NextResponse.json(
       { error: "Failed to fetch request" },
       { status: 500 }

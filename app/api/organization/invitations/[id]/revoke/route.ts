@@ -47,7 +47,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to revoke invitation:", error);
+    console.error("Failed to revoke invitation:");
     return NextResponse.json({ error: "Failed to revoke invitation" }, { status: 500 });
   }
 }

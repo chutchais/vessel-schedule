@@ -67,7 +67,7 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to get vessel label settings:", error);
+    console.error("Failed to get vessel label settings:");
     return NextResponse.json({ error: "Failed to load vessel label settings" }, { status: 500 });
   }
 }
@@ -119,7 +119,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to update vessel label settings:", error);
+    console.error("Failed to update vessel label settings:");
     return NextResponse.json({ error: "Failed to update vessel label settings" }, { status: 500 });
   }
 }

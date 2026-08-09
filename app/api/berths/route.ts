@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to list berths:", error);
+    console.error("Failed to list berths:");
     return NextResponse.json({ error: "Failed to list berths" }, { status: 500 });
   }
 }
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to create berth:", error);
+    console.error("Failed to create berth:");
     return NextResponse.json({ error: "Failed to create berth" }, { status: 500 });
   }
 }

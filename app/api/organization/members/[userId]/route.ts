@@ -166,7 +166,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to update member:", error);
+    console.error("Failed to update member:");
     return NextResponse.json({ error: "Failed to update member" }, { status: 500 });
   }
 }

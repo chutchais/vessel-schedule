@@ -78,7 +78,7 @@ async function main() {
   }
 }
 
-main().catch((err: Error) => {
-  console.error("Bootstrap failed:", err.message);
+main().catch(() => {
+  console.error("Bootstrap failed");
   process.exit(1);
 });

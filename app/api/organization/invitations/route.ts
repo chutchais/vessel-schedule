@@ -17,7 +17,7 @@ interface InviteBody { email?: unknown; role?: unknown }
 
 function jsonError(error: unknown) {
   if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.statusCode });
-  console.error("Invitation request failed:", error);
+  console.error("Invitation request failed:");
   return NextResponse.json({ error: "Unable to process invitation" }, { status: 500 });
 }
 

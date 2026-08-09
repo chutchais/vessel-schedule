@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to list companies:", error);
+    console.error("Failed to list companies:");
     return NextResponse.json({ error: "Failed to list companies" }, { status: 500 });
   }
 }
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to create company:", error);
+    console.error("Failed to create company:");
     return NextResponse.json({ error: "Failed to create company" }, { status: 500 });
   }
 }

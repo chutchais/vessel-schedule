@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to list members:", error);
+    console.error("Failed to list members:");
     return NextResponse.json({ error: "Failed to list members" }, { status: 500 });
   }
 }

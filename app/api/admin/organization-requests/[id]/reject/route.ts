@@ -147,7 +147,7 @@ export async function POST(
       const statusCode = error.statusCode === 403 ? 403 : 401;
       return NextResponse.json({ error: error.message }, { status: statusCode });
     }
-    console.error("Failed to reject organization request:", error);
+    console.error("Failed to reject organization request:");
     return NextResponse.json(
       { error: "Failed to process rejection" },
       { status: 500 }

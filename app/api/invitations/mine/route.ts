@@ -60,8 +60,8 @@ export async function GET() {
         deliveryStatus: inv.deliveryStatus,
       })),
     });
-  } catch (error) {
-    console.error("Failed to fetch invitations:", error);
+  } catch {
+    console.error("Failed to fetch invitations:");
     return NextResponse.json({ error: "Failed to fetch invitations" }, { status: 500 });
   }
 }

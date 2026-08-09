@@ -45,7 +45,7 @@ export async function GET() {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to get export table settings:", error);
+    console.error("Failed to get export table settings:");
     return NextResponse.json({ error: "Failed to load export table settings" }, { status: 500 });
   }
 }
@@ -91,7 +91,7 @@ export async function PATCH(request: NextRequest) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to update export table settings:", error);
+    console.error("Failed to update export table settings:");
     return NextResponse.json({ error: "Failed to update export table settings" }, { status: 500 });
   }
 }

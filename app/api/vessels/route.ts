@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to list vessels:", error);
+    console.error("Failed to list vessels:");
     return NextResponse.json({ error: "Failed to list vessels" }, { status: 500 });
   }
 }
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to create vessel:", error);
+    console.error("Failed to create vessel:");
     return NextResponse.json({ error: "Failed to create vessel" }, { status: 500 });
   }
 }

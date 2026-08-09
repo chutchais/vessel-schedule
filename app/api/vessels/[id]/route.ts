@@ -151,7 +151,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to update vessel:", error);
+    console.error("Failed to update vessel:");
     return NextResponse.json({ error: "Failed to update vessel" }, { status: 500 });
   }
 }

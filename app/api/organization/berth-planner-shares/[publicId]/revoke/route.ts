@@ -22,7 +22,7 @@ export async function POST(_request: Request, context: RouteContext<"/api/organi
     return NextResponse.json({ data: { revoked: true } });
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    console.error("Failed to revoke planner share:", error);
+    console.error("Failed to revoke planner share:");
     return NextResponse.json({ error: "Failed to revoke planner share." }, { status: 500 });
   }
 }

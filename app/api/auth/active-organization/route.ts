@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to set active organization:", error);
+    console.error("Failed to set active organization:");
     return NextResponse.json({ error: "Failed to set active organization" }, { status: 500 });
   }
 }

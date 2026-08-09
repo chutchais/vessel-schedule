@@ -67,8 +67,8 @@ export async function GET(request: NextRequest, context: RouteContext<"/api/publ
     };
     await prisma.$transaction([prisma.berthPlannerShareSession.update({ where: { id: session.id }, data: { lastAccessedAt: now } }), prisma.berthPlannerShare.update({ where: { id: share.id }, data: { lastAccessedAt: now } })]);
     return NextResponse.json({ data }, { headers: publicSecurityHeaders() });
-  } catch (error) {
-    console.error("Shared planner data failed:", error instanceof Error ? error.message : "unknown error");
+  } catch {
+    console.error("Shared planner data failed:");
     return denied();
   }
 }

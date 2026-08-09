@@ -53,7 +53,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to get platform audit log:", error);
+    console.error("Failed to get platform audit log:");
     return NextResponse.json({ error: "Failed to get platform audit log" }, { status: 500 });
   }
 }

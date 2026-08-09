@@ -230,7 +230,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to load berth planner data:", error);
+    console.error("Failed to load berth planner data:");
     return NextResponse.json({ error: "Failed to load berth planner data" }, { status: 500 });
   }
 }

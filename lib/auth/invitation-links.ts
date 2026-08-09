@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "crypto";
+import { buildAppUrl, getServerAppUrl } from "@/lib/config/app-url";
 
 const TOKEN_BYTES = 32;
 const INVITATION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
@@ -17,16 +18,9 @@ export function getInvitationExpiry(now = new Date()) {
 }
 
 export function getAppUrl() {
-  const value = process.env.APP_URL;
-  if (!value) throw new Error("APP_URL is not configured");
-
-  const url = new URL(value);
-  if (url.protocol !== "https:" && url.hostname !== "localhost") {
-    throw new Error("APP_URL must use HTTPS outside localhost");
-  }
-  return url.origin;
+  return getServerAppUrl();
 }
 
 export function buildInvitationUrl(token: string) {
-  return `${getAppUrl()}/invitations/accept?token=${encodeURIComponent(token)}`;
+  return buildAppUrl(`/invitations/accept?token=${encodeURIComponent(token)}`, getAppUrl());
 }

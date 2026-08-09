@@ -150,7 +150,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to update port:", error);
+    console.error("Failed to update port:");
     return NextResponse.json({ error: "Failed to update port" }, { status: 500 });
   }
 }

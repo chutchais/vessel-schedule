@@ -368,7 +368,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to export berth planner CSV:", error);
+    console.error("Failed to export berth planner CSV:");
     return NextResponse.json({ error: "Failed to export CSV" }, { status: 500 });
   }
 }

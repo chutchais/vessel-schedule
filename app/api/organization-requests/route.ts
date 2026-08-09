@@ -123,8 +123,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("Failed to create organization request:", error);
+  } catch {
+    console.error("Failed to create organization request:");
     return NextResponse.json(
       { error: "Failed to process your request" },
       { status: 500 }

@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to list audit logs:", error);
+    console.error("Failed to list audit logs:");
     return NextResponse.json({ error: "Failed to list audit logs" }, { status: 500 });
   }
 }

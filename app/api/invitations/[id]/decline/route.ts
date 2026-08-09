@@ -40,8 +40,8 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Failed to decline invitation:", error);
+  } catch {
+    console.error("Failed to decline invitation:");
     return NextResponse.json({ error: "Failed to decline invitation" }, { status: 500 });
   }
 }

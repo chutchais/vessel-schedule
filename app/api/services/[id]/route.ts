@@ -172,7 +172,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to update service:", error);
+    console.error("Failed to update service:");
     return NextResponse.json({ error: "Failed to update service" }, { status: 500 });
   }
 }

@@ -155,7 +155,7 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to load schedules:", error);
+    console.error("Failed to load schedules:");
     return NextResponse.json({ error: "Failed to load schedules" }, { status: 500 });
   }
 }
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to create schedule:", error);
+    console.error("Failed to create schedule:");
     return NextResponse.json({ error: "Failed to create schedule" }, { status: 500 });
   }
 }

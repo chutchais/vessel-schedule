@@ -79,8 +79,8 @@ export function OrganizationRequestsList() {
       const data = await response.json();
       setRequests(data.data);
       setPagination(data.pagination);
-    } catch (error) {
-      console.error("Error fetching requests:", error);
+    } catch {
+      console.error("Error fetching requests");
     } finally {
       setIsLoading(false);
     }
@@ -99,8 +99,8 @@ export function OrganizationRequestsList() {
       const details = await response.json();
       setSelectedRequest(details);
       setIsDrawerOpen(true);
-    } catch (error) {
-      console.error("Error fetching request details:", error);
+    } catch {
+      console.error("Error fetching request details");
     }
   };
 

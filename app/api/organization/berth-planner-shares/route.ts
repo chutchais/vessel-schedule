@@ -22,7 +22,7 @@ export async function GET() {
     return NextResponse.json({ data: rows });
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    console.error("Failed to list planner shares:", error);
+    console.error("Failed to list planner shares:");
     return NextResponse.json({ error: "Failed to list planner shares." }, { status: 500 });
   }
 }
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: { publicId, url: buildShareUrl(getAppUrl(), publicId, secret), expiresAt: expiresAt.toISOString() } }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    console.error("Failed to create planner share:", error);
+    console.error("Failed to create planner share:");
     return NextResponse.json({ error: "Failed to create planner share." }, { status: 500 });
   }
 }

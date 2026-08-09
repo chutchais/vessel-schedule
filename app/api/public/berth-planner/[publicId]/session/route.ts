@@ -28,8 +28,8 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/pub
     const response = NextResponse.json({ data: { authenticated: true } }, { headers: publicSecurityHeaders() });
     response.cookies.set(SHARE_COOKIE_NAME, sessionToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", priority: "high", path: `/api/public/berth-planner/${publicId}`, expires: expiresAt });
     return response;
-  } catch (error) {
-    console.error("Shared planner exchange failed:", error instanceof Error ? error.message : "unknown error");
+  } catch {
+    console.error("Shared planner exchange failed:");
     return denied();
   }
 }

@@ -35,7 +35,7 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to load terminals:", error);
+    console.error("Failed to load terminals:");
     return NextResponse.json({ error: "Failed to load terminals" }, { status: 500 });
   }
 }
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to create terminal:", error);
+    console.error("Failed to create terminal:");
     return NextResponse.json({ error: "Failed to create terminal" }, { status: 500 });
   }
 }

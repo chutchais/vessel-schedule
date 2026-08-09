@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { buildAppUrl } from "@/lib/config/app-url";
 import { createClient } from "@/lib/supabase/client";
 
 export function InvitationRegistration({ token, email }: { token: string; email: string }) {
@@ -11,7 +12,7 @@ export function InvitationRegistration({ token, email }: { token: string; email:
     event.preventDefault(); if (displayName.trim().length < 2) { setError("Enter your name."); return; } if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
     setSaving(true); setError(null);
     try {
-      const { data, error: signUpError } = await createClient().auth.signUp({ email, password, options: { data: { display_name: displayName.trim() }, emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` } });
+      const { data, error: signUpError } = await createClient().auth.signUp({ email, password, options: { data: { display_name: displayName.trim() }, emailRedirectTo: buildAppUrl(`/auth/callback?next=${encodeURIComponent(next)}`) } });
       if (signUpError) { setError(signUpError.message); return; }
       if (data.session) { router.push(next); router.refresh(); return; }
       setError("Check your email to confirm your account. The confirmation link will return you to this invitation.");

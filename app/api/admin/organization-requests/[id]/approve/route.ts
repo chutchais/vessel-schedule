@@ -64,7 +64,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to approve organization request:", error);
+    console.error("Failed to approve organization request:");
     return NextResponse.json({ error: "Failed to process approval" }, { status: 500 });
   }
 }

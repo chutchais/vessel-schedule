@@ -183,7 +183,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to load schedule:", error);
+    console.error("Failed to load schedule:");
     return NextResponse.json({ error: "Failed to load schedule" }, { status: 500 });
   }
 }
@@ -308,7 +308,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("Failed to update schedule:", error);
+    console.error("Failed to update schedule:");
     return NextResponse.json({ error: "Failed to update schedule" }, { status: 500 });
   }
 }

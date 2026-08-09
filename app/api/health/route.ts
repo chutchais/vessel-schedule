@@ -7,20 +7,13 @@ export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;
 
-    return NextResponse.json({
-      status: "ok",
-      database: "connected",
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Health check failed:", error);
+    return NextResponse.json({ status: "ok" }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    console.error("Health check failed");
 
     return NextResponse.json(
-      {
-        status: "error",
-        database: "disconnected",
-      },
-      { status: 503 },
+      { status: "error" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
 }

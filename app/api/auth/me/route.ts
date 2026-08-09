@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to get current user:", error);
+    console.error("Failed to get current user:");
     return NextResponse.json({ error: "Failed to get user" }, { status: 500 });
   }
 }

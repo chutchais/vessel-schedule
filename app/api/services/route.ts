@@ -40,7 +40,7 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to load services:", error);
+    console.error("Failed to load services:");
     return NextResponse.json({ error: "Failed to load services" }, { status: 500 });
   }
 }
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to create service:", error);
+    console.error("Failed to create service:");
     return NextResponse.json({ error: "Failed to create service" }, { status: 500 });
   }
 }

@@ -157,7 +157,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
 
-    console.error("Failed to update terminal:", error);
+    console.error("Failed to update terminal:");
     return NextResponse.json({ error: "Failed to update terminal" }, { status: 500 });
   }
 }
