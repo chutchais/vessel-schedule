@@ -4,6 +4,50 @@ Audit date: 2026-07-29
 Scope: Step 1 of `prompts/prompt_mvp_production_plan`  
 Recommendation: **GO WITH TIME-LIMITED RB-4 EXCEPTION**
 
+## Authentication E2E Batch 1 rerun (2026-08-01)
+
+Batch 1 status is **NO-GO (infrastructure)** for browser authentication E2E.  
+Database-side RB coverage is passing; local Supabase Auth E2E prerequisites are not fully configured.
+
+### Phase 1 — Existing database suites
+
+- Local test database guardrails passed:
+  - `DATABASE_ENVIRONMENT=test`
+  - `DATABASE_URL`, `DIRECT_URL`, `RB1_TEST_DATABASE_URL`, `RB2_TEST_DATABASE_URL`, `RB3_TEST_DATABASE_URL` resolve to the same local target (`127.0.0.1:55432/vessel_test`).
+- Reachability passed for `127.0.0.1:55432`.
+- Migration history deploy passed with no pending migrations.
+- RB suites passed:
+  - `lib/auth/invitation-transitions.integration.test.ts`
+  - `lib/schedules/schedule-mutations.integration.test.ts`
+  - `lib/admin/organization-request-approval.integration.test.ts`
+  - Result: **40/40 PASS**
+
+### Phase 2 — Playwright infrastructure
+
+- Added Playwright with Chromium:
+  - `playwright.config.ts` with dedicated app port `3201`, `webServer` readiness, and failure-only trace/screenshot capture.
+- Added scripts:
+  - `test:e2e`, `test:e2e:ui`, `test:e2e:headed`, `test:e2e:auth`, `test:e2e:preflight`.
+- Added E2E test scaffolding:
+  - `tests/e2e/auth-batch1.spec.ts`
+  - `tests/e2e/support/auth-batch1-fixture.ts`
+- Added artifact ignores:
+  - `.gitignore`: `playwright-report`, `test-results`, `.auth`
+  - `eslint.config.mjs` ignores those directories.
+
+### Phase 3 — Local Supabase Auth
+
+- Supabase local setup was absent (no `supabase/` config; Supabase CLI not present in this environment).
+- Added minimum setup proposal and env template:
+  - `docs/local-supabase-auth-e2e-setup.md`
+  - `.env.e2e.local.example`
+- E2E preflight currently fails because local Supabase/App variables are not provided in `.env.e2e.local`.
+
+### Phase 4 — Browser scenario execution
+
+- Planned high-risk scenarios are implemented in `tests/e2e/auth-batch1.spec.ts`, but execution is blocked at environment guards until local Supabase Auth config is present.
+- No hosted staging or production credentials were used.
+
 ## Pre-E2E feature addition (2026-08-01): export vessel-details table
 
 - Added configurable vessel-details table appended after grid pages in Berth Planner print/PDF export.

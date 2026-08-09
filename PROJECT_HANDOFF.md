@@ -1,5 +1,59 @@
 # Vessel Schedule — Project Handoff
 
+## Authentication E2E Batch 1 rerun (2026-08-01)
+
+Batch 1 database prerequisites and suites are passing locally, but browser E2E remains **NO-GO (infrastructure)** until local Supabase Auth E2E configuration is provided.
+
+### What was added
+
+- Playwright infrastructure:
+  - `playwright.config.ts` with Chromium, dedicated app port `3201`, `webServer` startup, and failure-only traces/screenshots.
+  - Scripts in `package.json`: `test:e2e`, `test:e2e:ui`, `test:e2e:headed`, `test:e2e:auth`, `test:e2e:preflight`.
+- Local safety and environment checks:
+  - `scripts/e2e-auth-preflight.ts` enforces:
+    - `DATABASE_ENVIRONMENT=test`
+    - local-only DB targets
+    - exact DB target alignment across `DATABASE_URL`, `DIRECT_URL`, and `RB1/2/3_TEST_DATABASE_URL`
+    - local-only `APP_URL`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`
+    - presence of Supabase E2E keys.
+- Authentication E2E tests and fixtures:
+  - `tests/e2e/auth-batch1.spec.ts`
+  - `tests/e2e/support/auth-batch1-fixture.ts`
+- Local Supabase setup proposal:
+  - `.env.e2e.local.example`
+  - `docs/local-supabase-auth-e2e-setup.md`
+- Artifact handling:
+  - `.gitignore` now ignores `playwright-report`, `test-results`, `.auth`
+  - `eslint.config.mjs` ignores Playwright artifact directories.
+
+### Architecture used for local testing
+
+- Prisma/RB suites DB: local PostgreSQL at `127.0.0.1:55432` (`vessel_test`).
+- Supabase Auth E2E: expected local Supabase stack and local credentials from `.env.e2e.local`.
+- This is a **separate-database architecture** for local runs (Prisma test DB + local Supabase-managed DB/services).
+
+### Execution evidence (this rerun)
+
+- Phase 1:
+  - DB reachability check passed (`127.0.0.1:55432`).
+  - Migration deploy passed (no pending migrations).
+  - RB-1/RB-2/RB-3 suites passed (`40/40`).
+- Validation:
+  - `npx prisma validate` PASS
+  - `npx prisma generate` PASS
+  - `npx tsc --noEmit` PASS
+  - `npm run lint` PASS
+  - `node --import tsx --test $(find lib -name '*.test.ts' | sort)` PASS (`226/226`)
+  - `npm run build` PASS
+- Phase 2/3/4 browser E2E:
+  - `npm run test:e2e:preflight` FAIL (missing local Supabase/Auth E2E vars)
+  - `npm run test:e2e:auth` FAIL at environment guards (`APP_URL`/local Supabase not configured)
+
+### Blockers and scope notes
+
+- Browser-authentication scenarios are blocked by missing local Supabase E2E environment/configuration.
+- First-time setup workflow remains a product gap for this batch: no dedicated in-app first-time setup route exists to exercise “setup once” semantics via browser E2E.
+
 ## Berth Planner CSV Export (2026-08-01)
 
 Vessel schedules can now be exported as CSV directly from the Berth Planner.

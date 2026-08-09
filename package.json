@@ -7,6 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:auth": "playwright test tests/e2e/auth-batch1.spec.ts",
+    "test:e2e:preflight": "tsx scripts/e2e-auth-preflight.ts",
     "db:migrate:status": "tsx scripts/run-prisma-migration.ts status",
     "db:migrate:deploy": "tsx scripts/run-prisma-migration.ts deploy",
     "verify:rb4-runtime": "node scripts/verify-rb4-runtime.mjs",
@@ -28,6 +33,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",

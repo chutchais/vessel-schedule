@@ -1,4 +1,23 @@
 2026-08-01
+- **Authentication E2E Batch 1 infrastructure (local-only)**
+  - Added Playwright infrastructure:
+    - `playwright.config.ts` (Chromium project, dedicated app port `3201`, `webServer`, trace/screenshot on failure only).
+    - Scripts: `test:e2e`, `test:e2e:ui`, `test:e2e:headed`, `test:e2e:auth`, `test:e2e:preflight`.
+  - Added local authentication E2E guardrails and fixtures:
+    - `scripts/e2e-auth-preflight.ts` enforces `DATABASE_ENVIRONMENT=test`, local DB target matching across `DATABASE_URL`, `DIRECT_URL`, and `RB*_TEST_DATABASE_URL`, and local-only Supabase/App URLs.
+    - `tests/e2e/auth-batch1.spec.ts` and `tests/e2e/support/auth-batch1-fixture.ts` cover protected-route redirect, sign-in/out, request approval, invitation onboarding paths, role boundaries, tenant isolation, forged active-organization rejection, and organization switching.
+  - Added setup proposal/reference for missing local Supabase config:
+    - `.env.e2e.local.example`
+    - `docs/local-supabase-auth-e2e-setup.md`
+  - Added artifact ignores:
+    - `.gitignore`: `playwright-report`, `test-results`, `.auth`
+    - `eslint.config.mjs`: ignore Playwright artifact directories.
+  - Validation:
+    - RB-1/RB-2/RB-3 PostgreSQL suites pass against `127.0.0.1:55432/vessel_test`.
+    - Prisma validate/generate, TypeScript, lint, all current unit/integration tests, and production build pass.
+  - Current Batch 1 browser E2E status: **NO-GO (infrastructure)** because local Supabase/Auth E2E environment variables are not configured (`APP_URL`/local Supabase values missing in `.env.e2e.local`). No hosted/production credentials were used.
+
+2026-08-01
 - **Berth Planner CSV Export**
   - Added "Export CSV" button to the Berth Planner secondary controls bar (alongside Print / Export PDF).
   - New API route `GET /api/berth-planner/export-csv` — org-scoped, server-side authorization.
