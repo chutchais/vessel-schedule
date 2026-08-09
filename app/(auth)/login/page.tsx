@@ -105,6 +105,7 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+      <p className="mt-5 text-center text-sm"><Link href="/privacy" className="text-slate-500 underline underline-offset-2 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Privacy Notice</Link></p>
     </div>
   );
 }

@@ -25,6 +25,7 @@ export default function RequestAccessPage() {
           <RequestAccessForm />
         </div>
       </div>
+      <p className="mt-5 text-center text-sm text-slate-500">By requesting access, you acknowledge the FlowPort <Link href="/privacy" className="font-medium text-blue-700 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Privacy Notice</Link>.</p>
     </div>
   );
 }
