@@ -16,8 +16,9 @@ export function SmtpConfigurationManager({ configuration, complete, destination 
     setRunning(action); setNotice(null);
     try {
       const res = await fetch("/api/platform-administration/smtp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }), cache: "no-store" });
-      const payload = await res.json() as { data?: { success: boolean; message: string }; error?: string };
-      const message = payload.data?.message ?? payload.error ?? "SMTP diagnostics could not be completed.";
+      const payload = await res.json() as { data?: { success: boolean; message: string }; error?: string; diagnostics?: { expectedOrigin: string; receivedOrigin: string | null; receivedRequestOrigin: string | null } };
+      const originDetails = payload.diagnostics ? ` Expected: ${payload.diagnostics.expectedOrigin}. Received: ${payload.diagnostics.receivedOrigin ?? "none"}. Request: ${payload.diagnostics.receivedRequestOrigin ?? "none"}.` : "";
+      const message = `${payload.data?.message ?? payload.error ?? "SMTP diagnostics could not be completed."}${originDetails}`;
       setNotice({ type: res.ok && payload.data?.success ? "success" : "error", message });
     } catch { setNotice({ type: "error", message: "SMTP diagnostics could not be completed." }); }
     finally { setRunning(null); }

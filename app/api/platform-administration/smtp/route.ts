@@ -8,7 +8,7 @@ import { getServerAppUrl } from "@/lib/config/app-url";
 import { inspectSmtpConfiguration, sendSmtpTestEmail, verifySmtpConnection } from "@/lib/email/invitation-email";
 import { checkPlatformSmtpRateLimit } from "@/lib/platform/smtp-rate-limit";
 import { isPlatformAdmin } from "@/lib/platform/smtp-authorization";
-import { canSendSmtpTestToVerifiedAccount, csrfOriginAllowed, isAllowedSmtpAction, safeSmtpErrorMessage, type SmtpAction } from "@/lib/platform/smtp-security";
+import { canSendSmtpTestToVerifiedAccount, isAllowedSmtpAction, safeSmtpErrorMessage, type SmtpAction, validateSmtpRequestOrigin } from "@/lib/platform/smtp-security";
 
 const headers = { "Cache-Control": "private, no-store" };
 
@@ -54,8 +54,16 @@ export async function POST(request: NextRequest) {
   let applicationOrigin: string;
   try { applicationOrigin = getServerAppUrl(); }
   catch { return response({ error: "SMTP diagnostics are unavailable" }, { status: 503 }); }
-  if (!csrfOriginAllowed(request.headers.get("origin"), request.headers.get("referer"), applicationOrigin)) {
-    return response({ error: "Invalid request origin" }, { status: 403 });
+  const origin = validateSmtpRequestOrigin({
+    origin: request.headers.get("origin"),
+    referer: request.headers.get("referer"),
+    host: request.headers.get("host"),
+    forwardedHost: request.headers.get("x-forwarded-host"),
+    forwardedProto: request.headers.get("x-forwarded-proto"),
+    vercelId: request.headers.get("x-vercel-id"),
+  }, applicationOrigin);
+  if (!origin.allowed) {
+    return response({ error: "Invalid request origin", diagnostics: { expectedOrigin: origin.expectedOrigin, receivedOrigin: origin.receivedOrigin, receivedRequestOrigin: origin.receivedRequestOrigin } }, { status: 403 });
   }
 
   let body: { action?: unknown };
