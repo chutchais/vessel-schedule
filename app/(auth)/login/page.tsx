@@ -31,7 +31,10 @@ export default function LoginPage() {
       }
 
       const nextPath = new URLSearchParams(window.location.search).get("next");
-      router.push(nextPath && nextPath.startsWith("/") ? nextPath : "/");
+      const destination = nextPath && nextPath !== "/" && nextPath.startsWith("/") && !nextPath.startsWith("//")
+        ? nextPath
+        : "/berth-planner";
+      router.push(destination);
       router.refresh();
     } catch {
       setError("An unexpected error occurred");

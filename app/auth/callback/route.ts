@@ -52,5 +52,5 @@ export async function GET(request: NextRequest) {
     // Best-effort; fall through to default redirect
   }
 
-  return NextResponse.redirect(buildAppUrl("/", origin));
+  return NextResponse.redirect(buildAppUrl("/berth-planner", origin));
 }
