@@ -5,7 +5,7 @@ import { AuthError } from "@/lib/auth/auth-errors";
 import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db/prisma";
 import { getServerAppUrl } from "@/lib/config/app-url";
-import { getSmtpConfigurationStatus, sendSmtpTestEmail, smtpConfigurationComplete, verifySmtpConnection } from "@/lib/email/invitation-email";
+import { inspectSmtpConfiguration, sendSmtpTestEmail, verifySmtpConnection } from "@/lib/email/invitation-email";
 import { checkPlatformSmtpRateLimit } from "@/lib/platform/smtp-rate-limit";
 import { isPlatformAdmin } from "@/lib/platform/smtp-authorization";
 import { canSendSmtpTestToVerifiedAccount, csrfOriginAllowed, isAllowedSmtpAction, safeSmtpErrorMessage, type SmtpAction } from "@/lib/platform/smtp-security";
@@ -32,7 +32,8 @@ export async function GET() {
   try {
     const currentUser = await requireCurrentUser();
     if (!isPlatformAdmin(currentUser.platformRole)) return response({ error: "Access denied" }, { status: 403 });
-    return response({ data: { configuration: getSmtpConfigurationStatus(), complete: smtpConfigurationComplete() } });
+    const configuration = inspectSmtpConfiguration();
+    return response({ data: { configuration: configuration.entries, complete: configuration.complete } });
   } catch (error) {
     if (error instanceof AuthError) return response({ error: error.message }, { status: error.statusCode });
     return response({ error: "Unable to read SMTP configuration status" }, { status: 500 });
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
     return response({ error: "Too many SMTP diagnostic attempts. Try again later.", retryAfterSeconds: rate.retryAfterSeconds }, { status: 429 });
   }
 
-  if (!smtpConfigurationComplete()) {
+  if (!inspectSmtpConfiguration().complete) {
     await auditAttempt(currentUser, action, false);
     return response({ error: "SMTP configuration is incomplete. Update production environment settings and redeploy before trying again." }, { status: 503 });
   }

@@ -410,3 +410,52 @@ The previously recorded RB4 failure is superseded by this evidence. The approved
 4. The hosting provider supplies its exact DNS targets; DNS propagation, HTTPS certificate issuance/renewal, canonical redirect behavior, hosted logging/redaction, and live health are verified manually.
 
 For validation without application SMTP, set `EMAIL_DELIVERY_MODE=disabled`; email-dependent invitation actions will remain unavailable and the UI will say so. This does not remove the backup or external configuration gates and is not approval for a public pilot.
+
+## Private-validation deployment preflight rerun — 2026-08-12
+
+**Result: NO-GO.** No deployment, migration, production-data operation, DNS change, Supabase setting change, or provider configuration change was performed.
+
+### Release identity and repository hygiene
+
+- Branch and remote: `main` exactly matches `origin/main` (`0` ahead, `0` behind) at `e86a54257d8b22d08385e410d9e39e4b0407d92e`.
+- Working tree: clean.
+- Tracked secret material: no local `.env`, private-key, certificate-container, credentials, or secrets file is tracked. The only tracked environment-related file is the placeholder-only `.env.example`; this is an intentional template exception, not a production environment file.
+
+### Dependency advisories
+
+- Focused production runtime audit: **PASS** — `npm audit --omit=dev --omit=optional --audit-level=low --json` reported zero advisories.
+- `GHSA-2v37-7h3g-55p8` (`nanoid`): **RESOLVED**. Installed path: `next@16.3.0 -> postcss@8.5.23 -> nanoid@3.3.17`; Tailwind resolves to the same `postcss@8.5.23 -> nanoid@3.3.17` instance.
+- Additional PostCSS advisory `GHSA-fxqj-rqcc-2cmp`: **RESOLVED**. Installed `postcss@8.5.23`; no production advisory remains.
+- No unresolved production dependency paths or versions were reported. `npm audit fix --force` was not used.
+
+### Safe local checks
+
+All checks below used isolated local placeholder configuration (`127.0.0.1:1` database target and `*.invalid` Supabase URL); no production connection was made.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Prisma validation | PASS | `npx prisma validate`; schema valid after the target guard accepted the explicit local placeholder target |
+| TypeScript | PASS | `npx tsc --noEmit` |
+| Lint | PASS | `npm run lint` |
+| Production build | PASS | `npm run build`; Next.js 16.3.0 compiled successfully and includes `/platform-administration/smtp` and `/api/platform-administration/smtp` |
+| Pruned runtime verification | PASS | Isolated committed checkout, `npm ci`, build, `npm prune --omit=dev --omit=optional`, then `npm run verify:rb4-runtime` |
+| Production-artifact smoke | PASS | Loopback `npm run smoke:production`: root, login, protected planner redirect, and static asset passed |
+| Full E2E | NOT RUN | Explicitly blocked by this preflight |
+
+### Production and external evidence
+
+- Public DNS: **FAIL / BLOCKING**. At preflight time, `getflowport.com` did not resolve through the available resolver. Consequently HTTPS certificate validation and live `/api/health` verification could not be performed.
+- Production application configuration: **UNVERIFIED**. No authenticated hosting/deployment environment was available to confirm both URL variables equal `https://getflowport.com`, application SMTP variable presence, or the explicit deployed public-planner-sharing value.
+- SMTP diagnostics: **UNVERIFIED / BLOCKING**. The Platform Admin-only status page could not be reached because the public hostname does not resolve, and no signed-in Platform Admin session was available. Required manual evidence: all seven values show `Configured`, connection check succeeds, and the restricted test email reaches that verified admin account.
+- Supabase Site URL and redirect allowlist: **UNVERIFIED / BLOCKING**. Confirm exact `https://getflowport.com` Site URL and callback redirects in the Supabase dashboard.
+- Production migration status: **UNKNOWN / BLOCKING**. The guarded status command was not run because no approved production target context was provided; no migration command was run.
+- Backup: **UNKNOWN / BLOCKING**. No real Supabase backup timestamp, backup type, provider evidence of restorability, or restore-owner evidence was available. Placeholders do not satisfy this gate.
+- Production logs: **UNVERIFIED / BLOCKING**. Repository code avoids dynamic error logging and audit sanitization redacts sensitive fields, but hosted log contents and access controls were not available for review.
+
+### Manual actions required before approval
+
+1. Restore public DNS for `getflowport.com`, then verify HTTPS/certificate, canonical-host behavior, and `https://getflowport.com/api/health` returns only its safe generic response with `Cache-Control: no-store`.
+2. In the hosting secret manager, confirm—without exposing values—that `APP_URL` and `NEXT_PUBLIC_APP_URL` exactly equal `https://getflowport.com`; SMTP host, port, TLS, username, password, sender, and explicit sharing flag are present in the intended scopes.
+3. Sign in as a Platform Admin at `/platform-administration/smtp`; record that all configuration rows are `Configured`, the connection check succeeds, and the test email arrives only at that admin's verified email address.
+4. In Supabase, verify Site URL and exact allowed callback/recovery redirects, obtain actual production migration status with the guarded status command, and record a real backup timestamp, backup type, restorability proof, and restore owner.
+5. Review hosted logs for redaction and confirm they contain no credentials, connection strings, tokens, cookies, or SMTP/provider error details.
