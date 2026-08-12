@@ -54,9 +54,9 @@ function getTransport(): EmailTransport | EmailDeliveryResult {
   const { host, port, from, username, password } = configuration;
   return {
     async verify() {
-      const { createConnection } = await import("node:tls");
+      const { connect } = await import("node:tls");
       await new Promise<void>((resolve, reject) => {
-        const socket = createConnection({ host, port, servername: host }, async () => {
+        const socket = connect({ host, port, servername: host }, async () => {
           try {
             const read = () => new Promise<string>((done, fail) => { const onData = (data: Buffer) => { const reply = data.toString("utf8"); socket.off("error", onError); done(reply); }; const onError = (error: Error) => { socket.off("data", onData); fail(error); }; socket.once("data", onData); socket.once("error", onError); });
             const command = async (line: string) => { socket.write(`${line}\r\n`); const reply = await read(); if (!/^2|^3/.test(reply)) throw new Error("SMTP authentication failed"); };
@@ -72,9 +72,9 @@ function getTransport(): EmailTransport | EmailDeliveryResult {
       });
     },
     async send(message) {
-      const { createConnection } = await import("node:tls");
+      const { connect } = await import("node:tls");
       await new Promise<void>((resolve, reject) => {
-        const socket = createConnection({ host, port, servername: host }, async () => {
+        const socket = connect({ host, port, servername: host }, async () => {
           try {
             const read = () => new Promise<string>((done, fail) => { const onData = (data: Buffer) => { const reply = data.toString("utf8"); socket.off("error", onError); done(reply); }; const onError = (error: Error) => { socket.off("data", onData); fail(error); }; socket.once("data", onData); socket.once("error", onError); });
             const command = async (line: string) => { socket.write(`${line}\r\n`); const reply = await read(); if (!/^2|^3/.test(reply)) throw new Error("SMTP rejected message"); };
