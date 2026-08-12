@@ -1,4 +1,5 @@
 2026-08-09
+- Added Platform Administration → SMTP Configuration: platform-admin-only server-side status checks, connection verification, restricted verified-account test email, durable per-admin throttling, CSRF origin validation, safe error redaction, and platform audit events. SMTP settings remain environment-only and are never exposed.
 - Updated product branding to FlowPort using the V1 CSS wordmark treatment (navy “Flow”, teal “Port”, and `getflowport.com` badge) across the landing page, auth entry points, and responsive application navigation; added canonical FlowPort metadata.
 - Revised the public landing page to accurately present the invite-only Vessel Schedule MVP: weekly visual berth planning, dual planner domains, direct manipulation, conflicts, filters, undo/recent changes, labels, exports, organization roles/invitations, audit history, and expiring read-only sharing.
 - Added the five-step operating workflow, security summary, honest pilot status, responsive public navigation, and first-time `Set Up Platform` visibility when no active platform admin exists.

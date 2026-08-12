@@ -236,6 +236,20 @@ export function SidebarNavigation({ className = "", onNavigate }: SidebarNavigat
                   Audit Logs
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/platform-administration/smtp"
+                  onClick={onNavigate}
+                  className={[
+                    "block rounded-md px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                    isActivePath(pathname, "/platform-administration/smtp")
+                      ? "bg-blue-50 font-medium text-blue-700"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                  ].join(" ")}
+                >
+                  SMTP Configuration
+                </Link>
+              </li>
             </ul>
           </section>
         )}
